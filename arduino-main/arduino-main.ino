@@ -1,58 +1,46 @@
+#include "Relay.h"
+#include "Led.h"
+#include "Network.h"
+#include "arduino-secrets.h"
+
 const int ledPin = 13;
-const int switchPin = 12;
 const int relayPin = 11;
 volatile bool systemEnabled = false;
 const int systemEnabledPin = 2;
+Relay relay(relayPin);
+Led led(ledPin);
+Network network(SECRET_SSID, SECRET_PASS);
 
 void setup() {
   // put your setup code here, to run once:
-  initialiseLed();
-  initialiseRelay();
+  Serial.begin(115200);
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
+
+  led.init();
+  relay.init();
   pinMode(systemEnabledPin, INPUT);
   attachInterrupt(digitalPinToInterrupt(systemEnabledPin), setOrClearSystemEnabled, CHANGE);
-  disableLed();
-  disableRelay();
-  Serial.begin(9600);
+  led.disable();
+  relay.disable();
+
+  network.init();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  delay(1000);
-  Serial.print("Test\n");
-  if (!systemEnabled){
-    return;
+  delay(100);
+  if (systemEnabled) {
+    relay.enable();
+  } else {
+    relay.disable();
   }
-  enableLed();
-  enableRelay();
-  delay(1000);
-  disableLed();
-  disableRelay();
+  led.enable();
+  delay(100);
+  led.disable();
 }
 
 void setOrClearSystemEnabled() {
   systemEnabled = (digitalRead(systemEnabledPin) == HIGH);
-}
-
-void initialiseRelay() {
-  pinMode(relayPin, OUTPUT);
-}
-
-void enableRelay() {
-  digitalWrite(relayPin, LOW);
-}
-
-void disableRelay() {
-  digitalWrite(relayPin, HIGH);
-}
-
-void initialiseLed() {
-  pinMode(ledPin, OUTPUT);
-}
-
-void enableLed() {
-  digitalWrite(ledPin, HIGH);
-}
-
-void disableLed() {
-  digitalWrite(ledPin, LOW);
 }
