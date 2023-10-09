@@ -35,7 +35,7 @@ bool Network::init() {
     Serial.print(i+1);
     Serial.print("/");
     Serial.print(connectionAttemptLimit);
-    Serial.print(")");
+    Serial.println(")");
 
     _status = WiFi.begin(_ssid, _pass);
 
@@ -100,4 +100,75 @@ void Network::printMacAddress(byte mac[]) {
     }
   }
   Serial.println();
+}
+
+StaticJsonDocument<5000> Network::get(const char host[], const char path[], const char query[]){
+  char response[5000] = "\0";
+
+  if (_client.connect(host, 443)) {
+    Serial.print("connected to host: ");
+    Serial.println(host);
+    // Make a HTTP request:
+    char requestGetLine[100] = "GET /";
+    strcat(requestGetLine, path);
+    strcat(requestGetLine, "?");
+    strcat(requestGetLine, query);
+    strcat(requestGetLine, " HTTP/1.1");
+    Serial.println(requestGetLine);
+    _client.println(requestGetLine);
+
+    char requestHostLine[100] = "Host: ";
+    strcat(requestHostLine, host);
+    Serial.println(requestHostLine);
+    _client.println(requestHostLine);
+
+    _client.println("Connection: close");
+    _client.println();
+
+    
+    Serial.print("Client Available? ");
+    Serial.println(_client.available());
+    delay(2000);
+    Serial.print("Client Available? ");
+    Serial.println(_client.available());
+
+    bool lastCharNewline = false;
+    bool receivingBody = false;
+    uint32_t responseId = 0;
+    for (uint32_t i = 0; i < 5000; i++){
+      if(!_client.available()) break;
+      char c = _client.read();
+      if (c == '\r') continue;  // Ignore carraige return symbols.
+      Serial.print(c);
+      if (c == '\n') {
+        Serial.print("(c is newline!)");
+        if (lastCharNewline) {
+          Serial.print("(receivingBody = true)");
+          receivingBody = true;
+          continue;
+        } else {
+          lastCharNewline = true;
+        }
+        Serial.println();
+      } else if (c != '\r'){
+        lastCharNewline = false;
+      }
+      if (receivingBody) {
+        response[responseId] = c;
+        responseId++;
+      }
+    }
+  }
+  Serial.println();
+  Serial.println("Response:");
+  Serial.println(response);
+
+  StaticJsonDocument<5000> doc;
+  DeserializationError error = deserializeJson(doc, response);
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.f_str());
+    return doc;
+  }
+  return doc;
 }
