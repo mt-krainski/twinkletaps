@@ -25,8 +25,7 @@ class RedisBoolean:
         return self._set(value, self.redis)
 
     def toggle(self):
-        # pipeline = self.redis.pipeline()
+        # TODO: Fix this, make this a transaction
         new_value = not self.get()
         self.set(new_value)
-        # pipeline.execute()
         return new_value
