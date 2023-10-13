@@ -8,21 +8,26 @@
 #include <ArduinoJson.h>
 
 #include "Arduino.h"
+#include "Led.h"
 
 class Network
 {
   public:
     Network(const char ssid[], const char pass[]);
+    Network(const char ssid[], const char pass[], Led *statusLed);
     bool init();
     StaticJsonDocument<5000> get(const char host[], const char path[], const char query[]);
   private:
     void printWifiData();
     void printCurrentNet();
     void printMacAddress(byte mac[]);
+    void blink();
+    void blink(int repeatCount);
     const char* _ssid;
     const char* _pass;
     int _status;
     WiFiSSLClient _client;
+    Led *_statusLed=NULL;
 };
 
 #endif

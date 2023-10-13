@@ -5,31 +5,60 @@
 #include "Network.h"
 #include "arduino-secrets.h"
 
-const int ledPin = 13;
+const int ledSystemPin = 3;
+const int ledLoopPin = 4;
+const int ledNetworkPin = 5;
+const int led4Pin = 6;
+
 const int relayPin = 11;
 volatile bool systemEnabled = false;
 const int systemEnabledPin = 2;
 Relay relay(relayPin);
-Led led(ledPin);
-Network network(SECRET_SSID, SECRET_PASS);
+
+Led ledSystem(ledSystemPin, false);
+Led ledLoop(ledLoopPin, false);
+Led ledNetwork(ledNetworkPin, false);
+Led led4(led4Pin, false);
+
+Network network(SECRET_SSID, SECRET_PASS, &ledNetwork);
 
 StaticJsonDocument<200> doc;
 
-void setup() {
-  // put your setup code here, to run once:
+void initialiseLeds(){
+  ledSystem.init();
+  ledLoop.init();
+  ledNetwork.init();
+  led4.init();
+
+  ledSystem.disable();
+  ledLoop.disable();
+  ledNetwork.disable();
+  led4.disable();
+}
+
+void initialiseSerial(){
   Serial.begin(115200);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
+  while (!Serial); // wait for serial port to connect. Needed for native USB port only
+  delay(1000);
+}
 
-  delay(5000);
+void setup() {
+  initialiseLeds();
 
-  led.init();
+  // Flash to indicate system has been turned on
+  ledSystem.blink();
+
+  initialiseSerial();
+
   relay.init();
+  relay.disable();
+
   pinMode(systemEnabledPin, INPUT);
   attachInterrupt(digitalPinToInterrupt(systemEnabledPin), setOrClearSystemEnabled, CHANGE);
-  led.disable();
-  relay.disable();
+
+  // Flash to indicate network initialisation is starting
+  ledSystem.blink();
+  ledSystem.blink();
 
   network.init();
 
@@ -62,19 +91,20 @@ void setup() {
   const int dummyDataId = dummyData["id"];
   Serial.print("Dummy data id: ");
   Serial.println(dummyDataId);
+
+  // System initialised, turn on LED permanently
+  ledSystem.enable();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  delay(1000);
+  ledLoop.blink();
+
   if (systemEnabled) {
     relay.enable();
   } else {
     relay.disable();
   }
-  led.enable();
-  delay(1000);
-  led.disable();
+  delay(2000);
 }
 
 void setOrClearSystemEnabled() {
