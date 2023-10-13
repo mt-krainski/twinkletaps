@@ -10,9 +10,13 @@ const int ledLoopPin = 4;
 const int ledNetworkPin = 5;
 const int led4Pin = 6;
 
+const int knobPin = A0;
+int knobReading = 0;
+
 const int relayPin = 11;
 volatile bool systemEnabled = false;
 const int systemEnabledPin = 2;
+
 Relay relay(relayPin);
 
 Led ledSystem(ledSystemPin, false);
@@ -104,6 +108,11 @@ void loop() {
   } else {
     relay.disable();
   }
+
+  // Read potentiometer
+  knobReading = analogRead(knobPin);
+  Serial.println(knobReading);
+  
   delay(2000);
 }
 
