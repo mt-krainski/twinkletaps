@@ -1,4 +1,6 @@
+import os
 from typing import Literal
+
 from pydantic import BaseModel
 from fastapi import FastAPI
 import redis
@@ -7,9 +9,11 @@ from .redis import RedisBoolean
 
 
 OK = Literal["OK"]
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 
 app = FastAPI()
-cache = redis.Redis(host="localhost", port=6379)
+cache = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
 LAMP_STATE = "lamp-state"
 lamp_state = RedisBoolean(cache, LAMP_STATE, False)
 
