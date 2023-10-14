@@ -3,7 +3,6 @@ services:
     build:
       context: .
       args:
-        - ENV=prod
         - POETRY_VERSION=1.6.1
     ports:
       - "80:80"
@@ -14,6 +13,9 @@ services:
       - REDIS_PORT=6379
       - PORT=80
       - WORKERS=4
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
   redis:
     image: "redis:7.2.1-alpine"
     ports:

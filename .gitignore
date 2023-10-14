@@ -4,6 +4,7 @@ arduino-secrets.h
 .vscode/
 **/__pycache__
 
+.env
 
 ## Terraform
 # Local .terraform directories
