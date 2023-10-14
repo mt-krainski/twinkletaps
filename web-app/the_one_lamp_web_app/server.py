@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from fastapi import FastAPI
 import redis
 
+from .basic_auth import UserValidation
 from .redis import RedisBoolean
 
 
@@ -28,19 +29,19 @@ def init():
 
 
 @app.get("/state")
-async def get_state() -> LampState:
+async def get_state(username: UserValidation) -> LampState:
     state = lamp_state.get()
     return LampState(state=state)
 
 
 @app.post("/state")
-async def post_state(state: LampState) -> OK:
+async def post_state(state: LampState, username: UserValidation) -> OK:
     lamp_state.set(state.state)
     return "OK"
 
 
 @app.post("/state/toggle")
-async def post_toggle_state() -> LampState:
+async def post_toggle_state(username: UserValidation) -> LampState:
     value = lamp_state.toggle()
     return LampState(state=value)
 
