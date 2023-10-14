@@ -5,6 +5,7 @@ arduino-secrets.h
 **/__pycache__
 
 .env
+*.tar
 
 ## Terraform
 # Local .terraform directories

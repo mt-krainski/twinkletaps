@@ -17,13 +17,13 @@ resource "aws_vpc" "vpc" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = "tf-example"
+    Name = "one-lamp-vpc"
     Env  = var.environment_tag
   }
 }
 
-resource "aws_eip" "test_instance_ip" {
-  instance = aws_instance.test_instance.id
+resource "aws_eip" "one_lamp_instance_ip" {
+  instance = aws_instance.one_lamp_instance.id
 }
 
 resource "aws_internet_gateway" "igw" {
@@ -40,7 +40,7 @@ resource "aws_subnet" "subnet_public" {
   availability_zone       = var.availability_zone
 
   tags = {
-    Name = "tf-example"
+    Name = "one-lamp-subnet"
     Env  = var.environment_tag
   }
 }
@@ -110,7 +110,7 @@ resource "aws_key_pair" "ec2key" {
   public_key = file(var.public_key_path)
 }
 
-resource "aws_instance" "test_instance" {
+resource "aws_instance" "one_lamp_instance" {
   ami                    = var.instance_ami
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.subnet_public.id
@@ -137,9 +137,9 @@ resource "aws_instance" "test_instance" {
   sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
   # Post-install configuration - https://docs.docker.com/engine/install/linux-postinstall/
-  sudo groupadd docker
+  sudo groupadd -f docker
   sudo usermod -aG docker ubuntu
-  sudo newgrp docker
+  newgrp docker
   sudo systemctl enable docker.service
   sudo systemctl enable containerd.service
   EOL
@@ -150,5 +150,5 @@ resource "aws_instance" "test_instance" {
 }
 
 output "ec2_eip" {
-  value = aws_eip.test_instance_ip.public_dns
+  value = aws_eip.one_lamp_instance_ip.public_dns
 }

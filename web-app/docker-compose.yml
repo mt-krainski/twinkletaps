@@ -1,9 +1,6 @@
 services:
   app:
-    build:
-      context: .
-      args:
-        - POETRY_VERSION=1.6.1
+    image: one-lamp-app
     ports:
       - "80:80"
     environment:

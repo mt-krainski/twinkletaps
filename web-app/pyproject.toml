@@ -29,5 +29,8 @@ max-line-length = 88
 [tool.poe.tasks]
 start = "uvicorn the_one_lamp_web_app.server:app --reload"
 docker-redis-up = "docker compose up redis --build --detach"
+docker-app-build = "docker build --tag one-lamp-app --build-arg 'POETRY_VERSION=1.6.1' ."
 docker-app-up = "docker compose up app --build --detach"
+docker-app-save = "docker save --output one-lamp-app.tar one-lamp-app"
+docker-app-load = "docker load --input one-lamp-app.tar"
 docker-up = "docker compose up --build --detach"
