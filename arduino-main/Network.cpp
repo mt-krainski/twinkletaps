@@ -50,10 +50,10 @@ bool Network::init() {
     _status = WiFi.begin(_ssid, _pass);
 
     // wait 10 seconds for connection:
-    for (int j=0; j < 5; j++){
-      delay(1000);
+    delay(2000);
+    for (int j=0; j < 4; j++){
       blink();
-      delay(1000);
+      delay(2000);
     }
     if (_status == WL_CONNECTED) break;
   }
@@ -66,7 +66,6 @@ bool Network::init() {
   blink(2);
   printCurrentNet();
   printWifiData();
-  delay(1000);
 
   return true;
 }
@@ -171,6 +170,8 @@ StaticJsonDocument<5000> Network::get(const char host[], const char path[], cons
     uint32_t responseId = 0;
     for (uint32_t i = 0; i < 5000; i++){
       if(!_client.available()) break;
+
+      // TODO: Refactor this to use _client.readStringUntil('/r');
       char c = _client.read();
       if (c == '\r') continue;  // Ignore carraige return symbols.
       Serial.print(c);
