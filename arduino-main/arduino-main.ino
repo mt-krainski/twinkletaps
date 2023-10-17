@@ -66,36 +66,6 @@ void setup() {
 
   network.init();
 
-  char json[] = "{\"sensor\":\"gps\",\"time\":1351824120,\"data\":[48.756080,2.302038]}";
-
-  // Deserialize the JSON document
-  DeserializationError error = deserializeJson(doc, json);
-
-  // Test if parsing succeeds.
-  if (error) {
-    Serial.print(F("deserializeJson() failed: "));
-    Serial.println(error.f_str());
-    return;
-  }
-
-  // Fetch values.
-  //
-  // Most of the time, you can rely on the implicit casts.
-  // In other case, you can do doc["time"].as<long>();
-  const char* sensor = doc["sensor"];
-  // long time = doc["time"];
-  // double latitude = doc["data"][0];
-  // double longitude = doc["data"][1];
-
-  // Print values.
-  Serial.print("Sensor test data: ");
-  Serial.println(sensor);
-
-  StaticJsonDocument<5000> dummyData = network.get("dummyjson.com", "products/1", "");
-  const int dummyDataId = dummyData["id"];
-  Serial.print("Dummy data id: ");
-  Serial.println(dummyDataId);
-
   // System initialised, turn on LED permanently
   ledSystem.enable();
 }
@@ -103,17 +73,22 @@ void setup() {
 void loop() {
   ledLoop.blink();
 
-  if (systemEnabled) {
-    relay.enable();
-  } else {
-    relay.disable();
-  }
+  StaticJsonDocument<5000> dummyData = network.get(ONE_LAMP_SERVER_HOSTNAME, "state", "", AUTH_BASIC_CREDENTIALS);
+  bool state = dummyData["state"];
+  if (state) relay.enable();
+  else relay.disable();
+
+  // if (systemEnabled) {
+  //   relay.enable();
+  // } else {
+  //   relay.disable();
+  // }
 
   // Read potentiometer
   knobReading = analogRead(knobPin);
-  Serial.println(knobReading);
+  // Serial.println(knobReading);
   
-  delay(2000);
+  delay(5000);
 }
 
 void setOrClearSystemEnabled() {
