@@ -18,6 +18,10 @@ variable "public_key_path" {
   description = "Public key path"
   default     = "~/.ssh/id_rsa.pub"
 }
+variable "install_docker_script" {
+  description = "Install and configure docker for Ubutnu"
+  default     = "scripts/install-docker.sh"
+}
 variable "instance_ami" {
   description = "AMI for aws EC2 instance"
   default     = "ami-053b0d53c279acc90"

@@ -34,3 +34,20 @@ docker-app-up = "docker compose up app --build --detach"
 docker-app-save = "docker save --output one-lamp-app.tar one-lamp-app"
 docker-app-load = "docker load --input one-lamp-app.tar"
 docker-up = "docker compose up --build --detach"
+
+[tool.poe.tasks._ec2_instance_host]
+shell = "terraform output --json | jq -r '.ec2_eip | .value'"
+cwd = "./deployment/aws/prod"
+
+[tool.poe.tasks.deploy]
+help = "Build and deploy the app"
+sequence = [
+    "scp one-lamp-app.tar ubuntu@${EC2_INSTANCE_HOST}:.",
+    "scp docker-compose.yml ubuntu@${EC2_INSTANCE_HOST}:.",
+    "ssh ubuntu@${EC2_INSTANCE_HOST} docker load --input one-lamp-app.tar",
+    "ssh ubuntu@${EC2_INSTANCE_HOST} docker compose down",
+    "ssh ubuntu@${EC2_INSTANCE_HOST} docker compose up --detach",
+]
+default_item_type = "cmd"
+deps = ["docker-app-build", "docker-app-save"]
+uses = { EC2_INSTANCE_HOST = "_ec2_instance_host" }
