@@ -1,0 +1,41 @@
+<html>
+  <head>
+    <script>
+      async function updateState() {
+        const currentStateDiv = document.getElementById("current-state");
+        const url = "{{ token }}/state";
+        const response = await fetch(url);
+        const state = await response.json();
+        let newCurrentStateDescription = "";
+        if (state.state) {
+          newCurrentStateDescription = "The One Lamp is ON";
+        } else {
+          newCurrentStateDescription = "The One Lamp is OFF";
+        }
+        currentStateDiv.innerHTML = newCurrentStateDescription;
+      }
+      setInterval(updateState, 1000);
+
+      window.onload = () => {
+        const button = document.getElementById("change-state-button");
+
+        button.addEventListener("click", function () {
+          const url = "{{ token }}/state/toggle";
+          fetch(url, { method: "POST" })
+            .then(function (result) {
+              updateState();
+            })
+            .catch(function (err) {
+              console.error(err);
+            });
+        });
+      };
+    </script>
+  </head>
+  <body>
+    <h1>Welcome {{user}}!</h1>
+    <div id="current-state"><br /></div>
+    <br />
+    <button id="change-state-button">Change Lamp State</button>
+  </body>
+</html>
