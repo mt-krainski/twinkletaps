@@ -6,6 +6,7 @@ This has two components:
 
 - the Lamp code, which is an Arduino based project in `arduino-main`
 - the web-app code, which is a Python FastAPI based project, along with an AWS deployment manifests
+  - For development, best use the `poetry-dotenv-plugin`
 
 ## Tricks
 

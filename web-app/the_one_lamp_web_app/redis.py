@@ -2,9 +2,16 @@ from typing import Optional
 
 
 class RedisBoolean:
-    def __init__(self, redis, label, initial_value: Optional[bool] = None):
+    def __init__(
+        self,
+        redis,
+        label,
+        initial_value: Optional[bool] = None,
+        ttl: Optional[int] = None,
+    ):
         self.redis = redis
         self.label = label
+        self.ttl = ttl
         if initial_value is not None:
             self.set(initial_value)
 
@@ -18,7 +25,10 @@ class RedisBoolean:
         return self._get(self.redis)
 
     def _set(self, value: bool, redis_or_pipeline):
-        redis_or_pipeline.set(self.label, str(value))
+        if self.ttl is not None:
+            redis_or_pipeline.set(self.label, str(value), ex=self.ttl)
+        else:
+            redis_or_pipeline.set(self.label, str(value))
         return value
 
     def set(self, value):
