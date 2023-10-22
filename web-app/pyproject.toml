@@ -51,3 +51,8 @@ sequence = [
 default_item_type = "cmd"
 deps = ["docker-app-build", "docker-app-save"]
 uses = { EC2_INSTANCE_HOST = "_ec2_instance_host" }
+
+[tool.poe.tasks.ssh-ec2]
+help = "Print the command to SSH to the EC2 instance running the app"
+uses = {EC2_INSTANCE_HOST = "_ec2_instance_host"}
+cmd = "ssh ubuntu@${EC2_INSTANCE_HOST}"

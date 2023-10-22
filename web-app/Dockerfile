@@ -16,8 +16,11 @@ COPY poetry.lock pyproject.toml ./
 RUN poetry config virtualenvs.create false
 RUN poetry install --without dev --no-interaction --no-ansi --no-root
 
-COPY the_one_lamp_web_app ./web_app
+COPY the_one_lamp_web_app ./the_one_lamp_web_app
 COPY scripts ./scripts
+
+# Poetry requires a readme file to be present
+RUN touch README.md
 
 RUN poetry install --only-root
 

@@ -73,7 +73,11 @@ void setup() {
 void loop() {
   ledLoop.blink();
 
-  StaticJsonDocument<5000> dummyData = network.get(ONE_LAMP_SERVER_HOSTNAME, "state", "", AUTH_BASIC_CREDENTIALS);
+  char path[100] = "";
+  strcat(path, API_TOKEN);
+  strcat(path, "/");
+  strcat(path, "state");
+  StaticJsonDocument<5000> dummyData = network.get(ONE_LAMP_SERVER_HOSTNAME, path, "", "");
   bool state = dummyData["state"];
   if (state) relay.enable();
   else relay.disable();

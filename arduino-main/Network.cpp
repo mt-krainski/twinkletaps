@@ -171,7 +171,7 @@ StaticJsonDocument<5000> Network::get(const char host[], const char path[], cons
     for (uint32_t i = 0; i < 5000; i++){
       if(!_client.available()) break;
 
-      // TODO: Refactor this to use _client.readStringUntil('/r');
+      // TODO: Refactor this to use _client.readStringUntil('/r')
       char c = _client.read();
       if (c == '\r') continue;  // Ignore carraige return symbols.
       Serial.print(c);
