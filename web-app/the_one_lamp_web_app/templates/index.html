@@ -7,10 +7,14 @@
         const response = await fetch(url);
         const state = await response.json();
         let newCurrentStateDescription = "";
-        if (state.state) {
-          newCurrentStateDescription = "The One Lamp is ON";
+        if (!state.active) {
+          newCurrentStateDescription = "The One Lamp is DISCONNECTED<br />";
+        } else if (state.state) {
+          newCurrentStateDescription =
+            "The One Lamp is CONNECTED<br />The One Lamp is ON";
         } else {
-          newCurrentStateDescription = "The One Lamp is OFF";
+          newCurrentStateDescription =
+            "The One Lamp is CONNECTED<br />The One Lamp is OFF";
         }
         currentStateDiv.innerHTML = newCurrentStateDescription;
       }
