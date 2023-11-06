@@ -82,12 +82,6 @@ void loop() {
   if (state) relay.enable();
   else relay.disable();
 
-  // if (systemEnabled) {
-  //   relay.enable();
-  // } else {
-  //   relay.disable();
-  // }
-
   // Read potentiometer
   knobReading = analogRead(knobPin);
   // Serial.println(knobReading);
