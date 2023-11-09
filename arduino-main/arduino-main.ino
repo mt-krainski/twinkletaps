@@ -17,6 +17,7 @@ const int relayPin = 11;
 volatile bool systemEnabled = false;
 const int systemEnabledPin = 2;
 
+int invalidServerResponseCounter = 0;
 const int invalidServerResponseLimit = 5;
 
 Relay relay(relayPin);
@@ -81,7 +82,6 @@ void loop() {
   }
 
   char path[100] = "";
-  int invalidServerResponseCounter = 0;
   strcat(path, API_TOKEN);
   strcat(path, "/");
   strcat(path, "state");
@@ -103,7 +103,11 @@ void loop() {
     Serial.print(")");
     Serial.println();
     if (invalidServerResponseCounter >= invalidServerResponseLimit) {
+      Serial.println("Failure limit reached, resetting...");
       relay.disable();
+      // We're getting errors, let's try to restart, it might be a network issue.
+      // Based on https://forum.arduino.cc/t/reset-by-software-arduino-r4/1154313/2
+      NVIC_SystemReset();
     }
   }
 }
