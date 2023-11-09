@@ -77,7 +77,7 @@ void loop() {
   strcat(path, API_TOKEN);
   strcat(path, "/");
   strcat(path, "state");
-  StaticJsonDocument<5000> dummyData = network.get(ONE_LAMP_SERVER_HOSTNAME, path, "", "");
+  StaticJsonDocument<5000> dummyData = network.get(ONE_LAMP_SERVER_HOSTNAME, path, "caller=one-lamp", "");
   bool state = dummyData["state"];
   if (state) relay.enable();
   else relay.disable();

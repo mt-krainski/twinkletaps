@@ -38,7 +38,7 @@ docker-up = "docker compose up --build --detach"
 cmd = "uvicorn the_one_lamp_web_app.server:app --reload"
 deps = ["docker-redis-up"]
 
-[tool.poe.tasks._ec2_instance_host]
+[tool.poe.tasks._ec2-instance-host]
 shell = "terraform output --json | jq -r '.ec2_eip | .value'"
 cwd = "./deployment/aws/prod"
 
@@ -52,10 +52,33 @@ sequence = [
     "ssh ubuntu@${EC2_INSTANCE_HOST} docker compose up --detach",
 ]
 default_item_type = "cmd"
-deps = ["docker-app-build", "docker-app-save"]
-uses = { EC2_INSTANCE_HOST = "_ec2_instance_host" }
+deps = ["docker-app-build", "docker-app-save", "aws-login"]
+uses = { EC2_INSTANCE_HOST = "_ec2-instance-host" }
 
 [tool.poe.tasks.ssh-ec2]
 help = "Print the command to SSH to the EC2 instance running the app"
-uses = {EC2_INSTANCE_HOST = "_ec2_instance_host"}
+uses = {EC2_INSTANCE_HOST = "_ec2-instance-host"}
 cmd = "ssh ubuntu@${EC2_INSTANCE_HOST}"
+
+[tool.poe.tasks.check-aws-login]
+shell = """
+    # Based on https://stackoverflow.com/a/76518342/10243384
+    aws sts get-caller-identity --profile PowerUser &> /dev/null
+    if [ "$?" == 0 ]; then
+        # auth is valid
+        echo "valid"
+    else
+        echo "invalid"
+    fi
+"""
+
+[tool.poe.tasks.aws-login]
+help = "Log in to AWS as PowerUser if not logged in"
+uses = {AWS_LOGGED_IN = "check-aws-login"}
+shell = """
+    if [ "$AWS_LOGGED_IN" == "invalid" ]; then
+        aws sso login --profile PowerUser;
+    else
+        echo "Already logged in"
+    fi
+"""
