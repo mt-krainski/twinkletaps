@@ -195,6 +195,7 @@ StaticJsonDocument<5000> Network::get(const char host[], const char path[], cons
     blink(4);
     Serial.println("Failed to connect to client");
   }
+  Serial.println();
   
   DeserializationError error = deserializeJson(doc, response);
   if (error) {

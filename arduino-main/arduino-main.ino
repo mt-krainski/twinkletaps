@@ -17,6 +17,8 @@ const int relayPin = 11;
 volatile bool systemEnabled = false;
 const int systemEnabledPin = 2;
 
+const int invalidServerResponseLimit = 5;
+
 Relay relay(relayPin);
 
 Led ledSystem(ledSystemPin, false);
@@ -25,8 +27,6 @@ Led ledNetwork(ledNetworkPin, false);
 Led led4(led4Pin, false);
 
 Network network(SECRET_SSID, SECRET_PASS, &ledNetwork);
-
-StaticJsonDocument<200> doc;
 
 void initialiseLeds(){
   ledSystem.init();
@@ -59,6 +59,7 @@ void setup() {
 
   pinMode(systemEnabledPin, INPUT);
   attachInterrupt(digitalPinToInterrupt(systemEnabledPin), setOrClearSystemEnabled, CHANGE);
+  systemEnabled = (digitalRead(systemEnabledPin) == HIGH);
 
   // Flash to indicate network initialisation is starting
   ledSystem.blink();
@@ -71,22 +72,40 @@ void setup() {
 }
 
 void loop() {
+  delay(5000);
   ledLoop.blink();
 
+  if (!systemEnabled) {
+    Serial.println("System disabled");
+    return;
+  }
+
   char path[100] = "";
+  int invalidServerResponseCounter = 0;
   strcat(path, API_TOKEN);
   strcat(path, "/");
   strcat(path, "state");
-  StaticJsonDocument<5000> dummyData = network.get(ONE_LAMP_SERVER_HOSTNAME, path, "caller=one-lamp", "");
-  bool state = dummyData["state"];
-  if (state) relay.enable();
-  else relay.disable();
-
-  // Read potentiometer
-  knobReading = analogRead(knobPin);
-  // Serial.println(knobReading);
-  
-  delay(5000);
+  StaticJsonDocument<5000> serverResponse = network.get(ONE_LAMP_SERVER_HOSTNAME, path, "caller=one-lamp", "");
+  if (serverResponse.containsKey("state")) {
+    bool state = serverResponse["state"];
+    if (state) {
+      relay.enable();
+    } else {
+      relay.disable();
+    }
+    invalidServerResponseCounter = 0;
+  } else {
+    Serial.print("Invalid server response (");
+    invalidServerResponseCounter++;
+    Serial.print(invalidServerResponseCounter);
+    Serial.print("/");
+    Serial.print(invalidServerResponseLimit);
+    Serial.print(")");
+    Serial.println();
+    if (invalidServerResponseCounter >= invalidServerResponseLimit) {
+      relay.disable();
+    }
+  }
 }
 
 void setOrClearSystemEnabled() {
