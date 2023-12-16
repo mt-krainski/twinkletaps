@@ -1,8 +1,8 @@
 <html>
   <head>
     <script>
-      async function updateState() {
-        const currentStateDiv = document.getElementById("current-state");
+      async function updateLampState() {
+        const currentStateDiv = document.getElementById("lamp-state");
         const url = "{{ token }}/state";
         const response = await fetch(url);
         const state = await response.json();
@@ -18,28 +18,67 @@
         }
         currentStateDiv.innerHTML = newCurrentStateDescription;
       }
-      setInterval(updateState, 1000);
+      setInterval(updateLampState, 1000);
 
-      window.onload = () => {
-        const button = document.getElementById("change-state-button");
+      async function updateHeartsState() {
+        const currentStateDiv = document.getElementById("hearts-state");
+        const url = "{{ token }}/hearts";
+        const response = await fetch(url);
+        const state = await response.json();
+        let newCurrentStateDescription = "";
+        if (state.count == 0) {
+          newCurrentStateDescription = "No hearts yet 😊";
+        } else {
+          newCurrentStateDescription = `There's ${state.count} ❤️ waiting for you!`;
+        }
+        currentStateDiv.innerHTML = newCurrentStateDescription;
+      }
+      setInterval(updateHeartsState, 1000);
+
+      function configureChangeLampStateButton() {
+        const button = document.getElementById("change-lamp-state-button");
 
         button.addEventListener("click", function () {
           const url = "{{ token }}/state/toggle";
           fetch(url, { method: "POST" })
             .then(function (result) {
-              updateState();
+              updateLampState();
             })
             .catch(function (err) {
               console.error(err);
             });
         });
+      }
+
+      function configureClaimHeartsButton() {
+        const button = document.getElementById("claim-hearts-button");
+
+        button.addEventListener("click", function () {
+          const url = "{{ token }}/hearts/clear";
+          fetch(url, { method: "POST" })
+            .then(function (result) {
+              updateHeartsState();
+            })
+            .catch(function (err) {
+              console.error(err);
+            });
+        });
+      }
+
+      window.onload = () => {
+        configureChangeLampStateButton();
+        configureClaimHeartsButton();
       };
     </script>
   </head>
   <body>
     <h1>Welcome {{user}}!</h1>
-    <div id="current-state"><br /></div>
+    <div id="lamp-state"><br /></div>
     <br />
-    <button id="change-state-button">Change Lamp State</button>
+    <button id="change-lamp-state-button">Change Lamp State</button>
+    <br /><br /><br />
+    <div id="hearts-state"><br /></div>
+    <br />
+    <button id="claim-hearts-button">Claim hearts</button>
   </body>
 </html>

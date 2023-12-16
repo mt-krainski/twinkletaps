@@ -5,10 +5,12 @@
 #include "Network.h"
 #include "arduino-secrets.h"
 
-const int ledSystemPin = 3;
-const int ledLoopPin = 4;
-const int ledNetworkPin = 5;
-const int led4Pin = 6;
+const bool DISABLE_NETWORKING = false;
+
+const int ledSystemPin = 4;
+const int ledLoopPin = 5;
+const int ledNetworkPin = 6;
+const int led4Pin = 7;
 
 const int knobPin = A0;
 int knobReading = 0;
@@ -16,6 +18,9 @@ int knobReading = 0;
 const int relayPin = 11;
 volatile bool systemEnabled = false;
 const int systemEnabledPin = 2;
+
+const int sendHeartButtonPin = 3;
+volatile int heartsToSendCounter = 0;
 
 int invalidServerResponseCounter = 0;
 const int invalidServerResponseLimit = 5;
@@ -62,11 +67,18 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(systemEnabledPin), setOrClearSystemEnabled, CHANGE);
   systemEnabled = (digitalRead(systemEnabledPin) == HIGH);
 
+  pinMode(sendHeartButtonPin, INPUT);
+  attachInterrupt(digitalPinToInterrupt(sendHeartButtonPin), incrementHeartsCounter, RISING);
+
   // Flash to indicate network initialisation is starting
   ledSystem.blink();
   ledSystem.blink();
 
-  network.init();
+  if (DISABLE_NETWORKING) { 
+    Serial.println("WARNING, NETWORKING DISABLED");
+  } else {
+    network.init();
+  }
 
   // System initialised, turn on LED permanently
   ledSystem.enable();
@@ -81,6 +93,31 @@ void loop() {
     return;
   }
 
+  if (heartsToSendCounter > 0) {
+    Serial.print("I have some hearts to send: ");
+    Serial.println(heartsToSendCounter);
+    Serial.println("Mock sending hearts...");
+    heartsToSendCounter=0;
+  }
+
+  if (!DISABLE_NETWORKING) getLampStateFromServer();
+}
+
+void setOrClearSystemEnabled() {
+  systemEnabled = (digitalRead(systemEnabledPin) == HIGH);
+}
+
+void incrementHeartsCounter() {
+  static unsigned long last_interrupt_time = 0;
+  unsigned long interrupt_time = millis();
+  // Some debounde protection
+  if (interrupt_time - last_interrupt_time > 100) {
+    heartsToSendCounter++;
+    last_interrupt_time = interrupt_time;
+  }
+}
+
+void getLampStateFromServer() {
   char path[100] = "";
   strcat(path, API_TOKEN);
   strcat(path, "/");
@@ -110,8 +147,4 @@ void loop() {
       NVIC_SystemReset();
     }
   }
-}
-
-void setOrClearSystemEnabled() {
-  systemEnabled = (digitalRead(systemEnabledPin) == HIGH);
 }

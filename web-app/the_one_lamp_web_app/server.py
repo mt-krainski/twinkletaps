@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 import redis
 
 from .token_auth import TokenValidation
-from .redis import RedisBoolean, RedisDatetime
+from .redis import RedisBoolean, RedisDatetime, RedisInt
 
 
 OK = Literal["OK"]
@@ -26,11 +26,21 @@ LAMP_STATE = "lamp-state"
 lamp_state = RedisBoolean(cache, LAMP_STATE, False, ttl=REDIS_STATE_TTL)
 LAMP_LAST_HIT = "lamp-last-hit"
 lamp_last_hit = RedisDatetime(cache, LAMP_LAST_HIT, ttl=REDIS_STATE_TTL)
+HEARTS_COUNT = "hearts-count"
+hearts_count = RedisInt(cache, HEARTS_COUNT, 0)
 
 
 class LampState(BaseModel):
     state: bool
     active: bool
+
+
+class IncrementHeartsRequst(BaseModel):
+    count: int
+
+
+class HeartsCount(BaseModel):
+    count: int
 
 
 @app.get("/{user_token}/state")
@@ -49,6 +59,25 @@ async def get_state(
 async def post_state(request: Request, state: LampState, user: TokenValidation) -> OK:
     lamp_state.set(state.state)
     return "OK"
+
+
+@app.post("/{user_token}/hearts/add")
+async def add_hearts(
+    request: Request, increment: IncrementHeartsRequst, user: TokenValidation
+) -> OK:
+    hearts_count.add(increment.count)
+    return "OK"
+
+
+@app.get("/{user_token}/hearts")
+async def get_hearts(request: Request, user: TokenValidation) -> HeartsCount:
+    return HeartsCount(count=hearts_count.get())
+
+
+@app.post("/{user_token}/hearts/clear")
+async def clear_hearts(request: Request, user: TokenValidation) -> HeartsCount:
+    count = hearts_count.set(0)
+    return HeartsCount(count=count)
 
 
 @app.post("/{user_token}/state/toggle")
