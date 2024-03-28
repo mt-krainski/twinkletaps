@@ -34,3 +34,7 @@ variable "environment_tag" {
   description = "Environment tag"
   default     = "prod"
 }
+variable "tf_state_bucket" {
+  description = "Bucket used for managing the TF state"
+  default     = "twinlketaps-terraform-state"
+}
