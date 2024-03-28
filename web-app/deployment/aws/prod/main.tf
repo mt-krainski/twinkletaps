@@ -9,11 +9,11 @@ terraform {
     key     = "prod/terraform.tfstate"
     region  = "us-east-1"
     encrypt = true
-    profile = "PowerUser"
+    profile = "lamp"
   }
 }
 
 provider "aws" {
-  profile = "PowerUser"
+  profile = "lamp"
   region  = var.region
 }

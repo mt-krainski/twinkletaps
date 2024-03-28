@@ -63,7 +63,7 @@ cmd = "ssh ubuntu@${EC2_INSTANCE_HOST}"
 [tool.poe.tasks.check-aws-login]
 shell = """
     # Based on https://stackoverflow.com/a/76518342/10243384
-    aws sts get-caller-identity --profile PowerUser &> /dev/null
+    aws sts get-caller-identity --profile lamp &> /dev/null
     if [ "$?" == 0 ]; then
         # auth is valid
         echo "valid"
@@ -73,11 +73,11 @@ shell = """
 """
 
 [tool.poe.tasks.aws-login]
-help = "Log in to AWS as PowerUser if not logged in"
+help = "Log in to AWS as 'lamp' if not logged in"
 uses = {AWS_LOGGED_IN = "check-aws-login"}
 shell = """
     if [ "$AWS_LOGGED_IN" == "invalid" ]; then
-        aws sso login --profile PowerUser;
+        aws sso login --profile lamp;
     else
         echo "Already logged in"
     fi

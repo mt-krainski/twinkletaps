@@ -16,7 +16,7 @@ variable "region" {
 }
 variable "public_key_path" {
   description = "Public key path"
-  default     = "~/.ssh/id_rsa.pub"
+  default     = "~/.ssh/id_ed25519.pub"
 }
 variable "install_docker_script" {
   description = "Install and configure docker for Ubutnu"
