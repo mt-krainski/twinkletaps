@@ -96,8 +96,9 @@ void loop() {
   if (heartsToSendCounter > 0) {
     Serial.print("I have some hearts to send: ");
     Serial.println(heartsToSendCounter);
-    Serial.println("Mock sending hearts...");
-    heartsToSendCounter=0;
+    Serial.println("Sending hearts...");
+    if (!DISABLE_NETWORKING) sendHearts();
+    Serial.println("Hearts sent!");
   }
 
   if (!DISABLE_NETWORKING) getLampStateFromServer();
@@ -118,11 +119,10 @@ void incrementHeartsCounter() {
 }
 
 void getLampStateFromServer() {
-  char path[100] = "";
-  strcat(path, API_TOKEN);
-  strcat(path, "/");
-  strcat(path, "state");
-  StaticJsonDocument<5000> serverResponse = network.get(ONE_LAMP_SERVER_HOSTNAME, path, "caller=one-lamp", "");
+  char getLampPath[100] = "";
+  strcat(getLampPath, API_TOKEN);
+  strcat(getLampPath, "/state");
+  StaticJsonDocument<5000> serverResponse = network.get(ONE_LAMP_SERVER_HOSTNAME, getLampPath, "caller=one-lamp", "");
   if (serverResponse.containsKey("state")) {
     bool state = serverResponse["state"];
     if (state) {
@@ -147,4 +147,14 @@ void getLampStateFromServer() {
       NVIC_SystemReset();
     }
   }
+}
+
+void sendHearts() {
+  char addHeartsPath[100] = "";
+  strcat(addHeartsPath, API_TOKEN);
+  strcat(addHeartsPath, "/hearts/add");
+  DynamicJsonDocument requestBody(1024);
+  requestBody["count"] = heartsToSendCounter;
+  heartsToSendCounter=0;
+  StaticJsonDocument<5000> serverResponse = network.post(ONE_LAMP_SERVER_HOSTNAME, addHeartsPath, "", requestBody, "");
 }

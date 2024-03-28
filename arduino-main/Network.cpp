@@ -209,6 +209,113 @@ StaticJsonDocument<5000> Network::get(const char host[], const char path[], cons
   return doc;
 }
 
+StaticJsonDocument<5000> Network::post(const char host[], const char path[], const char query[], const StaticJsonDocument<5000> body_json, const char basicAuth[]){
+  char response[5000] = "\0";
+  StaticJsonDocument<5000> doc;
+  blink();
+  if (_client.connect(host, 80)) {
+    Serial.print("Connecting to host: ");
+    Serial.println(host);
+    // Make a HTTP request:
+    char requestGetLine[100] = "POST /";
+    strcat(requestGetLine, path);
+    if (strlen(query) > 0) {
+      strcat(requestGetLine, "?");
+      strcat(requestGetLine, query);
+    }
+    strcat(requestGetLine, " HTTP/1.1");
+    Serial.println(requestGetLine);
+    _client.println(requestGetLine);
+
+    char requestHostLine[100] = "Host: ";
+    strcat(requestHostLine, host);
+    Serial.println(requestHostLine);
+    _client.println(requestHostLine);
+
+
+
+    Serial.println("Content-Type: application/json");
+    _client.println("Content-Type: application/json");
+    Serial.println("Accept: application/json");
+    _client.println("Accept: application/json");
+
+    if(strlen(basicAuth) > 0) {
+      char requestAuthorizationLine[200] = "Authorization: Basic ";
+      strcat(requestAuthorizationLine, basicAuth);
+      Serial.println(requestAuthorizationLine);
+      _client.println(requestAuthorizationLine);
+    };
+
+    _client.println("Connection: close");
+
+    char body[5000] = "\0";
+    serializeJson(body_json, body);
+    char contentLengthLine[100] = "\0";
+    snprintf(contentLengthLine, 100, "%s%u", "Content-Length: ", strlen(body));
+    Serial.println(contentLengthLine);
+    _client.println(contentLengthLine);
+    
+    Serial.println();
+    _client.println();
+    Serial.println(body);
+    _client.println(body);
+
+    // Wait up to 10s for the client to receive data
+    for (uint32_t i=0; i<100; i++) {
+      if(_client.available()) break;
+      delay(100);
+    }
+
+    if (!_client.available()) {
+      Serial.println("Client not available after request");
+      blink(4);
+      return doc;
+    }
+
+    bool lastCharNewline = false;
+    bool receivingBody = false;
+    uint32_t responseId = 0;
+    for (uint32_t i = 0; i < 5000; i++){
+      if(!_client.available()) break;
+
+      // TODO: Refactor this to use _client.readStringUntil('/r')
+      char c = _client.read();
+      if (c == '\r') continue;  // Ignore carraige return symbols.
+      Serial.print(c);
+      if (c == '\n') {
+        if (lastCharNewline) {
+          receivingBody = true;
+          continue;
+        } else {
+          lastCharNewline = true;
+        }
+      } else if (c != '\r'){
+        lastCharNewline = false;
+      }
+      if (receivingBody) {
+        response[responseId] = c;
+        responseId++;
+      }
+    }
+    _client.stop();
+  } else {
+    blink(4);
+    Serial.println("Failed to connect to client");
+  }
+  Serial.println();
+  
+  DeserializationError error = deserializeJson(doc, response);
+  if (error) {
+    blink(4);
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.f_str());
+    return doc;
+  } else {
+    blink(2);
+  }
+  return doc;
+}
+
 void Network::blink() {
   if (!_statusLed) return;
   _statusLed->blink();
