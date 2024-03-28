@@ -38,3 +38,8 @@ variable "tf_state_bucket" {
   description = "Bucket used for managing the TF state"
   default     = "twinlketaps-terraform-state"
 }
+
+variable "domain_prod" {
+  description = "Production domain"
+  default = "twinkletaps.com"
+}
