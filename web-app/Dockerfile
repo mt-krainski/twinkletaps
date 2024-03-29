@@ -10,6 +10,9 @@ ENV \
     PIP_DEFAULT_TIMEOUT=100 \
     POETRY_VERSION=${POETRY_VERSION}
 
+RUN apk add libffi-dev
+RUN apk add --no-cache --virtual .build-deps gcc musl-dev
+
 RUN pip install "poetry==$POETRY_VERSION"
 COPY poetry.lock pyproject.toml ./
 

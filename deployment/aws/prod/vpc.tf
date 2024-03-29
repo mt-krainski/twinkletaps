@@ -4,7 +4,7 @@ resource "aws_vpc" "vpc" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = "one-lamp-vpc"
+    Name = "twinkletaps-vpc"
     Env  = var.environment_tag
   }
 }
@@ -23,7 +23,7 @@ resource "aws_subnet" "subnet_public" {
   availability_zone       = var.availability_zone
 
   tags = {
-    Name = "one-lamp-subnet"
+    Name = "twinkletaps-subnet"
     Env  = var.environment_tag
   }
 }

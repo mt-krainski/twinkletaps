@@ -209,7 +209,7 @@ StaticJsonDocument<5000> Network::get(const char host[], const char path[], cons
   return doc;
 }
 
-StaticJsonDocument<5000> Network::post(const char host[], const char path[], const char query[], const StaticJsonDocument<5000> body_json, const char basicAuth[]){
+StaticJsonDocument<5000> Network::post(const char host[], const char path[], const char query[], const DynamicJsonDocument body_json, const char basicAuth[]){
   char response[5000] = "\0";
   StaticJsonDocument<5000> doc;
   blink();

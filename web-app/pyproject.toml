@@ -28,7 +28,7 @@ max-line-length = 88
 
 [tool.poe.tasks]
 docker-redis-up = "docker compose up redis --build --detach"
-docker-app-build = "docker build --tag one-lamp-app --build-arg 'POETRY_VERSION=1.6.1' ."
+docker-app-build = "docker build --tag one-lamp-app --build-arg 'POETRY_VERSION=1.6.1' . --platform=linux/amd64"
 docker-app-up = "docker compose up app --build --detach"
 docker-app-save = "docker save --output one-lamp-app.tar one-lamp-app"
 docker-app-load = "docker load --input one-lamp-app.tar"
@@ -39,8 +39,7 @@ cmd = "uvicorn the_one_lamp_web_app.server:app --reload"
 deps = ["docker-redis-up"]
 
 [tool.poe.tasks._ec2-instance-host]
-shell = "terraform output --json | jq -r '.ec2_eip | .value'"
-cwd = "./deployment/aws/prod"
+shell = "terraform -chdir='../deployment/aws/prod' output --json | jq -r '.ec2_eip | .value'"
 
 [tool.poe.tasks.deploy]
 help = "Build and deploy the app"

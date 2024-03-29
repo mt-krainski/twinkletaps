@@ -17,7 +17,7 @@ class Network
     Network(const char ssid[], const char pass[], Led *statusLed);
     bool init();
     StaticJsonDocument<5000> get(const char host[], const char path[], const char query[], const char basicAuth[]);
-    StaticJsonDocument<5000> post(const char host[], const char path[], const char query[], const StaticJsonDocument<5000> body_json, const char basicAuth[]);
+    StaticJsonDocument<5000> post(const char host[], const char path[], const char query[], const DynamicJsonDocument body_json, const char basicAuth[]);
   private:
     void printWifiData();
     void printCurrentNet();

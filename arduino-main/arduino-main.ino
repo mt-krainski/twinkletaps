@@ -122,7 +122,7 @@ void getLampStateFromServer() {
   char getLampPath[100] = "";
   strcat(getLampPath, API_TOKEN);
   strcat(getLampPath, "/state");
-  StaticJsonDocument<5000> serverResponse = network.get(ONE_LAMP_SERVER_HOSTNAME, getLampPath, "caller=one-lamp", "");
+  StaticJsonDocument<5000> serverResponse = network.get(TWINKLETAPS_SERVER_HOSTNAME, getLampPath, "caller=one-lamp", "");
   if (serverResponse.containsKey("state")) {
     bool state = serverResponse["state"];
     if (state) {
@@ -156,5 +156,5 @@ void sendHearts() {
   DynamicJsonDocument requestBody(1024);
   requestBody["count"] = heartsToSendCounter;
   heartsToSendCounter=0;
-  StaticJsonDocument<5000> serverResponse = network.post(ONE_LAMP_SERVER_HOSTNAME, addHeartsPath, "", requestBody, "");
+  StaticJsonDocument<5000> serverResponse = network.post(TWINKLETAPS_SERVER_HOSTNAME, addHeartsPath, "", requestBody, "");
 }

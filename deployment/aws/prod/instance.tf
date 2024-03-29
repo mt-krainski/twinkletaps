@@ -1,5 +1,5 @@
-resource "aws_eip" "one_lamp_instance_ip" {
-  instance = aws_instance.one_lamp_instance.id
+resource "aws_eip" "twinkletaps_instance_ip" {
+  instance = aws_instance.twinkletaps_instance.id
 }
 
 resource "aws_key_pair" "ec2key" {
@@ -7,7 +7,7 @@ resource "aws_key_pair" "ec2key" {
   public_key = file(var.public_key_path)
 }
 
-resource "aws_instance" "one_lamp_instance" {
+resource "aws_instance" "twinkletaps_instance" {
   ami                    = var.instance_ami
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.subnet_public.id

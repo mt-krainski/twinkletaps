@@ -3,5 +3,5 @@ resource "aws_route53_record" "server_record" {
   name    = "app.twinkletaps.com"
   type    = "A"
   ttl     = "300"
-  records = [aws_instance.one_lamp_instance.public_ip]
+  records = [aws_eip.twinkletaps_instance_ip.public_ip]
 }
