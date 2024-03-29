@@ -29,6 +29,23 @@ jobs:
           pipx install poetry
           pipx install poethepoet
       - name: Install Dependencies
-        working-directory: web-app
+        working-directory: ./web-app
         run: |
           poetry install
+  
+  build-vue:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: "Install nvm and npm"
+        run: |
+          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+          source ~/.bashrc
+          nvm install 20
+          nvm use 20
+      - name: "Install dependencies"
+        working-directory: ./ui
+        run: |
+          npm install
+        
