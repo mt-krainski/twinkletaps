@@ -54,4 +54,26 @@ jobs:
         working-directory: ./ui
         run: |
           npm run build
+
+  build-nuxt:
+  runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: "Install nvm and npm"
+        run: |
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          nvm install 20
+      - name: "Install dependencies"
+        working-directory: ./ui
+        run: |
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          nvm use 20
+          npm install
+      - name: "Build"
+        working-directory: ./twinkletaps-ui
+        run: |
+          npm run build
         

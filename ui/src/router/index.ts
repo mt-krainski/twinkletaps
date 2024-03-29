@@ -8,7 +8,7 @@ const router = createRouter({
       path: '/',
       name: 'TwinkleTaps',
       // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
+      // this generates a separate chunk (xyz.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
       component: () => import('../views/HomeView.vue'),
     },
