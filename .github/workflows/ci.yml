@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-python:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Tools
+        run: |
+          curl https://pyenv.run | bash
+          eval "$(pyenv init -)"
+          pyenv install 3.11
+          apt update
+          apt install pipx
+          pipx ensurepath
+          pipx install poetry
+          pipx install poethepoet
+      - name: Install Dependencies
+        working-directory: web-app
+        run: |
+          poetry install
