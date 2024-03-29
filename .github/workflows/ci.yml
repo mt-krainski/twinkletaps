@@ -32,7 +32,7 @@ jobs:
         working-directory: ./web-app
         run: |
           poetry install
-  
+
   build-vue:
     runs-on: ubuntu-latest
 
@@ -56,7 +56,7 @@ jobs:
           npm run build
 
   build-nuxt:
-  runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
@@ -76,4 +76,3 @@ jobs:
         working-directory: ./twinkletaps-ui
         run: |
           npm run build
-        
