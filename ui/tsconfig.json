@@ -1,0 +1,23 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.node.json",
+  "include": [
+    "vite.config.*",
+    "vitest.config.*",
+    "cypress.config.*",
+    "playwright.config.*",
+    "src/**/*.ts",
+    "test/**/*.ts"
+  ],
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "build",
+    "target": "ESNext",
+    "module": "NodeNext",
+    "types": ["vite/client", "node"],
+    // workaround for https://github.com/vuejs/tsconfig/issues/6
+    "preserveValueImports": false,
+    "importsNotUsedAsValues": "remove",
+    "verbatimModuleSyntax": true,
+    // end workaround
+  }
+}

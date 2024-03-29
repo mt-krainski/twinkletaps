@@ -1,0 +1,23 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "./node_modules/gts",
+    "plugin:vue/essential",
+    "plugin:vue/recommended",
+    "@vue/prettier",
+    "@vue/typescript",
+    "@vue/typescript/recommended"
+  ],
+  "plugins": ["vue", "prettier", "@typescript-eslint/eslint-plugin"],
+  "parser": "vue-eslint-parser",
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "parser": "@typescript-eslint/parser",
+    "sourceType": "module"
+  }
+}
