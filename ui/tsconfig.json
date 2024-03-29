@@ -13,6 +13,7 @@
     "outDir": "build",
     "target": "ESNext",
     "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "types": ["vite/client", "node"],
     // workaround for https://github.com/vuejs/tsconfig/issues/6
     "preserveValueImports": false,
