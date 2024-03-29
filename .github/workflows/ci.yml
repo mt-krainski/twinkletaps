@@ -66,13 +66,11 @@ jobs:
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           nvm install 20
       - name: "Install dependencies"
-        working-directory: ./ui
+        working-directory: ./twinkletaps-ui
         run: |
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           nvm use 20
-          npm cache clean --force
-          rm -rf node_modules
           npm install
       - name: "Build"
         working-directory: ./twinkletaps-ui
