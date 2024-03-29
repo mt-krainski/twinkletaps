@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "compile": "run-p type-check build-only",
+    "build": "run-p type-check build-only",
     "preview": "vite preview",
     "test:unit": "vitest --environment jsdom --root src/",
     "test:e2e": "start-server-and-test preview http://localhost:4173 'cypress run --e2e'",
@@ -18,8 +18,7 @@
     "gts:lint": "gts lint ./src/**/*.{ts,vue}",
     "gts:clean": "gts clean ./src/**/*.{ts,vue}",
     "gts:fix": "gts fix ./src/**/*.{ts,vue}",
-    "prepare": "npm run compile",
-    "pretest": "npm run compile",
+    "pretest": "npm run build",
     "posttest": "npm run lint"
   },
   "dependencies": {
