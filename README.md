@@ -1,4 +1,4 @@
-# The One Lamp Project
+# TwinkleTaps
 
 This is a pretty silly, albeit fun project idea to build a lamp I could control via a website. And then perhaps, randomly, give access to it to everyone in the internet.
 
