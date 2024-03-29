@@ -9,11 +9,12 @@
     "test/**/*.ts"
   ],
   "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "build",
-    "target": "ESNext",
+    "lib": ["dom"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "outDir": "build",
+    "rootDir": ".",
+    "target": "ESNext",
     "types": ["vite/client", "node"],
     // workaround for https://github.com/vuejs/tsconfig/issues/6
     "preserveValueImports": false,
