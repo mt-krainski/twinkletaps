@@ -16,7 +16,7 @@
           </template>
         </v-btn>
       </v-col>
-      <v-col class="text-left pt-10" cols="12">
+      <v-col class="text-center pt-10" cols="12">
         <div style="font-family: monospace">{{ tapsDisplay }}</div>
       </v-col>
     </v-row>
@@ -29,16 +29,24 @@ const clickActive = ref(false);
 const recording = ref(false);
 const cooldown = ref(false);
 const recordedTap: Ref<boolean[]> = ref([]);
+const alreadyRecordedForInterval = ref(false);
 let recordingInterval: ReturnType<typeof setInterval>;
 
 const tapsDisplay = computed(() => {
-  return recordedTap.value.map(x => (x ? '*' : '_')).join('');
+  const mappedTaps = recordedTap.value.map(x => (x ? '‾' : '_')).join('');
+  return mappedTaps.padEnd(tapDuration + 1, '-');
 });
 
 function clickStart() {
   clickActive.value = true;
+  if (recording.value) {
+    if (!getLastRecorded()) {
+      recordTapState(true);
+      alreadyRecordedForInterval.value = true;
+    }
+  }
   if (!recording.value) {
-    recordedTap.value.splice(0, recordedTap.value.length);
+    clearRecording();
     recordTapState(true);
     recording.value = true;
     recordingInterval = setInterval(recordTap, 100);
@@ -49,8 +57,21 @@ function clickEnd() {
   clickActive.value = false;
 }
 
+function getLastRecorded() {
+  return recordedTap.value.at(-1);
+}
+
+function clearRecording() {
+  recordedTap.value.splice(0, recordedTap.value.length);
+}
+
 function recordTap() {
-  recordTapState();
+  if (!alreadyRecordedForInterval.value) {
+    recordTapState();
+  } else {
+    alreadyRecordedForInterval.value = false;
+  }
+
   if (tapLongEnough()) finishRecording();
 }
 
