@@ -76,3 +76,7 @@ jobs:
         working-directory: ./twinkletaps-ui
         run: |
           npm run build
+      - name: "Test E2E (dev)"
+        working-directory: ./twinkletaps-ui
+        run: |
+          npm run test:e2e
