@@ -2,7 +2,7 @@
   <v-layout class="align-center justify-center">
     <v-app-bar>
       <template v-slot:prepend>
-        <v-btn to="/" nuxt icon="mdi-home"></v-btn>
+        <v-btn icon="mdi-home" @click="navigateTo('/')"></v-btn>
       </template>
       <v-app-bar-title>Twinkle Taps</v-app-bar-title>
       <v-btn to="/" nuxt class="mx-2">Home</v-btn>
@@ -21,8 +21,8 @@
       <slot />
     </v-main>
     <v-footer name="footer" app>
-      <v-btn class="mx-auto" variant="text" @click="print('footer')">
-        Get data
+      <v-btn class="mx-auto" variant="text" @click="navigateTo('/about')">
+        About
       </v-btn>
     </v-footer>
   </v-layout>
