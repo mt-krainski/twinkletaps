@@ -1,12 +1,11 @@
 <template>
   <v-layout class="align-center justify-center">
     <v-app-bar>
-      <template v-slot:prepend>
-        <v-btn icon="mdi-home" @click="navigateTo('/')"></v-btn>
-      </template>
-      <v-app-bar-title>Twinkle Taps</v-app-bar-title>
-      <v-btn to="/" nuxt class="mx-2">Home</v-btn>
-      <v-btn to="/about" nuxt class="mx-2">About</v-btn>
+      <v-app-bar-title>
+        <v-btn variant="text" @click="navigateTo('/')" size="large">
+          Twinkle Taps
+        </v-btn>
+      </v-app-bar-title>
       <v-btn v-if="authenticated" icon>
         <v-icon>mdi-cog</v-icon>
         <v-menu activator="parent">
