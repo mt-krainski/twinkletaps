@@ -2,7 +2,7 @@
   <v-container fluid fill-height style="max-width: 300px">
     <v-row align="center" justify="center">
       <v-col class="text-center pt-10" cols="12">
-        <h2>Login</h2>
+        <div class="text-h2">Login</div>
       </v-col>
       <v-col class="text-center" cols="12">
         <label for="uname"><b>Username</b></label>

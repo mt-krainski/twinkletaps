@@ -1,5 +1,5 @@
 <template>
-  <v-layout class="rounded rounded-md">
+  <v-layout class="align-center justify-center">
     <v-app-bar>
       <template v-slot:prepend>
         <v-btn to="/" nuxt icon="mdi-home"></v-btn>
@@ -20,6 +20,11 @@
     >
       <slot />
     </v-main>
+    <v-footer name="footer" app>
+      <v-btn class="mx-auto" variant="text" @click="print('footer')">
+        Get data
+      </v-btn>
+    </v-footer>
   </v-layout>
 </template>
 
