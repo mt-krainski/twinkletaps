@@ -6,7 +6,7 @@ describe('Login Page', () => {
 
   it('Successful Login Redirects to /', () => {
     cy.visit('/login');
-    cy.wait(500);
+    cy.wait(1000);
     cy.get('button').contains('Login').click();
     cy.url().should('eq', pathToUrl('/'));
   });
