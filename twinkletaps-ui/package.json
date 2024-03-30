@@ -5,8 +5,11 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
+    "start": "npm run dev",
+    "start:built": "node .output/server/index.mjs",
     "cypress:e2e": "cypress run --e2e",
-    "test:e2e": "start-server-and-test dev http://localhost:3000 cypress:e2e",
+    "test:e2e:dev": "start-server-and-test dev http://localhost:3000 cypress:e2e",
+    "test:e2e": "start-server-and-test start:built http://localhost:3000 cypress:e2e",
     "gts:lint": "gts lint ./src/**/*.{ts,vue}",
     "gts:clean": "gts clean ./src/**/*.{ts,vue}",
     "gts:fix": "gts fix ./src/**/*.{ts,vue}",
