@@ -2,7 +2,7 @@
   <v-layout class="rounded rounded-md">
     <v-app-bar>
       <template v-slot:prepend>
-        <v-btn to="/" nuxt icon="mdi-home" depressed></v-btn>
+        <v-btn to="/" nuxt icon="mdi-home"></v-btn>
       </template>
       <v-app-bar-title>Twinkle Taps</v-app-bar-title>
       <v-btn to="/" nuxt class="mx-2">Home</v-btn>
@@ -24,20 +24,13 @@
 </template>
 
 <script lang="ts" setup>
-import { storeToRefs } from 'pinia'; // import storeToRefs helper hook from pinia
-import { useAuthStore } from '~/store/auth'; // import the auth store we just created
+import { storeToRefs } from 'pinia';
+import { useAuthStore } from '~/store/auth';
 
 const router = useRouter();
 
-const { logUserOut } = useAuthStore(); // use authenticateUser action from  auth store
-const { authenticated } = storeToRefs(useAuthStore()); // make authenticated state reactive with storeToRefs
-
-const items = [
-  { title: 'Click Me' },
-  { title: 'Click Me' },
-  { title: 'Click Me' },
-  { title: 'Click Me 2' },
-];
+const { logUserOut } = useAuthStore();
+const { authenticated } = storeToRefs(useAuthStore());
 
 const logout = () => {
   logUserOut();
