@@ -13,6 +13,9 @@ export default defineNuxtConfig({
   build: {
     transpile: ['vuetify'],
   },
+  features: {
+    inlineStyles: false,
+  },
   vite: {
     define: {
       'process.env.DEBUG': false,
