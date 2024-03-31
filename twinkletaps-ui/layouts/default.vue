@@ -6,7 +6,7 @@
           Twinkle Taps
         </v-btn>
       </v-app-bar-title>
-      <v-btn v-if="authenticated" icon>
+      <v-btn v-if="authenticated" icon name="userMenu">
         <v-icon>mdi-cog</v-icon>
         <v-menu activator="parent">
           <v-btn @click="logout" class="mx-2">Logout</v-btn>
@@ -36,8 +36,8 @@ const router = useRouter();
 const { logUserOut } = useAuthStore();
 const { authenticated } = storeToRefs(useAuthStore());
 
-const logout = () => {
-  logUserOut();
+const logout = async () => {
+  await logUserOut();
   router.push('/login');
 };
 </script>

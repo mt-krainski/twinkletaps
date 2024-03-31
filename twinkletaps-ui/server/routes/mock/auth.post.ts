@@ -1,18 +1,21 @@
-import axios, { isAxiosError } from 'axios';
-
 export default defineEventHandler(async event => {
   const { username, password } = await readBody(event);
-  if (username === 'test-user' && password === 'local-dev')
+  if (username === 'test-user' && password === 'local-dev') {
+    appendResponseHeader(
+      event,
+      'set-cookie',
+      'auth=local-test-cookie; path=/;'
+    );
     return {
       id: 15,
-      username: 'kminchelle',
-      email: 'kminchelle@qq.com',
-      firstName: 'Jeanne',
-      lastName: 'Halvorson',
+      username: 'test',
+      email: 'test@twinkletaps.com',
+      firstName: 'Test',
+      lastName: 'User',
       gender: 'female',
-      image: 'https://robohash.org/Jeanne.png?set=set4',
-      token:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTUsInVzZXJuYW1lIjoia21pbmNoZWxsZSIsImVtYWlsIjoia21pbmNoZWxsZUBxcS5jb20iLCJmaXJzdE5hbWUiOiJKZWFubmUiLCJsYXN0TmFtZSI6IkhhbHZvcnNvbiIsImdlbmRlciI6ImZlbWFsZSIsImltYWdlIjoiaHR0cHM6Ly9yb2JvaGFzaC5vcmcvSmVhbm5lLnBuZz9zZXQ9c2V0NCIsImlhdCI6MTcxMTkxNzYyNiwiZXhwIjoxNzExOTIxMjI2fQ.2RONCc7fq36H5OLPQwZQuVLNltxQgRQY75uSCEPAmII',
+      image: 'https://ui-avatars.com/api/?name=Test+User&rounded=true',
+      token: 'test-token',
     };
+  }
   // TODO: return error response
 });

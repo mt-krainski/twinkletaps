@@ -1,21 +1,23 @@
 import { useAuthStore } from '~/store/auth';
 
-export default defineNuxtRouteMiddleware(to => {
+export default defineNuxtRouteMiddleware(async to => {
+  const runtimeConfig = useRuntimeConfig();
+  const { data, pending, error, status }: any = await useFetch(
+    `${runtimeConfig.public.apiBase}/whoami`
+  );
   const { authenticated } = storeToRefs(useAuthStore()); // make authenticated state reactive
-  const token = useCookie('token'); // get token from cookies
-
-  if (token.value) {
+  if (status.value === 'success') {
     // check if value exists
     authenticated.value = true; // update the state to authenticated
   }
 
   // if token exists and url is /login redirect to homepage
-  if (token.value && to?.name === 'login') {
+  if (status.value === 'success' && to?.name === 'login') {
     return navigateTo('/');
   }
 
   // if token doesn't exist redirect to log in
-  if (!token.value && to?.name !== 'login') {
+  if (status.value === 'error' && to?.name !== 'login') {
     abortNavigation();
     return navigateTo('/login');
   }

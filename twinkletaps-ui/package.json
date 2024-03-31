@@ -5,6 +5,7 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
+    "dev:testing": "NUXT_PUBLIC_ENV=testing nuxt dev",
     "start": "npm run dev",
     "start:built": "node .output/server/index.mjs",
     "cypress:e2e": "cypress run --e2e",
