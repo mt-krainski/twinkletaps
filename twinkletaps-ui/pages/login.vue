@@ -5,7 +5,7 @@
         <div class="text-h2">Login</div>
       </v-col>
       <v-col class="text-center" cols="12">
-        <label for="uname"><b>Username</b></label>
+        <label for="username"><b>Username</b></label>
       </v-col>
 
       <v-col class="text-center" cols="12">
@@ -14,12 +14,12 @@
           type="text"
           class="input"
           placeholder="Enter Username"
-          name="uname"
+          name="username"
           required
         />
       </v-col>
       <v-col class="text-center" cols="12">
-        <label for="psw"><b>Password</b></label>
+        <label for="password"><b>Password</b></label>
       </v-col>
       <v-col class="text-center" cols="12">
         <v-text-field
@@ -27,7 +27,7 @@
           type="password"
           class="input"
           placeholder="Enter Password"
-          name="psw"
+          name="password"
           required
         />
       </v-col>
@@ -39,23 +39,28 @@
 </template>
 
 <script lang="ts" setup>
-import { storeToRefs } from 'pinia'; // import storeToRefs helper hook from pinia
-import { useAuthStore } from '~/store/auth'; // import the auth store we just created
+import { storeToRefs } from 'pinia';
+import { useAuthStore } from '~/store/auth';
 
-const { authenticateUser } = useAuthStore(); // use authenticateUser action from  auth store
+const { authenticateUser } = useAuthStore();
+const { authenticated } = storeToRefs(useAuthStore());
 
-const { authenticated } = storeToRefs(useAuthStore()); // make authenticated state reactive with storeToRefs
+const runtimeConfig = useRuntimeConfig();
 
 const user = ref({
-  username: 'kminchelle',
-  password: '0lelplR',
+  username: '',
+  password: '',
 });
 const router = useRouter();
 
+if (runtimeConfig.public.env === 'dev') {
+  user.value.username = 'test-user';
+  user.value.password = 'local-dev';
+}
+
 const login = async () => {
   console.log(user.value);
-  await authenticateUser(user.value); // call authenticateUser and pass the user object
-  // redirect to homepage if user is authenticated
+  await authenticateUser(user.value);
   if (authenticated) {
     router.push('/');
   }

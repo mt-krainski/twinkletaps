@@ -30,4 +30,10 @@ export default defineNuxtConfig({
       );
     },
   },
+  runtimeConfig: {
+    public: {
+      apiBase: '/mock',
+      env: 'dev',
+    },
+  },
 });
