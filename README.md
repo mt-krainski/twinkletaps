@@ -2,11 +2,13 @@
 
 This is a pretty silly, albeit fun project idea to build a lamp I could control via a website. And then perhaps, randomly, give access to it to everyone in the internet.
 
-This has two components:
+This has a few components:
 
 - the Lamp code, which is an Arduino based project in `arduino-main`
 - the web-app code, which is a Python FastAPI based project, along with an AWS deployment manifests
   - For development, best use the `poetry-dotenv-plugin`
+- the UI which is using Vue.js and Nuxt
+- the deployment to AWS using Terraform
 
 ## Tricks
 
