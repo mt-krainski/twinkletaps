@@ -3,15 +3,15 @@
     <v-row align="center" justify="center" class="pt-10">
       <v-col class="text-center" cols="12">
         <v-btn
-          @mousedown="clickStart"
-          @mouseup="clickEnd"
           icon
           size="200px"
           :disabled="cooldown"
           :loading="cooldown"
+          @mousedown="clickStart"
+          @mouseup="clickEnd"
         >
           <v-icon size="100px">mdi-lightbulb-on-outline</v-icon>
-          <template v-slot:loader>
+          <template #loader>
             <v-progress-circular indeterminate :size="60"></v-progress-circular>
           </template>
         </v-btn>

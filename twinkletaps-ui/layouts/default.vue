@@ -2,14 +2,14 @@
   <v-layout class="align-center justify-center">
     <v-app-bar>
       <v-app-bar-title>
-        <v-btn variant="text" @click="navigateTo('/')" size="large">
+        <v-btn variant="text" size="large" @click="navigateTo('/')">
           Twinkle Taps
         </v-btn>
       </v-app-bar-title>
       <v-btn v-if="authenticated" icon name="userMenu">
         <v-icon>mdi-cog</v-icon>
         <v-menu activator="parent">
-          <v-btn @click="logout" class="mx-2">Logout</v-btn>
+          <v-btn class="mx-2" @click="logout">Logout</v-btn>
         </v-menu>
       </v-btn>
     </v-app-bar>

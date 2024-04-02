@@ -32,7 +32,7 @@
         />
       </v-col>
       <v-col class="text-center" cols="12">
-        <v-btn @click.prevent="login" class="button">Login</v-btn>
+        <v-btn class="button" @click.prevent="login">Login</v-btn>
       </v-col>
     </v-row>
   </v-container>

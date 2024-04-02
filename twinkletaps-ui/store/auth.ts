@@ -14,7 +14,7 @@ export const useAuthStore = defineStore('auth', {
     async authenticateUser({ username, password }: UserPayloadInterface) {
       // useFetch from nuxt 3
       const runtimeConfig = useRuntimeConfig();
-      const { data, pending }: any = await useFetch(
+      const { data, pending } = await useFetch(
         `${runtimeConfig.public.apiBase}/auth`,
         {
           method: 'post',
@@ -24,18 +24,15 @@ export const useAuthStore = defineStore('auth', {
           },
         }
       );
-      this.loading = pending;
+      this.loading = pending.value;
 
       if (data.value) this.authenticated = true;
     },
     async logUserOut() {
       const runtimeConfig = useRuntimeConfig();
-      const { data, pending }: any = await useFetch(
-        `${runtimeConfig.public.apiBase}/logout`,
-        {
-          method: 'post',
-        }
-      );
+      await useFetch(`${runtimeConfig.public.apiBase}/logout`, {
+        method: 'post',
+      });
       this.authenticated = false;
     },
   },

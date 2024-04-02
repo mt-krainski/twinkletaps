@@ -2,9 +2,7 @@ import { useAuthStore } from '~/store/auth';
 
 export default defineNuxtRouteMiddleware(async to => {
   const runtimeConfig = useRuntimeConfig();
-  const { data, pending, error, status }: any = await useFetch(
-    `${runtimeConfig.public.apiBase}/whoami`
-  );
+  const { status } = await useFetch(`${runtimeConfig.public.apiBase}/whoami`);
   const { authenticated } = storeToRefs(useAuthStore()); // make authenticated state reactive
   if (status.value === 'success') {
     // check if value exists
