@@ -80,3 +80,7 @@ jobs:
         working-directory: ./twinkletaps-ui
         run: |
           npm run test:e2e
+      - name: "Lint"
+        working-directory: ./twinkletaps-ui
+        run: |
+          npm run gts:lint
