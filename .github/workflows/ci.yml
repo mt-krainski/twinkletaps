@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build-python:
+  build-web-app:
     runs-on: ubuntu-latest
 
     steps:
@@ -33,7 +33,40 @@ jobs:
         run: |
           poetry install
 
-  build-nuxt:
+  build-twinkletaps-be:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install pipx
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pipx
+          pipx ensurepath
+          export PATH=/root/.local/bin:$PATH
+      - name: Install Pyenv and Python
+        run: |
+          curl https://pyenv.run | bash
+          export PYENV_ROOT=~/.pyenv
+          export PATH="$PYENV_ROOT/bin:$PATH"
+          eval "$(pyenv init -)"
+          pyenv install 3.11
+      - name: Install Poetry and Poe
+        run: |
+          pipx install poetry
+          pipx install poethepoet
+      - name: Install Dependencies
+        working-directory: ./twinkletaps-be
+        run: |
+          poetry install
+          poe manage migrate
+          timeout 10 poe manage runserver; \
+            if [ $? -eq 124 ]; then \
+              exit 1; \
+            else exit 0; \
+            fi
+
+  build-twinkletaps-ui:
     runs-on: ubuntu-latest
 
     steps:
