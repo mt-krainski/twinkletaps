@@ -54,6 +54,7 @@ jobs:
       - name: Install Poetry and Poe
         run: |
           pipx install poetry
+          poetry config virtualenvs.prefer-active-python true
           pipx install poethepoet
       - name: Install Dependencies
         working-directory: ./twinkletaps-be
