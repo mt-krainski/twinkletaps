@@ -60,11 +60,12 @@ jobs:
         working-directory: ./twinkletaps-be
         run: |
           eval "$(pyenv init -)"
+          poetry config virtualenvs.prefer-active-python true
           poetry install
           poe manage migrate
           timeout_result_code=0
           timeout 10 poe manage runserver || timeout_result_code=$?
-          if [ $timeout_result_code -ne 124 ]; echo "Server did not stay alive long enough"; then exit 1; fi
+          if [ $timeout_result_code -ne 124 ]; echo "Server did not stay alive long enough - ${timeout_result_code}"; then exit 1; fi
 
   build-twinkletaps-ui:
     runs-on: ubuntu-latest
