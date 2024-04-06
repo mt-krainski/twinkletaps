@@ -34,6 +34,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.flake8]
 max-line-length = 88
+dictionaries = ["en_US", "python", "technical", "django"]
 
 [tool.isort]
 include_trailing_comma = true
@@ -46,3 +47,4 @@ DJANGO_SETTINGS_MODULE = "settings.core"
 
 [tool.poe.tasks]
 manage = "python ./scripts/manage.py"
+lint = "flake8"
