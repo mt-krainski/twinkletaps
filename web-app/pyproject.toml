@@ -14,7 +14,7 @@ asyncio = "^3.4.3"
 
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.9.1"
+black = "^24.3.0"
 flake8 = "^6.1.0"
 flake8-pyproject = "^1.2.3"
 poethepoet = "^0.24.1"
