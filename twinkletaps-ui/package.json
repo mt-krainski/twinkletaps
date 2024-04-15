@@ -24,7 +24,7 @@
     "add": "^2.0.6",
     "axios": "^1.6.8",
     "module-alias": "^2.2.3",
-    "nuxt": "^3.11.1",
+    "nuxt": "^3.11.2",
     "pinia": "^2.1.7",
     "sass": "^1.72.0",
     "vite-plugin-vuetify": "^2.0.3",
