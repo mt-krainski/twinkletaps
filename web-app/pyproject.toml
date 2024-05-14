@@ -27,12 +27,20 @@ build-backend = "poetry.core.masonry.api"
 max-line-length = 88
 
 [tool.poe.tasks]
+clean = "rm -rf dist"
 docker-redis-up = "docker compose up redis --build --detach"
 docker-app-build = "docker build --tag one-lamp-app --build-arg 'POETRY_VERSION=1.6.1' . --platform=linux/amd64"
 docker-app-up = "docker compose up app --build --detach"
-docker-app-save = "docker save --output one-lamp-app.tar one-lamp-app"
 docker-app-load = "docker load --input one-lamp-app.tar"
 docker-up = "docker compose up --build --detach"
+
+[tool.poe.tasks.package]
+sequence = [
+    "mkdir dist",
+    "docker save --output dist/one-lamp-app.tar one-lamp-app",
+    "cp docker-compose.yml dist/docker-compose.yml"
+]
+default_item_type = "cmd"
 
 [tool.poe.tasks.start]
 cmd = "uvicorn the_one_lamp_web_app.server:app --reload"
@@ -44,14 +52,13 @@ shell = "terraform -chdir='../deployment/aws/prod' output --json | jq -r '.ec2_e
 [tool.poe.tasks.deploy]
 help = "Build and deploy the app"
 sequence = [
-    "scp one-lamp-app.tar ubuntu@${EC2_INSTANCE_HOST}:.",
-    "scp docker-compose.yml ubuntu@${EC2_INSTANCE_HOST}:.",
-    "ssh ubuntu@${EC2_INSTANCE_HOST} docker load --input one-lamp-app.tar",
-    "ssh ubuntu@${EC2_INSTANCE_HOST} docker compose down",
-    "ssh ubuntu@${EC2_INSTANCE_HOST} docker compose up --detach",
+    "rsync -r --progress --stats dist/* ubuntu@${EC2_INSTANCE_HOST}:app/",
+    "ssh ubuntu@${EC2_INSTANCE_HOST} docker load --input app/one-lamp-app.tar",
+    "ssh ubuntu@${EC2_INSTANCE_HOST} 'cd app; docker compose down'",
+    "ssh ubuntu@${EC2_INSTANCE_HOST} 'cd app; docker compose --env-file ~/.env up --detach'",
 ]
 default_item_type = "cmd"
-deps = ["docker-app-build", "docker-app-save", "aws-login"]
+deps = ["clean", "docker-app-build", "package", "aws-login"]
 uses = { EC2_INSTANCE_HOST = "_ec2-instance-host" }
 
 [tool.poe.tasks.ssh-ec2]
