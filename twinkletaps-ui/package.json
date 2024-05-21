@@ -26,7 +26,7 @@
     "module-alias": "^2.2.3",
     "nuxt": "^3.11.2",
     "pinia": "^2.1.7",
-    "sass": "^1.76.0",
+    "sass": "^1.77.2",
     "vite-plugin-vuetify": "^2.0.3",
     "vue": "^3.4.27",
     "vue-router": "^4.3.2",
