@@ -59,7 +59,7 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
-          version: $POETRY_VERSION
+          version: "$POETRY_VERSION"
       - name: Install Poe
         run: |
           pipx install poethepoet
