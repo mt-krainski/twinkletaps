@@ -54,7 +54,7 @@ help = "Build and deploy the app"
 sequence = [
     "rsync -r --progress --stats dist/* ubuntu@${EC2_INSTANCE_HOST}:app/",
     "ssh ubuntu@${EC2_INSTANCE_HOST} docker load --input app/one-lamp-app.tar",
-    "ssh ubuntu@${EC2_INSTANCE_HOST} 'cd app; docker compose down'",
+    "ssh ubuntu@${EC2_INSTANCE_HOST} 'cd app; docker compose --env-file ~/.env down'",
     "ssh ubuntu@${EC2_INSTANCE_HOST} 'cd app; docker compose --env-file ~/.env up --detach'",
 ]
 default_item_type = "cmd"

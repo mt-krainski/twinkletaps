@@ -11,6 +11,9 @@ services:
       - PORT=80
       - WORKERS=4
       - PYTHONUNBUFFERED=1
+      - API_TOKEN=${API_TOKEN}
+      - API_USERNAME=${API_USERNAME}
+      - REDIS_STATE_TTL=${REDIS_STATE_TTL}
   redis:
     image: "redis:7.2.1-alpine"
     ports:

@@ -10,8 +10,12 @@ class TokenCredentials(TypedDict):
     token: str
 
 
-API_TOKEN = os.getenv("API_TOKEN", "").encode("utf8")
+API_TOKEN = os.getenv("API_TOKEN").encode("utf8")
 API_USERNAME = os.getenv("API_USERNAME", "user")
+
+if API_TOKEN == None:
+    print("API_TOKEN was not provided")
+    API_TOKEN = ""
 
 
 def validate_token(user_token: str) -> TokenCredentials:
