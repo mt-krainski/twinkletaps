@@ -64,7 +64,7 @@ jobs:
         id: cached-poetry-dependencies
         uses: actions/cache@v3
         with:
-          path: .venv
+          path: twinkletaps-be/.venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('./twinkletaps-be/poetry.lock') }}
       - name: Install dependencies
         working-directory: ./twinkletaps-be
@@ -72,15 +72,20 @@ jobs:
         run: poetry install --no-interaction --no-root
       - name: Install project
         working-directory: ./twinkletaps-be
-        run: poetry install --no-interaction
+        run: |
+          poe configure
+          poetry install --no-interaction
       - name: Run tests
         working-directory: ./twinkletaps-be
         run: |
           source .venv/bin/activate
           poe manage migrate
-          timeout_result_code=0
-          timeout 10 poe manage runserver || timeout_result_code=$?
-          if [ $timeout_result_code -ne 124 ]; then echo "Server did not stay alive long enough - ${timeout_result_code}"; exit 1; fi
+          poe test
+      - name: Run lint
+        working-directory: ./twinkletaps-be
+        run: |
+          source .venv/bin/activate
+          poe lint
 
   build-twinkletaps-ui:
     runs-on: ubuntu-latest

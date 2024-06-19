@@ -1,5 +1,5 @@
 from django.urls import include, path
-from rest_framework import renderers, routers, serializers, viewsets
+from rest_framework import routers, serializers, viewsets
 from rest_framework.decorators import action
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
@@ -68,6 +68,15 @@ class TapViewSet(viewsets.ModelViewSet):
 
     @action(detail=True)
     def simple(self, request, pk=None):
+        """Return tap as a sequence.
+
+        Args:
+            request (Request): DRF Request object
+            pk (str, optional): pk of the selected tap object. Defaults to None.
+
+        Returns:
+            Response: response containing selected tap's sequence
+        """
         tap = self.get_object()
         return Response(tap.sequence)
 
@@ -81,5 +90,4 @@ router.register(r"taps", TapViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
-    # path("", views.index, name="index"),
 ]
