@@ -23,13 +23,13 @@ flake8-comprehensions = "^3.14.0"
 flake8-docstrings = "^1.7.0"
 flake8-eradicate = "^1.5.0"
 flake8-isort = "^6.1.1"
-flake8-pytest-style = "^2.0.0"
 flake8-spellcheck = "^0.28.0"
 pep8-naming = "^0.14.1"
 flake8-pyproject = "^1.2.3"
 black = "^24.4.2"
 flake8-black = "^0.3.6"
 isort = "^5.13.2"
+django-extensions = "^3.2.3"
 
 [build-system]
 requires = ["poetry-core"]
@@ -39,6 +39,10 @@ build-backend = "poetry.core.masonry.api"
 max-line-length = 88
 dictionaries = ["en_US", "python", "technical", "django"]
 builtins-ignorelist = ["id"]
+ignore = ["D104", "D100", "D101", "D106"]
+per-file-ignores = """
+  **/migrations/*: E501
+"""
 
 [tool.isort]
 include_trailing_comma = true
@@ -46,9 +50,17 @@ force_grid_wrap = 0
 line_length = 88
 profile = "black"
 
-[tool.poe.env]
-DJANGO_SETTINGS_MODULE = "settings.core"
+[tool.poe]
+envfile = ".env"
 
 [tool.poe.tasks]
+configure = "./scripts/configure.sh"
 manage = "python ./scripts/manage.py"
 lint = "flake8"
+generate-secret = 'python -c "import secrets; print(secrets.token_urlsafe())"'
+
+[tool.poe.tasks.test]
+sequence = [
+  { cmd = "./scripts/try-runserver.sh" },
+  { ref = "manage test" }
+]
