@@ -56,7 +56,7 @@ envfile = ".env"
 [tool.poe.tasks]
 configure = "./scripts/configure.sh"
 manage = "python ./scripts/manage.py"
-lint = "flake8"
+lint = "flake8 twinkletaps_be settings scripts"
 generate-secret = 'python -c "import secrets; print(secrets.token_urlsafe())"'
 
 [tool.poe.tasks.test]
