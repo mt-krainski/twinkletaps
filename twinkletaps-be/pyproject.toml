@@ -11,6 +11,9 @@ django = "^5.0.6"
 djangorestframework = "^3.15.1"
 markdown = "^3.6"
 django-filter = "^24.2"
+requests = "^2.32.3"
+pytest = "^8.2.2"
+pytest-django = "^4.8.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -58,9 +61,10 @@ configure = "./scripts/configure.sh"
 manage = "python ./scripts/manage.py"
 lint = "flake8 twinkletaps_be settings scripts"
 generate-secret = 'python -c "import secrets; print(secrets.token_urlsafe())"'
+test = 'pytest --showlocals'
 
-[tool.poe.tasks.test]
+[tool.poe.tasks.test-full]
 sequence = [
   { cmd = "./scripts/try-runserver.sh" },
-  { ref = "manage test" }
+  { ref = "test" }
 ]
