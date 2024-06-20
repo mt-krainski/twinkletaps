@@ -80,7 +80,7 @@ jobs:
         run: |
           source .venv/bin/activate
           poe manage migrate
-          poe test
+          poe test-full
       - name: Run lint
         working-directory: ./twinkletaps-be
         run: |

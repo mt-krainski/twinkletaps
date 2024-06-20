@@ -1,7 +1,7 @@
 from django.test import TestCase
 
-from ..users.models import User
-from .models import Device, Tap
+from ...users.models import User
+from ..models import Device, Tap
 
 
 class ModelsTestCase(TestCase):
