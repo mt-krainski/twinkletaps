@@ -52,6 +52,7 @@ include_trailing_comma = true
 force_grid_wrap = 0
 line_length = 88
 profile = "black"
+known_first_party = ["twinkletaps_be"]
 
 [tool.poe]
 envfile = ".env"

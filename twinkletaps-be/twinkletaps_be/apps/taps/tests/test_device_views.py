@@ -1,5 +1,6 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
+
 from twinkletaps_be.apps.users.models import User
 
 from ..models import Device
@@ -17,6 +18,7 @@ class DeviceViewTestCase(TestCase):
         self.context["client"] = client
 
     def test_create_device(self):
+        """Test requests for creating device."""
         response = self.context["client"].post(
             "/taps/devices/",
             {"name": "test device", "owner": self.context["test_user"].id},
@@ -32,6 +34,7 @@ class DeviceViewTestCase(TestCase):
         self.assertIn(created_object["id"], created_object["url"])
 
     def test_list_devices(self):
+        """Test requests for listing devices."""
         response = self.context["client"].get(
             "/taps/devices/",
             format="json",
@@ -52,6 +55,7 @@ class DeviceViewTestCase(TestCase):
         self.assertEqual(str(created_device.owner_id), devices[0]["owner"])
 
     def test_delete_device(self):
+        """Test view for deleting devices."""
         created_device = Device(name="test device", owner=self.context["test_user"])
         created_device.save()
         self.assertEqual(Device.objects.count(), 1)
