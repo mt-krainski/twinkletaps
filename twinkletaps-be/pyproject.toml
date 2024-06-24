@@ -33,6 +33,7 @@ black = "^24.4.2"
 flake8-black = "^0.3.6"
 isort = "^5.13.2"
 django-extensions = "^3.2.3"
+coverage = "^7.5.4"
 
 [build-system]
 requires = ["poetry-core"]
@@ -62,7 +63,7 @@ configure = "./scripts/configure.sh"
 manage = "python ./scripts/manage.py"
 lint = "flake8 twinkletaps_be settings scripts"
 generate-secret = 'python -c "import secrets; print(secrets.token_urlsafe())"'
-test = 'pytest --showlocals'
+test = 'coverage run -m pytest --showlocals'
 
 [tool.poe.tasks.test-full]
 sequence = [

@@ -67,6 +67,33 @@ class DeviceViewTestCase(TestCase):
         self.assertEqual(str(created_tap.id), devices[0]["id"])
         self.assertEqual(str(created_tap.creator_id), devices[0]["creator"])
 
+    def test_get_tap_detail(self):
+        created_tap = Tap(
+            creator=self.context["test_user"],
+            sequence="1111111111",
+            device=self.context["test_device"],
+            group="Test Group",
+        )
+        created_tap.save()
+
+        response = self.context["client"].get(f"/taps/taps/{created_tap.id}/")
+        self.assertEqual(response.status_code, 200)
+        tap_response_data = response.json()
+        self.assertEqual(tap_response_data["id"], str(created_tap.id))
+        self.assertEqual(
+            tap_response_data["creator"], str(self.context["test_user"].id)
+        )
+        self.assertEqual(tap_response_data["group"], "Test Group")
+        self.assertEqual(tap_response_data["sequence"], "1111111111")
+        self.assertEqual(
+            tap_response_data["device"], str(self.context["test_device"].id)
+        )
+        self.assertEqual(
+            tap_response_data["device_owner"], str(self.context["test_device"].owner.id)
+        )
+        self.assertIsNotNone(tap_response_data["created_at"])
+        self.assertIn(str(created_tap.id), tap_response_data["url"])
+
     def test_delete_tap(self):
         """Test view for deleting taps."""
         created_tap = Tap(
@@ -81,3 +108,18 @@ class DeviceViewTestCase(TestCase):
         response = self.context["client"].delete(f"/taps/taps/{created_tap.id}/")
         self.assertEqual(response.status_code, 204)
         self.assertEqual(Tap.objects.count(), 0)
+
+    def test_get_tap_as_simple(self):
+        created_tap = Tap(
+            creator=self.context["test_user"],
+            sequence="10101010",
+            device=self.context["test_device"],
+            group="Test Group",
+        )
+        created_tap.save()
+
+        response = self.context["client"].get(
+            f"/taps/taps/{created_tap.id}/simple/", headers={"Accept": "text/plain"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, "10101010")
