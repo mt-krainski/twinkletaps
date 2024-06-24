@@ -9,13 +9,15 @@ from .models import Device, Tap
 
 class PlainTestRenderer(BaseRenderer):
     media_type = "text/plain"
-    format = "txt"
+    format = "txt"  # noqa: A003
 
     def render(self, data, *args, **kwargs):
-        """Simply return the data as string
+        """Simply return the data as string.
 
         Args:
             data (Any): data to be rendered, it should have a valid __str__ method
+            args: additional arguments
+            kwargs: additional arguments
 
         Returns:
             str: Rendered data

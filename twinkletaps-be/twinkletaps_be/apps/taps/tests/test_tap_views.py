@@ -68,6 +68,7 @@ class DeviceViewTestCase(TestCase):
         self.assertEqual(str(created_tap.creator_id), devices[0]["creator"])
 
     def test_get_tap_detail(self):
+        """Test GET individual tap."""
         created_tap = Tap(
             creator=self.context["test_user"],
             sequence="1111111111",
@@ -110,6 +111,7 @@ class DeviceViewTestCase(TestCase):
         self.assertEqual(Tap.objects.count(), 0)
 
     def test_get_tap_as_simple(self):
+        """Test GET only sequence from tap."""
         created_tap = Tap(
             creator=self.context["test_user"],
             sequence="10101010",
