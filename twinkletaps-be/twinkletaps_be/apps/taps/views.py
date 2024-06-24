@@ -1,10 +1,26 @@
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
-from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
+from rest_framework.renderers import BaseRenderer, BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 
 from ..users.models import User
 from .models import Device, Tap
+
+
+class PlainTestRenderer(BaseRenderer):
+    media_type = "text/plain"
+    format = "txt"
+
+    def render(self, data, *args, **kwargs):
+        """Simply return the data as string
+
+        Args:
+            data (Any): data to be rendered, it should have a valid __str__ method
+
+        Returns:
+            str: Rendered data
+        """
+        return str(data)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -57,6 +73,7 @@ class TapViewSet(viewsets.ModelViewSet):
     renderer_classes = [
         BrowsableAPIRenderer,
         JSONRenderer,
+        PlainTestRenderer,
     ]
 
     @action(detail=True)
