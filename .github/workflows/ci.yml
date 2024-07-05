@@ -115,7 +115,7 @@ jobs:
       - name: "Lint"
         working-directory: ./twinkletaps-ui
         run: |
-          npm run gts:lint
+          npm run lint
 
   dependabot:
     name: 'Dependabot'
