@@ -32,7 +32,7 @@
     "vite-plugin-vuetify": "^2.0.4",
     "vue": "^3.4.37",
     "vue-router": "^4.4.3",
-    "vuetify": "^3.6.14"
+    "vuetify": "^3.7.0"
   },
   "devDependencies": {
     "@types/node": "^22.2.0",
