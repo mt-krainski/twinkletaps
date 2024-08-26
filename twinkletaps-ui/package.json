@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
-    "@nuxt/kit": "^3.12.3",
+    "@nuxt/kit": "^3.13.0",
     "@pinia/nuxt": "^0.5.2",
     "add": "^2.0.6",
     "axios": "^1.7.4",
