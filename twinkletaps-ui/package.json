@@ -35,7 +35,7 @@
     "vuetify": "^3.7.2"
   },
   "devDependencies": {
-    "@types/node": "^22.7.4",
+    "@types/node": "^22.7.5",
     "@typescript-eslint/eslint-plugin": "^8.8.1",
     "@typescript-eslint/parser": "^8.8.0",
     "@vue/eslint-config-prettier": "^9.0.0",
