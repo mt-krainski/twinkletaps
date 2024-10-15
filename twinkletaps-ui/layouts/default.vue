@@ -2,14 +2,27 @@
   <v-layout class="align-center justify-center">
     <v-app-bar>
       <v-app-bar-title>
-        <v-btn variant="text" size="large" @click="navigateTo('/')">
+        <v-btn
+          variant="text"
+          size="large"
+          @click="navigateTo('/')"
+        >
           Twinkle Taps
         </v-btn>
       </v-app-bar-title>
-      <v-btn v-if="authenticated" icon name="userMenu">
+      <v-btn
+        v-if="authenticated"
+        icon
+        name="userMenu"
+      >
         <v-icon>mdi-cog</v-icon>
         <v-menu activator="parent">
-          <v-btn class="mx-2" @click="logout">Logout</v-btn>
+          <v-btn
+            class="mx-2"
+            @click="logout"
+          >
+            Logout
+          </v-btn>
         </v-menu>
       </v-btn>
     </v-app-bar>
@@ -19,8 +32,15 @@
     >
       <slot />
     </v-main>
-    <v-footer name="footer" app>
-      <v-btn class="mx-auto" variant="text" @click="navigateTo('/about')">
+    <v-footer
+      name="footer"
+      app
+    >
+      <v-btn
+        class="mx-auto"
+        variant="text"
+        @click="navigateTo('/about')"
+      >
         About
       </v-btn>
     </v-footer>
