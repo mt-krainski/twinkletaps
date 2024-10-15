@@ -1,14 +1,32 @@
 <template>
-  <v-container fluid fill-height style="max-width: 300px">
-    <v-row align="center" justify="center">
-      <v-col class="text-center pt-10" cols="12">
-        <div class="text-h2">Login</div>
+  <v-container
+    fluid
+    fill-height
+    style="max-width: 300px"
+  >
+    <v-row
+      align="center"
+      justify="center"
+    >
+      <v-col
+        class="text-center pt-10"
+        cols="12"
+      >
+        <div class="text-h2">
+          Login
+        </div>
       </v-col>
-      <v-col class="text-center" cols="12">
+      <v-col
+        class="text-center"
+        cols="12"
+      >
         <label for="username"><b>Username</b></label>
       </v-col>
 
-      <v-col class="text-center" cols="12">
+      <v-col
+        class="text-center"
+        cols="12"
+      >
         <v-text-field
           v-model="user.username"
           type="text"
@@ -18,10 +36,16 @@
           required
         />
       </v-col>
-      <v-col class="text-center" cols="12">
+      <v-col
+        class="text-center"
+        cols="12"
+      >
         <label for="password"><b>Password</b></label>
       </v-col>
-      <v-col class="text-center" cols="12">
+      <v-col
+        class="text-center"
+        cols="12"
+      >
         <v-text-field
           v-model="user.password"
           type="password"
@@ -31,8 +55,16 @@
           required
         />
       </v-col>
-      <v-col class="text-center" cols="12">
-        <v-btn class="button" @click.prevent="login">Login</v-btn>
+      <v-col
+        class="text-center"
+        cols="12"
+      >
+        <v-btn
+          class="button"
+          @click.prevent="login"
+        >
+          Login
+        </v-btn>
       </v-col>
     </v-row>
   </v-container>

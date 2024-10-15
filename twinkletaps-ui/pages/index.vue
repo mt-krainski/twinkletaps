@@ -1,7 +1,17 @@
 <template>
-  <v-container fill-height style="max-width: 400px">
-    <v-row align="center" justify="center" class="pt-10">
-      <v-col class="text-center" cols="12">
+  <v-container
+    fill-height
+    style="max-width: 400px"
+  >
+    <v-row
+      align="center"
+      justify="center"
+      class="pt-10"
+    >
+      <v-col
+        class="text-center"
+        cols="12"
+      >
         <v-btn
           icon
           size="200px"
@@ -10,14 +20,24 @@
           @mousedown="clickStart"
           @mouseup="clickEnd"
         >
-          <v-icon size="100px">mdi-lightbulb-on-outline</v-icon>
+          <v-icon size="100px">
+            mdi-lightbulb-on-outline
+          </v-icon>
           <template #loader>
-            <v-progress-circular indeterminate :size="60"></v-progress-circular>
+            <v-progress-circular
+              indeterminate
+              :size="60"
+            />
           </template>
         </v-btn>
       </v-col>
-      <v-col class="text-center pt-10" cols="12">
-        <div style="font-family: monospace">{{ tapsDisplay }}</div>
+      <v-col
+        class="text-center pt-10"
+        cols="12"
+      >
+        <div style="font-family: monospace">
+          {{ tapsDisplay }}
+        </div>
       </v-col>
     </v-row>
   </v-container>
