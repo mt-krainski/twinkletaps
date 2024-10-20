@@ -1,0 +1,6 @@
+tunnel:
+    ory tunnel https://dreamy-payne-kncunjev2t.projects.oryapis.com
+
+# Command to update the Ory project configuration
+update-config:
+    ./scripts/update-config.sh

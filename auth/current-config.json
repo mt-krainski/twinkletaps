@@ -1,0 +1,586 @@
+{
+  "cors_admin": {
+    "enabled": false,
+    "origins": []
+  },
+  "cors_public": {
+    "enabled": false,
+    "origins": []
+  },
+  "environment": "dev",
+  "home_region": "eu-central",
+  "id": "8b458878-6ced-40dd-964c-abf09241df1d",
+  "name": "test",
+  "revision_id": "08364c75-3db8-4e80-a103-1007d000d07b",
+  "services": {
+    "identity": {
+      "config": {
+        "cookies": {
+          "domain": "dreamy-payne-kncunjev2t.projects.oryapis.com",
+          "path": "/",
+          "same_site": "Lax"
+        },
+        "courier": {
+          "smtp": {
+            "from_name": "test via Ory"
+          },
+          "templates": {
+            "login_code": {
+              "valid": {
+                "email": {
+                  "body": {}
+                },
+                "sms": {
+                  "body": {}
+                }
+              }
+            },
+            "recovery": {
+              "invalid": {
+                "email": {
+                  "body": {}
+                }
+              },
+              "valid": {
+                "email": {
+                  "body": {}
+                }
+              }
+            },
+            "recovery_code": {
+              "invalid": {
+                "email": {
+                  "body": {}
+                }
+              },
+              "valid": {
+                "email": {
+                  "body": {}
+                }
+              }
+            },
+            "registration_code": {
+              "valid": {
+                "email": {
+                  "body": {}
+                },
+                "sms": {
+                  "body": {}
+                }
+              }
+            },
+            "verification": {
+              "invalid": {
+                "email": {
+                  "body": {}
+                }
+              },
+              "valid": {
+                "email": {
+                  "body": {}
+                }
+              }
+            },
+            "verification_code": {
+              "invalid": {
+                "email": {
+                  "body": {}
+                }
+              },
+              "valid": {
+                "email": {
+                  "body": {}
+                },
+                "sms": {
+                  "body": {}
+                }
+              }
+            }
+          }
+        },
+        "feature_flags": {
+          "cacheable_sessions": false,
+          "cacheable_sessions_max_age": "2m30s",
+          "faster_session_extend": true,
+          "use_continue_with_transitions": false
+        },
+        "identity": {
+          "default_schema_id": "preset://email",
+          "schemas": [
+            {
+              "id": "preset://email",
+              "url": "base64://ewogICIkaWQiOiAiaHR0cHM6Ly9zY2hlbWFzLm9yeS5zaC9wcmVzZXRzL2tyYXRvcy9pZGVudGl0eS5lbWFpbC5zY2hlbWEuanNvbiIsCiAgIiRzY2hlbWEiOiAiaHR0cDovL2pzb24tc2NoZW1hLm9yZy9kcmFmdC0wNy9zY2hlbWEjIiwKICAidGl0bGUiOiAiUGVyc29uIiwKICAidHlwZSI6ICJvYmplY3QiLAogICJwcm9wZXJ0aWVzIjogewogICAgInRyYWl0cyI6IHsKICAgICAgInR5cGUiOiAib2JqZWN0IiwKICAgICAgInByb3BlcnRpZXMiOiB7CiAgICAgICAgImVtYWlsIjogewogICAgICAgICAgInR5cGUiOiAic3RyaW5nIiwKICAgICAgICAgICJmb3JtYXQiOiAiZW1haWwiLAogICAgICAgICAgInRpdGxlIjogIkUtTWFpbCIsCiAgICAgICAgICAib3J5LnNoL2tyYXRvcyI6IHsKICAgICAgICAgICAgImNyZWRlbnRpYWxzIjogewogICAgICAgICAgICAgICJwYXNzd29yZCI6IHsKICAgICAgICAgICAgICAgICJpZGVudGlmaWVyIjogdHJ1ZQogICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgIndlYmF1dGhuIjogewogICAgICAgICAgICAgICAgImlkZW50aWZpZXIiOiB0cnVlCiAgICAgICAgICAgICAgfSwKICAgICAgICAgICAgICAidG90cCI6IHsKICAgICAgICAgICAgICAgICJhY2NvdW50X25hbWUiOiB0cnVlCiAgICAgICAgICAgICAgfSwKICAgICAgICAgICAgICAiY29kZSI6IHsKICAgICAgICAgICAgICAgICJpZGVudGlmaWVyIjogdHJ1ZSwKICAgICAgICAgICAgICAgICJ2aWEiOiAiZW1haWwiCiAgICAgICAgICAgICAgfSwKICAgICAgICAgICAgICAicGFzc2tleSI6IHsKICAgICAgICAgICAgICAgICJkaXNwbGF5X25hbWUiOiB0cnVlCiAgICAgICAgICAgICAgfQogICAgICAgICAgICB9LAogICAgICAgICAgICAicmVjb3ZlcnkiOiB7CiAgICAgICAgICAgICAgInZpYSI6ICJlbWFpbCIKICAgICAgICAgICAgfSwKICAgICAgICAgICAgInZlcmlmaWNhdGlvbiI6IHsKICAgICAgICAgICAgICAidmlhIjogImVtYWlsIgogICAgICAgICAgICB9CiAgICAgICAgICB9LAogICAgICAgICAgIm1heExlbmd0aCI6IDMyMAogICAgICAgIH0KICAgICAgfSwKICAgICAgInJlcXVpcmVkIjogWwogICAgICAgICJlbWFpbCIKICAgICAgXSwKICAgICAgImFkZGl0aW9uYWxQcm9wZXJ0aWVzIjogZmFsc2UKICAgIH0KICB9Cn0K"
+            }
+          ]
+        },
+        "oauth2_provider": {
+          "override_return_to": false
+        },
+        "preview": {
+          "default_read_consistency_level": "strong"
+        },
+        "security": {
+          "account_enumeration": {
+            "mitigate": false
+          }
+        },
+        "selfservice": {
+          "allowed_return_urls": [
+            "https://dreamy-payne-kncunjev2t.projects.oryapis.com",
+            "/ui/logout",
+            "/ui/consent",
+            "/ui/welcome",
+            "/ui/sessions",
+            "https://dreamy-payne-kncunjev2t.projects.oryapis.com/ui/error",
+            "https://dreamy-payne-kncunjev2t.projects.oryapis.com/ui/login",
+            "https://dreamy-payne-kncunjev2t.projects.oryapis.com/ui/recovery",
+            "https://dreamy-payne-kncunjev2t.projects.oryapis.com/ui/settings",
+            "https://dreamy-payne-kncunjev2t.projects.oryapis.com/ui/registration",
+            "https://dreamy-payne-kncunjev2t.projects.oryapis.com/ui/verification"
+          ],
+          "default_browser_return_url": "https://localhost:4000",
+          "flows": {
+            "error": {
+              "ui_url": "https://dreamy-payne-kncunjev2t.projects.oryapis.com/ui/error"
+            },
+            "login": {
+              "after": {
+                "code": {
+                  "hooks": []
+                },
+                "hooks": [],
+                "lookup_secret": {
+                  "hooks": []
+                },
+                "oidc": {
+                  "hooks": []
+                },
+                "passkey": {
+                  "hooks": []
+                },
+                "password": {
+                  "hooks": []
+                },
+                "totp": {
+                  "hooks": []
+                },
+                "webauthn": {
+                  "hooks": []
+                }
+              },
+              "before": {
+                "hooks": []
+              },
+              "lifespan": "30m0s",
+              "style": "identifier_first",
+              "ui_url": "https://dreamy-payne-kncunjev2t.projects.oryapis.com/ui/login"
+            },
+            "logout": {
+              "after": {}
+            },
+            "recovery": {
+              "after": {
+                "hooks": []
+              },
+              "before": {
+                "hooks": []
+              },
+              "enabled": true,
+              "lifespan": "30m0s",
+              "notify_unknown_recipients": false,
+              "ui_url": "https://dreamy-payne-kncunjev2t.projects.oryapis.com/ui/recovery",
+              "use": "code"
+            },
+            "registration": {
+              "after": {
+                "code": {
+                  "hooks": [
+                    {
+                      "hook": "session"
+                    }
+                  ]
+                },
+                "hooks": [],
+                "oidc": {
+                  "hooks": [
+                    {
+                      "hook": "session"
+                    }
+                  ]
+                },
+                "passkey": {
+                  "hooks": [
+                    {
+                      "hook": "session"
+                    }
+                  ]
+                },
+                "password": {
+                  "hooks": [
+                    {
+                      "hook": "session"
+                    }
+                  ]
+                },
+                "webauthn": {
+                  "hooks": [
+                    {
+                      "hook": "session"
+                    }
+                  ]
+                }
+              },
+              "before": {
+                "hooks": []
+              },
+              "enable_legacy_one_step": false,
+              "enabled": true,
+              "lifespan": "30m0s",
+              "login_hints": false,
+              "ui_url": "https://dreamy-payne-kncunjev2t.projects.oryapis.com/ui/registration"
+            },
+            "settings": {
+              "after": {
+                "hooks": [],
+                "lookup_secret": {
+                  "hooks": []
+                },
+                "oidc": {
+                  "hooks": []
+                },
+                "passkey": {
+                  "hooks": []
+                },
+                "password": {
+                  "hooks": []
+                },
+                "profile": {
+                  "hooks": []
+                },
+                "totp": {
+                  "hooks": []
+                },
+                "webauthn": {
+                  "hooks": []
+                }
+              },
+              "before": {
+                "hooks": []
+              },
+              "lifespan": "30m0s",
+              "privileged_session_max_age": "15m0s",
+              "required_aal": "highest_available",
+              "ui_url": "https://dreamy-payne-kncunjev2t.projects.oryapis.com/ui/settings"
+            },
+            "verification": {
+              "after": {
+                "hooks": []
+              },
+              "before": {
+                "hooks": []
+              },
+              "enabled": true,
+              "lifespan": "30m0s",
+              "notify_unknown_recipients": false,
+              "ui_url": "https://dreamy-payne-kncunjev2t.projects.oryapis.com/ui/verification",
+              "use": "code"
+            }
+          },
+          "methods": {
+            "b2b": {
+              "config": {
+                "organizations": []
+              }
+            },
+            "code": {
+              "config": {
+                "lifespan": "15m0s",
+                "missing_credential_fallback_enabled": true
+              },
+              "enabled": true,
+              "mfa_enabled": false,
+              "passwordless_enabled": false,
+              "passwordless_login_fallback_enabled": false
+            },
+            "link": {
+              "config": {
+                "base_url": "",
+                "lifespan": "15m0s"
+              },
+              "enabled": true
+            },
+            "lookup_secret": {
+              "enabled": false
+            },
+            "oidc": {
+              "config": {
+                "providers": []
+              },
+              "enabled": false
+            },
+            "passkey": {
+              "config": {
+                "rp": {
+                  "display_name": "test",
+                  "id": "dreamy-payne-kncunjev2t.projects.oryapis.com",
+                  "origins": [
+                    "https://dreamy-payne-kncunjev2t.projects.oryapis.com"
+                  ]
+                }
+              },
+              "enabled": false
+            },
+            "password": {
+              "config": {
+                "haveibeenpwned_enabled": true,
+                "identifier_similarity_check_enabled": true,
+                "ignore_network_errors": true,
+                "max_breaches": 1,
+                "min_password_length": 8
+              },
+              "enabled": true
+            },
+            "profile": {
+              "enabled": true
+            },
+            "totp": {
+              "config": {
+                "issuer": "test"
+              },
+              "enabled": false
+            },
+            "webauthn": {
+              "config": {
+                "passwordless": false,
+                "rp": {
+                  "display_name": "test",
+                  "id": "dreamy-payne-kncunjev2t.projects.oryapis.com",
+                  "origins": [
+                    "https://dreamy-payne-kncunjev2t.projects.oryapis.com"
+                  ]
+                }
+              },
+              "enabled": false
+            }
+          }
+        },
+        "serve": {
+          "admin": {
+            "base_url": "https://dreamy-payne-kncunjev2t.projects.oryapis.com/",
+            "request_log": {
+              "disable_for_health": true
+            }
+          },
+          "public": {
+            "base_url": "https://dreamy-payne-kncunjev2t.projects.oryapis.com/",
+            "cors": {
+              "enabled": false
+            },
+            "request_log": {
+              "disable_for_health": true
+            }
+          }
+        },
+        "session": {
+          "cookie": {
+            "domain": "dreamy-payne-kncunjev2t.projects.oryapis.com",
+            "name": "ory_session_dreamypaynekncunjev2t",
+            "path": "/",
+            "persistent": false,
+            "same_site": "Lax"
+          },
+          "lifespan": "72h0m0s",
+          "whoami": {
+            "required_aal": "highest_available",
+            "tokenizer": {
+              "templates": {}
+            }
+          }
+        }
+      }
+    },
+    "oauth2": {
+      "config": {
+        "clients": {
+          "http": {
+            "disallow_private_ip_ranges": true
+          }
+        },
+        "dev": true,
+        "hsm": {
+          "enabled": false
+        },
+        "oauth2": {
+          "client_credentials": {
+            "default_grant_allowed_scope": false
+          },
+          "exclude_not_before_claim": false,
+          "expose_internal_errors": true,
+          "grant": {
+            "jwt": {
+              "iat_optional": false,
+              "jti_optional": false,
+              "max_ttl": "720h0m0s"
+            }
+          },
+          "hashers": {
+            "algorithm": "pbkdf2",
+            "pbkdf2": {
+              "iterations": 10000
+            }
+          },
+          "pkce": {
+            "enforced": false,
+            "enforced_for_public_clients": false
+          },
+          "session": {
+            "encrypt_at_rest": true
+          }
+        },
+        "oidc": {
+          "dynamic_client_registration": {
+            "enabled": false
+          },
+          "subject_identifiers": {}
+        },
+        "serve": {
+          "admin": {
+            "cors": {
+              "allow_credentials": true,
+              "allowed_headers": [
+                "Accept",
+                "Content-Type",
+                "Content-Length",
+                "Accept-Language",
+                "Content-Language",
+                "Authorization"
+              ],
+              "allowed_methods": [
+                "POST",
+                "GET",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "CONNECT",
+                "HEAD",
+                "OPTIONS",
+                "TRACE"
+              ],
+              "debug": false,
+              "enabled": false,
+              "exposed_headers": [
+                "Cache-Control",
+                "Expires",
+                "Last-Modified",
+                "Pragma",
+                "Content-Length",
+                "Content-Language",
+                "Content-Type"
+              ],
+              "max_age": 0
+            },
+            "tls": {
+              "enabled": false
+            }
+          },
+          "cookies": {
+            "domain": "dreamy-payne-kncunjev2t.projects.oryapis.com",
+            "names": {
+              "consent_csrf": "ory_oauth2_consent_csrf_dreamypaynekncunjev2t",
+              "login_csrf": "ory_oauth2_login_csrf_dreamypaynekncunjev2t",
+              "session_csrf": "ory_oauth2_session_csrf_dreamypaynekncunjev2t"
+            },
+            "same_site_legacy_workaround": false,
+            "same_site_mode": "Lax",
+            "secure": true
+          },
+          "public": {
+            "cors": {
+              "allow_credentials": true,
+              "allowed_headers": [
+                "Accept",
+                "Content-Type",
+                "Content-Length",
+                "Accept-Language",
+                "Content-Language",
+                "Authorization"
+              ],
+              "allowed_methods": [
+                "POST",
+                "GET",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "CONNECT",
+                "HEAD",
+                "OPTIONS",
+                "TRACE"
+              ],
+              "debug": false,
+              "enabled": false,
+              "exposed_headers": [
+                "Cache-Control",
+                "Expires",
+                "Last-Modified",
+                "Pragma",
+                "Content-Length",
+                "Content-Language",
+                "Content-Type"
+              ],
+              "max_age": 0
+            },
+            "tls": {
+              "enabled": false
+            }
+          },
+          "tls": {
+            "enabled": false
+          }
+        },
+        "strategies": {
+          "access_token": "opaque",
+          "jwt": {},
+          "scope": "wildcard"
+        },
+        "ttl": {
+          "access_token": "1h0m0s",
+          "auth_code": "30m0s",
+          "id_token": "1h0m0s",
+          "login_consent_request": "30m0s",
+          "refresh_token": "720h0m0s"
+        },
+        "urls": {
+          "consent": "/ui/consent",
+          "error": "/ui/error",
+          "login": "/ui/login",
+          "logout": "/ui/logout",
+          "post_logout_redirect": "/oauth2/fallbacks/logout",
+          "registration": "/ui/registration",
+          "self": {
+            "admin": "https://dreamy-payne-kncunjev2t.projects.oryapis.com/admin",
+            "issuer": "https://dreamy-payne-kncunjev2t.projects.oryapis.com",
+            "public": "https://dreamy-payne-kncunjev2t.projects.oryapis.com"
+          }
+        },
+        "webfinger": {
+          "jwks": {},
+          "oidc_discovery": {
+            "auth_url": "https://dreamy-payne-kncunjev2t.projects.oryapis.com/oauth2/auth",
+            "jwks_url": "https://dreamy-payne-kncunjev2t.projects.oryapis.com/.well-known/jwks.json",
+            "token_url": "https://dreamy-payne-kncunjev2t.projects.oryapis.com/oauth2/token",
+            "userinfo_url": "https://dreamy-payne-kncunjev2t.projects.oryapis.com/userinfo"
+          }
+        }
+      }
+    },
+    "permission": {
+      "config": {
+        "namespaces": []
+      }
+    }
+  },
+  "slug": "dreamy-payne-kncunjev2t",
+  "state": "running",
+  "workspace_id": "af76845f-967f-4ce3-ac26-0620144a33ca",
+  "AdditionalProperties": {}
+}
