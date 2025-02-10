@@ -51,7 +51,7 @@
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-prettier": "^5.2.3",
     "eslint-plugin-vue": "^9.30.0",
-    "prettier": "^3.3.3",
+    "prettier": "^3.5.0",
     "start-server-and-test": "^2.0.10",
     "typescript": "^5.7.3"
   }
