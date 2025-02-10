@@ -33,7 +33,7 @@ black = "^25.1.0"
 flake8-black = "^0.3.6"
 isort = "^6.0.0"
 django-extensions = "^3.2.3"
-coverage = "^7.6.10"
+coverage = "^7.6.11"
 
 [build-system]
 requires = ["poetry-core"]
