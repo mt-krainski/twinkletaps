@@ -20,7 +20,7 @@
     "@eslint/compat": "^1.2.5",
     "@eslint/eslintrc": "^3.3.0",
     "@eslint/js": "^9.23.0",
-    "@eslint/migrate-config": "^1.3.8",
+    "@eslint/migrate-config": "^1.4.0",
     "@mdi/font": "^7.4.47",
     "@nuxt/kit": "^3.16.1",
     "@pinia/nuxt": "^0.9.0",
