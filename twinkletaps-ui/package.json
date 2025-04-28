@@ -19,7 +19,7 @@
   "dependencies": {
     "@eslint/compat": "^1.2.8",
     "@eslint/eslintrc": "^3.3.0",
-    "@eslint/js": "^9.23.0",
+    "@eslint/js": "^9.25.1",
     "@eslint/migrate-config": "^1.4.1",
     "@mdi/font": "^7.4.47",
     "@nuxt/kit": "^3.17.0",
