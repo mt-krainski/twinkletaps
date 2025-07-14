@@ -28,7 +28,7 @@
     "axios": "^1.10.0",
     "globals": "^16.2.0",
     "module-alias": "^2.2.3",
-    "nuxt": "^3.17.5",
+    "nuxt": "^3.17.7",
     "pinia": "^3.0.3",
     "sass": "^1.89.2",
     "vite-plugin-vuetify": "^2.1.1",
