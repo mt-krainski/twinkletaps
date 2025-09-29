@@ -32,7 +32,7 @@
     "pinia": "^3.0.3",
     "sass": "^1.93.0",
     "vite-plugin-vuetify": "^2.1.2",
-    "vue": "^3.5.20",
+    "vue": "^3.5.22",
     "vue-router": "^4.5.1",
     "vuetify": "^3.9.6"
   },
