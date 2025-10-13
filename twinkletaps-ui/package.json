@@ -52,7 +52,7 @@
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-vue": "^10.5.0",
     "prettier": "^3.6.2",
-    "start-server-and-test": "^2.0.13",
+    "start-server-and-test": "^2.1.2",
     "typescript": "^5.9.2"
   }
 }
