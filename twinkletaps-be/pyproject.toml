@@ -12,7 +12,7 @@ djangorestframework = "^3.16.1"
 markdown = "^3.10"
 django-filter = "^25.2"
 requests = "^2.32.5"
-pytest = "^9.0.0"
+pytest = "^9.0.1"
 pytest-django = "^4.11.1"
 
 
