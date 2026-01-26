@@ -22,7 +22,7 @@
     "@eslint/js": "^9.39.0",
     "@eslint/migrate-config": "^2.0.1",
     "@mdi/font": "^7.4.47",
-    "@nuxt/kit": "^4.2.2",
+    "@nuxt/kit": "^4.3.0",
     "@pinia/nuxt": "^0.11.3",
     "add": "^2.0.6",
     "axios": "^1.13.1",
