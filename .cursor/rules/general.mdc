@@ -1,0 +1,15 @@
+---
+alwaysApply: true
+---
+# Project Configuration
+
+## Project Overview
+This is a simple Arduino project. The project follows modern development practices with a focus on performance and developer experience.
+
+## Other notes
+- Unless I explicitly ask for it, don't modify the readme or write other documentation files.
+- Be cool and casual, don't use overexaggerated phrases like "You're absolutely right!"
+- Prefer to copy or move files to deleting and then reconstructing them.
+- Maintain clean code, don't leave unnecessary comments. Comments should be used to explain the "why" of the code, not the "what".
+- Before making any bigger changes, be sure to analyze the codebase and used practices and patterns and use them in the new code.
+- If we're in a chain of changes, and some functions changed places, unless there is a good reason, don't change the functions back. E.g. if you originally wrote a declaration in `lib.h` and I moved to a different file, don't change the type declaration back `lib.h`.

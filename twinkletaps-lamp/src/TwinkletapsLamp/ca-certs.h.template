@@ -1,0 +1,14 @@
+// CA root certificate for TLS connections.
+// Generate this file by running: ./scripts/fetch-ca-cert.sh
+// Or create it manually with your own CA cert in PEM format.
+
+#ifndef CA_CERTS_H
+#define CA_CERTS_H
+
+static const char ROOT_CA_CERT[] = R"(
+-----BEGIN CERTIFICATE-----
+... your CA certificate in PEM format ...
+-----END CERTIFICATE-----
+)";
+
+#endif

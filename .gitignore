@@ -1,5 +1,5 @@
 .DS_Store
-arduino-secrets.h
+
 .venv/
 .vscode/
 **/__pycache__
