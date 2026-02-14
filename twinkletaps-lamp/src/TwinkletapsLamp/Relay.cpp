@@ -13,9 +13,9 @@ void Relay::init() {
 }
 
 void Relay::enable() {
-  digitalWrite(_pin, LOW);
+  digitalWrite(_pin, HIGH);
 }
 
 void Relay::disable() {
-  digitalWrite(_pin, HIGH);
+  digitalWrite(_pin, LOW);
 }
