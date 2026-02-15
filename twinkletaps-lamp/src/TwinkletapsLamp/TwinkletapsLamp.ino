@@ -12,13 +12,13 @@ MqttClient mqttClient(wifiClient);
 
 const int RELAY_PIN = 8;
 const int BUTTON_PIN = 12;
-const int SWITCH_PIN = 11;
+const int ENABLE_SWITCH_PIN = 11;
 
 Led led(LED_BUILTIN);
 Relay relay(RELAY_PIN);
 
 volatile bool buttonPressed = false;
-volatile bool switchEnabled = false;
+volatile bool systemEnabled = false;
 
 const int MQTT_PORT = 8883;
 const int SEQUENCE_STEP_MS = 250;
@@ -38,9 +38,9 @@ void setup() {
   pinMode(BUTTON_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), onButtonPress, RISING);
 
-  pinMode(SWITCH_PIN, INPUT);
-  attachInterrupt(digitalPinToInterrupt(SWITCH_PIN), onSwitchChange, CHANGE);
-  switchEnabled = (digitalRead(SWITCH_PIN) == HIGH);
+  pinMode(ENABLE_SWITCH_PIN, INPUT);
+  attachInterrupt(digitalPinToInterrupt(ENABLE_SWITCH_PIN), onSwitchChange, CHANGE);
+  systemEnabled = (digitalRead(ENABLE_SWITCH_PIN) == HIGH);
 
   Serial.println("🚀 TwinkleTapsLampNew - MQTT Subscriber");
   Serial.println("========================================");
@@ -197,7 +197,7 @@ void playSequence(const char* sequence) {
   Serial.print("   ▶ Playing sequence: ");
   Serial.println(sequence);
 
-  if (!switchEnabled) {
+  if (!systemEnabled) {
     Serial.println("   ⏭ Switch is OFF, skipping sequence");
     return;
   }
@@ -228,7 +228,7 @@ void onButtonPress() {
 }
 
 void onSwitchChange() {
-  switchEnabled = (digitalRead(SWITCH_PIN) == HIGH);
+  systemEnabled = (digitalRead(ENABLE_SWITCH_PIN) == HIGH);
 }
 
 void printWiFiStatus() {
