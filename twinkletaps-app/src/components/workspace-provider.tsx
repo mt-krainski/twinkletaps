@@ -2,24 +2,25 @@
 
 import { createContext, useCallback, useContext } from "react";
 import { useRouter } from "next/navigation";
+import type { WorkspaceRole } from "@/lib/services/workspace";
 
 export interface WorkspaceInfo {
   id: string;
   name: string;
 }
 
-export interface TeamInfo {
+export interface DeviceInfo {
   id: string;
   name: string;
-  isPrivate: boolean;
 }
 
 interface WorkspaceContextType {
   workspaces: WorkspaceInfo[];
   selectedWorkspaceId: string | undefined;
-  teams: TeamInfo[];
+  devices: DeviceInfo[];
+  workspaceRole: WorkspaceRole | undefined;
   switchWorkspace: (workspaceId: string) => void;
-  navigateToTeam: (teamId: string) => void;
+  navigateToDevice: (deviceId: string) => void;
   navigateHome: () => void;
 }
 
@@ -38,14 +39,16 @@ export function useWorkspace(): WorkspaceContextType {
 interface WorkspaceProviderProps {
   workspaces: WorkspaceInfo[];
   selectedWorkspaceId?: string;
-  teams: TeamInfo[];
+  devices: DeviceInfo[];
+  workspaceRole: WorkspaceRole | undefined;
   children: React.ReactNode;
 }
 
 export function WorkspaceProvider({
   workspaces,
   selectedWorkspaceId,
-  teams,
+  devices,
+  workspaceRole,
   children,
 }: WorkspaceProviderProps) {
   const router = useRouter();
@@ -57,9 +60,9 @@ export function WorkspaceProvider({
     [router]
   );
 
-  const navigateToTeam = useCallback(
-    (teamId: string) => {
-      router.push(`/teams/${teamId}`);
+  const navigateToDevice = useCallback(
+    (deviceId: string) => {
+      router.push(`/devices/${deviceId}`);
     },
     [router]
   );
@@ -73,9 +76,10 @@ export function WorkspaceProvider({
       value={{
         workspaces,
         selectedWorkspaceId,
-        teams,
+        devices,
+        workspaceRole,
         switchWorkspace,
-        navigateToTeam,
+        navigateToDevice,
         navigateHome,
       }}
     >

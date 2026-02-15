@@ -8,7 +8,8 @@ import { createClient } from "@/lib/supabase/server";
 import {
   getProfileSummary,
   getUserWorkspaces,
-  getWorkspaceTeams,
+  getWorkspaceDevices,
+  getUserWorkspaceRole,
 } from "@/lib/services";
 
 interface AuthenticatedLayoutProps {
@@ -37,14 +38,16 @@ export default async function AuthenticatedLayout({
   }));
 
   const selectedWorkspaceId = workspaceList[0]?.id;
-  const teams = selectedWorkspaceId
-    ? await getWorkspaceTeams(user.id, selectedWorkspaceId)
-    : [];
+  const [devices, workspaceRole] = selectedWorkspaceId
+    ? await Promise.all([
+        getWorkspaceDevices(user.id, selectedWorkspaceId),
+        getUserWorkspaceRole(user.id, selectedWorkspaceId),
+      ])
+    : [[], undefined];
 
-  const teamList = teams.map((team) => ({
-    id: team.id,
-    name: team.name,
-    isPrivate: team.isPrivate,
+  const deviceList = devices.map((device) => ({
+    id: device.id,
+    name: device.name,
   }));
 
   return (
@@ -60,7 +63,8 @@ export default async function AuthenticatedLayout({
         <WorkspaceProvider
           workspaces={workspaceList}
           selectedWorkspaceId={selectedWorkspaceId}
-          teams={teamList}
+          devices={deviceList}
+          workspaceRole={workspaceRole ?? undefined}
         >
           <DashboardShell>{children}</DashboardShell>
         </WorkspaceProvider>

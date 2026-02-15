@@ -7,7 +7,7 @@ import {
 import {
   WorkspaceContext,
   type WorkspaceInfo,
-  type TeamInfo,
+  type DeviceInfo,
 } from "@/components/workspace-provider";
 
 export async function withDropdown(
@@ -44,10 +44,10 @@ export const mockWorkspaces: WorkspaceInfo[] = [
   { id: "team-2", name: "Startup Inc" },
 ];
 
-export const mockTeams: TeamInfo[] = [
-  { id: "private-1", name: "My Notes", isPrivate: true },
-  { id: "team-a", name: "Engineering", isPrivate: false },
-  { id: "team-b", name: "Design", isPrivate: false },
+export const mockDevices: DeviceInfo[] = [
+  { id: "device-1", name: "Living Room" },
+  { id: "device-2", name: "Bedroom" },
+  { id: "device-3", name: "Office" },
 ];
 
 type UserProfileValue = React.ComponentProps<
@@ -81,9 +81,10 @@ export function MockProviders({
   const workspace: WorkspaceValue = {
     workspaces: mockWorkspaces,
     selectedWorkspaceId: mockWorkspaces[0]?.id,
-    teams: mockTeams,
+    devices: mockDevices,
+    workspaceRole: "admin",
     switchWorkspace: fn(),
-    navigateToTeam: fn(),
+    navigateToDevice: fn(),
     navigateHome: fn(),
     ...workspaceValue,
   };

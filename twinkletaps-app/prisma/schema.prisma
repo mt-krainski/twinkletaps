@@ -16,7 +16,7 @@ model Profile {
   website   String?
 
   userWorkspaces UserWorkspace[]
-  userTeams      UserTeam[]
+  userDevices    UserDevice[]
   roleAuditLogs  RoleAuditLog[]
 
   @@map("profiles")
@@ -30,29 +30,31 @@ model Workspace {
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz
 
-  teams          Team[]
+  devices        Device[]
   userWorkspaces UserWorkspace[]
 
   @@map("workspaces")
 }
 
-model Team {
+model Device {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   workspaceId String    @map("workspace_id") @db.Uuid
   name        String
   avatarUrl   String?   @map("avatar_url")
-  isPrivate   Boolean   @default(false) @map("is_private")
+  deviceUuid  String    @unique @map("device_uuid") @db.Uuid
+  mqttTopic   String    @map("mqtt_topic")
+  mqttUsername String?  @map("mqtt_username")
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
 
-  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  userTeams UserTeam[]
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userDevices UserDevice[]
 
-  @@unique([name, workspaceId], map: "teams_name_workspace_unique")
-  @@index([deletedAt], map: "teams_deleted_at_idx")
-  @@index([workspaceId], map: "teams_workspace_id_idx")
-  @@map("teams")
+  @@unique([name, workspaceId], map: "devices_name_workspace_unique")
+  @@index([deletedAt], map: "devices_deleted_at_idx")
+  @@index([workspaceId], map: "devices_workspace_id_idx")
+  @@map("devices")
 }
 
 model UserWorkspace {
@@ -72,21 +74,21 @@ model UserWorkspace {
   @@map("user_workspaces")
 }
 
-model UserTeam {
+model UserDevice {
   userId    String    @map("user_id") @db.Uuid
-  teamId    String    @map("team_id") @db.Uuid
+  deviceId  String    @map("device_id") @db.Uuid
   role      String
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz
 
-  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
-  team Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user   Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device Device  @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
-  @@id([userId, teamId])
-  @@index([deletedAt], map: "user_teams_deleted_at_idx")
-  @@index([teamId], map: "user_teams_team_id_idx")
-  @@map("user_teams")
+  @@id([userId, deviceId])
+  @@index([deletedAt], map: "user_devices_deleted_at_idx")
+  @@index([deviceId], map: "user_devices_device_id_idx")
+  @@map("user_devices")
 }
 
 model RoleAuditLog {

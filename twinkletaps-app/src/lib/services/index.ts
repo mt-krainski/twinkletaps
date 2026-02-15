@@ -1,4 +1,4 @@
 export * from "./profile";
 export * from "./workspace";
-export * from "./team";
+export * from "./device";
 
