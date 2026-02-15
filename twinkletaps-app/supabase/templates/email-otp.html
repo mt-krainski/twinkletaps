@@ -1,0 +1,41 @@
+<h2>Your verification code</h2>
+<p>Hi there,</p>
+<p>
+  You requested to sign in to {{ .CompanyName }}. Please use the verification
+  code below:
+</p>
+
+<div
+  style="
+    background-color: #f9f9f9;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    margin: 30px 0;
+  "
+>
+  <h1
+    style="
+      font-size: 32px;
+      font-weight: bold;
+      letter-spacing: 8px;
+      color: #111;
+      font-family: 'Courier New', monospace;
+      margin: 0;
+    "
+  >
+    {{ .Token }}
+  </h1>
+</div>
+
+<p>This code will expire in 1 hour.</p>
+
+<p style="color: #666; font-size: 14px">
+  If you didn't request this code, you can safely ignore this email.
+</p>
+
+<hr style="margin-top: 30px; border: none; border-top: 1px solid #e0e0e0" />
+<p style="color: #666; font-size: 14px">
+  Best regards,<br />{{ .CompanyName }} Team
+</p>

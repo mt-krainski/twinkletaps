@@ -1,0 +1,32 @@
+name: Lint
+on:
+  workflow_call:
+    inputs:
+      cache-key:
+        required: true
+        type: string
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Restore dependencies from cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ inputs.cache-key }}
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Lint
+        run: npm run lint

@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Profile {
+  id        String    @id @db.Uuid
+  updatedAt DateTime? @updatedAt @map("updated_at") @db.Timestamptz
+  username  String?   @unique
+  fullName  String?   @map("full_name")
+  avatarUrl String?   @map("avatar_url")
+  website   String?
+
+  userWorkspaces UserWorkspace[]
+  userTeams      UserTeam[]
+  roleAuditLogs  RoleAuditLog[]
+
+  @@map("profiles")
+}
+
+model Workspace {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  avatarUrl String?   @map("avatar_url")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  teams          Team[]
+  userWorkspaces UserWorkspace[]
+
+  @@map("workspaces")
+}
+
+model Team {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId String    @map("workspace_id") @db.Uuid
+  name        String
+  avatarUrl   String?   @map("avatar_url")
+  isPrivate   Boolean   @default(false) @map("is_private")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
+
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userTeams UserTeam[]
+
+  @@unique([name, workspaceId], map: "teams_name_workspace_unique")
+  @@index([deletedAt], map: "teams_deleted_at_idx")
+  @@index([workspaceId], map: "teams_workspace_id_idx")
+  @@map("teams")
+}
+
+model UserWorkspace {
+  userId      String    @map("user_id") @db.Uuid
+  workspaceId String    @map("workspace_id") @db.Uuid
+  role        String
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
+
+  user      Profile   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([userId, workspaceId])
+  @@index([deletedAt], map: "user_workspaces_deleted_at_idx")
+  @@index([workspaceId], map: "user_workspaces_workspace_id_idx")
+  @@map("user_workspaces")
+}
+
+model UserTeam {
+  userId    String    @map("user_id") @db.Uuid
+  teamId    String    @map("team_id") @db.Uuid
+  role      String
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@id([userId, teamId])
+  @@index([deletedAt], map: "user_teams_deleted_at_idx")
+  @@index([teamId], map: "user_teams_team_id_idx")
+  @@map("user_teams")
+}
+
+model RoleAuditLog {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tableName String    @map("table_name")
+  recordId  String    @map("record_id")
+  userId    String    @map("user_id") @db.Uuid
+  action    String
+  oldValues Json?     @map("old_values")
+  newValues Json?     @map("new_values")
+  changedAt DateTime  @default(now()) @map("changed_at") @db.Timestamptz
+
+  user Profile @relation(fields: [userId], references: [id])
+
+  @@index([tableName, recordId], map: "role_audit_log_table_record_idx")
+  @@index([userId], map: "role_audit_log_user_id_idx")
+  @@map("role_audit_log")
+}

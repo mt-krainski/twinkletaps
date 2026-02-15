@@ -1,0 +1,38 @@
+name: Install Dependencies
+on:
+  workflow_call:
+    outputs:
+      cache-key:
+        description: "Cache key for dependencies"
+        value: ${{ jobs.install-dependencies.outputs.cache-key }}
+
+jobs:
+  install-dependencies:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      cache-key: ${{ steps.set-cache-key.outputs.key }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set cache key
+        id: set-cache-key
+        run: echo "key=package-lock.json.${{ hashFiles('package-lock.json') }}" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ steps.set-cache-key.outputs.key }}
+
+      - name: Install dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: npm ci

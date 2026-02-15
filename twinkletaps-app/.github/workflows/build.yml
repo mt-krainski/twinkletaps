@@ -1,0 +1,50 @@
+name: Build
+on:
+  workflow_call:
+    inputs:
+      cache-key:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Restore dependencies from cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ inputs.cache-key }}
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ${{ github.workspace }}/.next/cache
+          # Generate a new cache whenever packages or source files change.
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          # If source files changed but packages didn't, rebuild from a prior cache.
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+
+      - name: Try build
+        # This step is here mainly to test that the build works. These env vars are
+        # actually baked in into the built artifacts. So if you want ot use the artifacts
+        # produced at this step in production, you need to provide accurate env vars.
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54321"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-key"
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:54322/postgres"
+        run: npm run build

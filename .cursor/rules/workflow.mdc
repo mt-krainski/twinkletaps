@@ -1,0 +1,344 @@
+---
+alwaysApply: true
+---
+
+# Agentic Development Rules: File-Based Kanban + Small Reviewable Increments
+
+## Goals
+
+* Mimic a normal software development lifecycle with clear stages: **Intake → Plan → Build → Verify/Review → Merge**.
+* Use a **filesystem Kanban**: each task is a file; board columns are directories.
+* Optimize for **small, reviewable, testable increments**:
+
+  * Target **~200-300 lines changed** per task (guideline, not a hard cap).
+  * Each task must produce a **coherent, verifiable increment** (not “half a feature”).
+
+* Make work easy to audit:
+
+  * Every change set links back to a **task ID**.
+  * Each task includes verification steps, test plan, and (when applicable) PR/branch metadata.
+
+---
+
+## Kanban Board in the Repository
+
+Create a directory at repo root:
+
+* `./.kanban/`
+
+With these columns (directories):
+
+* `.kanban/00_intake/`
+  Raw user ideas / requests. May be incomplete.
+* `.kanban/10_analysis_plan/`
+  Agent-produced plan and proposed tasks, no code changes.
+* `.kanban/20_ready/`
+  Approved tasks ready to implement (one file per task).
+* `.kanban/30_in_progress/`
+  A task currently being implemented.
+* `.kanban/40_review/`
+  Implemented and ready for code review + verification.
+* `.kanban/50_verified/`
+  Passed verification (tests, checks, manual validation notes).
+* `.kanban/60_merged/`
+  Landed in mainline; includes merge/PR reference.
+* `.kanban/90_blocked/`
+  Blocked tasks with reason + needed input.
+
+**Invariant:** A task file exists in **exactly one** column at a time.
+
+---
+
+## Task ID and File Naming
+
+Every task has a unique ID:
+
+* Format: `T-###` (e.g., `T-003`)
+
+Task filename:
+
+* `T-###__short_slug.md`
+  Example: `T-003__add_ws_auth_middleware.md`
+
+IDs are immutable. If scope changes substantially, create a new task.
+
+---
+
+## Task File Template (Required Fields)
+
+Each task file MUST include the following sections:
+
+1. **Header**
+
+   * `Task ID:`
+   * `Title:`
+   * `Owner:` (Human / Agent name)
+   * `Status:` (mirrors directory column)
+   * `Created:` / `Updated:`
+
+2. **Problem / Goal**
+
+   * What user value this delivers.
+   * Non-goals (explicitly state what is out of scope).
+
+3. **Acceptance Criteria**
+
+   * Bullet list of observable outcomes.
+   * Must include how to verify the feature works.
+
+4. **Repo Context**
+
+   * Files/components likely involved (paths).
+   * Existing patterns to follow (frameworks, architectural constraints).
+   * Relevant prior code / modules and why.
+
+5. **Implementation Plan (Small & Concrete)**
+
+   * Steps with expected code touchpoints.
+   * Expected change size estimate (rough LOC delta).
+
+6. **Test Plan**
+
+   * Unit/integration/e2e updates required.
+   * Commands to run (exact).
+   * Any fixtures/mocks needed.
+
+7. **Verification Notes**
+
+   * Manual validation steps (if applicable).
+   * Screenshots/log snippets expected (optional).
+
+8. **Risk / Rollback**
+
+   * What could break, and how to rollback safely.
+
+9. **Metadata**
+
+   * `Branch:` (if used)
+   * `PR:` (link or placeholder)
+   * `Depends on:` (Task IDs)
+   * `Related:` (Issue/Jira IDs, optional)
+
+---
+
+## Stage Responsibilities and Rules
+
+### Stage 00: Intake (Human → `00_intake`)
+
+**Human responsibility**
+
+* Capture the request/idea in an intake file.
+* Provide any constraints (time, scope, tech constraints, coding standards).
+
+**Agent responsibility (when invoked on intake)**
+
+* Do not code.
+* Ask clarifying questions when needed. Err on the side of asking questions and clarifications
+
+**Output**
+
+* Move intake file to `10_analysis_plan/` with a completed analysis + task breakdown (see Stage 10).
+
+---
+
+### Stage 10: Analysis & Planning (Agent → `10_analysis_plan`)
+
+**Agent must:**
+
+1. **Scan the repo** to understand:
+
+   * Architecture, conventions, test setup, CI, linters, code ownership patterns.
+
+2. Identify:
+
+   * Where changes should live.
+   * Existing helpers/utilities to reuse.
+   * Risks and unknowns.
+
+3. Produce an **implementation plan**:
+
+   * implementation plan should consist of an overview of work needed to be done - think of this as an explicit list of thigs to do
+   * implementation plan breaks the work down into smaller tasks:
+      * Each task is a coherent increment (not half a feature).
+      * Aim for ~200-300 LOC change per task.
+      * Each task must be testable/verifiable in isolation.
+      * If one feature is large, split by **vertical slices** (thin end-to-end capability) or by **preparatory refactor** that is independently valuable.
+      * After each change, the application must remain functioning. E.g. it's not acceptable to have one task modify the database schema and a second task modify the prisma orm definition of that schema
+
+**Task decomposition rules**
+
+* ✅ Good splits:
+
+  * “Add auth middleware + tests” (complete behavior + verification)
+  * “Add DB migration + read API endpoint + tests” (complete path)
+  * “Introduce shared utility + refactor two call sites + tests” (coherent cleanup enabling next steps)
+
+* ❌ Bad splits:
+
+  * “Add half of endpoint logic” then “add rest of endpoint logic”
+  * “Add UI skeleton” with nothing runnable or testable
+
+Dos and don'ts:
+- make each task clear and descriptive
+
+
+**Output artifacts**
+
+* Append the plan to the original task as a new section (Plan)
+* Ask human for review
+* After human accepts the plan, create separate task files in `.kanban/20_ready/` for each proposed task.
+* Tasks should reference the plan document
+
+---
+
+### Stage 20: Ready (Human gate → `20_ready`)
+
+**Human responsibility**
+
+* Select next task(s) to execute.
+* Optionally edit acceptance criteria or priorities.
+
+**Agent responsibility**
+
+* Do not start multiple tasks in parallel unless explicitly instructed.
+* When starting a task: move exactly one file to `30_in_progress/`.
+* Focus on exactly one work item at a time. Feel free to reference Epic for additional context.
+
+---
+
+### Stage 30: Development (Agent → `30_in_progress`)
+
+**Agent must:**
+
+0. Move task to the in-progress directory. Prefer `mv` to recreating the file.
+1. Create a branch (if branch workflow used):
+
+   * `task/<TASK_ID>/<slug>`
+
+2. Implement strictly according to the task scope.
+3. Keep changes within the targeted review size; if scope expands:
+
+   * Stop and create a follow-up task; do not silently balloon.
+
+4. Update tests and docs necessary for the increment.
+5. Run the project's standard checks locally (as available).
+
+**Definition of Done for Development**
+
+* Acceptance criteria satisfied.
+* Test plan implemented and runnable.
+* No obvious lint/type failures introduced.
+* Task file metadata updated:
+
+  * Branch name
+  * PR link/placeholder
+  * Notes about what changed
+
+**Then**
+
+* Move task file to `40_review/`.
+
+---
+
+### Stage 40: Review & Verification (Second agent + Human → `40_review`)
+
+**Verifier Agent (or “review agent”) must:**
+
+* Re-read the task requirements and compare with the change.
+* Check for:
+
+  * Correctness, edge cases, security/regression risks
+  * Consistency with repo patterns
+  * Test adequacy (what's missing)
+  * Documentation / comments where needed
+  
+* Provide a concise review report in the task file:
+
+  * “Pass / Needs changes”
+  * Specific required edits
+
+**Human responsibility**
+
+* Final sanity check; optionally run smoke tests.
+
+**If changes required**
+
+* Move back to `30_in_progress/` with explicit review notes.
+
+**If accepted**
+
+* Move to `50_verified/`.
+
+---
+
+### Stage 50: Merge (Human or merge agent → `50_verified` → `60_merged`)
+
+**Merge requirements**
+
+* All CI green (if applicable).
+* Task file includes:
+
+  * PR link
+  * Summary of what merged
+  * Verification evidence (tests run + manual checks)
+
+**After merge**
+
+* Move to `60_merged/`.
+* Optionally append release note or changelog reference if your repo uses it.
+
+---
+
+## Pull Requests and Linking
+
+If using PRs:
+
+* PR title format: `[TASK_ID] <Title>`
+* PR description must include:
+
+  * Task ID
+  * What changed
+  * How to test
+  * Risks/rollback notes
+
+Task file must include PR URL once created.
+
+---
+
+## Quality Bar (Non-Negotiables)
+
+* Follow existing architecture and naming conventions.
+* Prefer reuse over invention.
+* No dead code, commented-out blocks, or “temporary hacks” without explicit task notes.
+* Every behavior change must have:
+
+  * Tests OR a clearly documented reason why tests are not feasible, plus manual verification steps.
+* Keep diffs reviewable:
+
+  * Avoid large mechanical refactors mixed with feature work unless the task is explicitly a refactor task.
+
+---
+
+## Operating Mode: How You (the Human) Invoke Agents
+
+You will typically do:
+
+1. Add/modify an intake file in `00_intake/`.
+2. Invoke **Planner Agent** on that file:
+
+   * Output: plan + tasks moved into `20_ready/`.
+3. Pick next task and invoke **Builder Agent** on that task file:
+
+   * Output: code + task moved to `40_review/`.
+4. Invoke **Reviewer Agent** on the review task file:
+
+   * Output: review notes; pass → `50_verified`, fail → `30_in_progress`.
+5. Merge and move to `60_merged/`.
+
+---
+
+## Default Assumptions (Override Per Repo)
+
+* Branch naming: `task/<TASK_ID>/<slug>`
+* Commit messages: `<TASK_ID>: <short message>`
+* Test commands: use the repo's documented defaults; if missing, the agent must infer and document the commands used.
