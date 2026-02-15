@@ -107,7 +107,7 @@ jobs:
 
       - name: Create mock secrets file
         working-directory: ./twinkletaps-lamp
-        run: cp arduino-secrets.h.template arduino-secrets.h
+        run: cp src/TwinkletapsLamp/arduino-secrets.h.template src/TwinkletapsLamp/arduino-secrets.h
 
       - name: Compile TwinkletapsLamp
         working-directory: ./twinkletaps-lamp
