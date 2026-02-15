@@ -49,7 +49,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
@@ -87,6 +87,32 @@ jobs:
           source .venv/bin/activate
           poe lint
 
+  build-twinkletaps-lamp:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install dependencies
+        working-directory: ./twinkletaps-lamp
+        run: ./scripts/install-deps.sh
+
+      - name: Create mock board configuration
+        working-directory: ./twinkletaps-lamp
+        run: echo "arduino:renesas_uno:unor4wifi" > .board_fqbn
+
+      - name: Compile TwinkletapsLamp
+        working-directory: ./twinkletaps-lamp
+        run: ./scripts/compile.sh
+
+      - name: Verify compilation output
+        run: |
+          echo "✅ Arduino project compiled successfully!"
+
   build-twinkletaps-ui:
     runs-on: ubuntu-latest
 
@@ -118,8 +144,14 @@ jobs:
           npm run lint
 
   dependabot:
-    name: 'Dependabot'
-    needs: [build-web-app, build-twinkletaps-be, build-twinkletaps-ui]
+    name: "Dependabot"
+    needs:
+      [
+        build-web-app,
+        build-twinkletaps-be,
+        build-twinkletaps-ui,
+        build-twinkletaps-lamp,
+      ]
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'dependabot[bot]' && github.event_name == 'pull_request'}}
     steps:
@@ -127,7 +159,7 @@ jobs:
         id: metadata
         uses: dependabot/fetch-metadata@v2
         with:
-          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
       - name: Enable auto-merge for Dependabot PRs
         run: gh pr merge --auto --merge "$PR_URL"
         env:
