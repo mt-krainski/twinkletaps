@@ -107,3 +107,14 @@ model RoleAuditLog {
   @@index([userId], map: "role_audit_log_user_id_idx")
   @@map("role_audit_log")
 }
+
+model MqttCredential {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username      String    @unique
+  password      String
+  allocatedUuid String    @unique @map("allocated_uuid") @db.Uuid
+  claimedAt     DateTime? @map("claimed_at") @db.Timestamptz
+
+  @@index([claimedAt], map: "mqtt_credentials_claimed_at_idx")
+  @@map("mqtt_credentials")
+}
