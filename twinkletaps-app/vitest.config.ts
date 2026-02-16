@@ -14,7 +14,7 @@ export default defineConfig({
   plugins: [tsconfigPaths()],
   resolve: {
     alias: {
-      "@": path.join(dirname, "src"),
+      "@": path.resolve(dirname, "src"),
     },
   },
   test: {
@@ -28,6 +28,7 @@ export default defineConfig({
         },
       },
       {
+        extends: true,
         test: {
           name: 'integration',
           environment: 'node',
