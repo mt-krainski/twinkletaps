@@ -1,7 +1,68 @@
 import { prisma } from "../prisma";
 import { getUserWorkspaceRole } from "./workspace";
+import {
+  claimMqttCredential,
+  MqttCredentialPoolEmptyError,
+} from "./mqtt-credentials";
 
 export type DeviceRole = "user";
+
+const NAME_MIN_LENGTH = 1;
+const NAME_MAX_LENGTH = 100;
+const MQTT_TOPIC_PREFIX = "twinkletaps/devices";
+
+export type RegisterDeviceResult = {
+  deviceId: string;
+  deviceUuid: string;
+  mqttTopic: string;
+  mqttUsername: string;
+  mqttPassword: string;
+};
+
+export async function registerDeviceForUser(
+  userId: string,
+  workspaceId: string,
+  name: string,
+): Promise<RegisterDeviceResult> {
+  const role = await getUserWorkspaceRole(userId, workspaceId);
+  if (role !== "admin") {
+    throw new Error("Only workspace admins can register devices");
+  }
+
+  const trimmedName = name.trim();
+  if (
+    trimmedName.length < NAME_MIN_LENGTH ||
+    trimmedName.length > NAME_MAX_LENGTH
+  ) {
+    throw new Error(
+      `Device name must be between ${NAME_MIN_LENGTH} and ${NAME_MAX_LENGTH} characters`,
+    );
+  }
+
+  const credential = await claimMqttCredential();
+  const deviceUuid = credential.allocatedUuid;
+  const mqttTopic = `${MQTT_TOPIC_PREFIX}/${credential.allocatedUuid}`;
+
+  const device = await prisma.device.create({
+    data: {
+      workspaceId,
+      name: trimmedName,
+      deviceUuid,
+      mqttTopic,
+      mqttUsername: credential.username,
+    },
+  });
+
+  return {
+    deviceId: device.id,
+    deviceUuid,
+    mqttTopic,
+    mqttUsername: credential.username,
+    mqttPassword: credential.password,
+  };
+}
+
+export { MqttCredentialPoolEmptyError };
 
 export async function getWorkspaceDevices(userId: string, workspaceId: string) {
   const workspaceRole = await getUserWorkspaceRole(userId, workspaceId);
