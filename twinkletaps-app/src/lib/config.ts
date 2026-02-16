@@ -14,4 +14,7 @@ export const config = {
     terms: process.env.NEXT_PUBLIC_TERMS_URL || "#",
     privacy: process.env.NEXT_PUBLIC_PRIVACY_URL || "#",
   },
+  mqtt: {
+    brokerUrl: process.env.NEXT_PUBLIC_MQTT_BROKER_URL,
+  },
 } as const;
