@@ -5,34 +5,37 @@ export type DeviceRole = "user";
 
 export async function getWorkspaceDevices(userId: string, workspaceId: string) {
   const workspaceRole = await getUserWorkspaceRole(userId, workspaceId);
-
   if (!workspaceRole) {
     return [];
   }
 
-  const devices = await prisma.device.findMany({
+  const allDevicesInWorkspace = await prisma.device.findMany({
     where: {
       workspaceId,
       deletedAt: null,
     },
     include: {
       userDevices: {
-        where: {
-          userId,
-          deletedAt: null,
-        },
-        select: {
-          role: true,
-        },
+        where: { userId, deletedAt: null },
+        select: { role: true },
       },
     },
   });
 
-  if (workspaceRole === "admin" || workspaceRole === "member") {
-    return devices;
+  const isAdminOrMember =
+    workspaceRole === "admin" || workspaceRole === "member";
+  if (isAdminOrMember) {
+    return allDevicesInWorkspace;
   }
 
-  return devices.filter((device) => device.userDevices.length > 0);
+  const VALID_DEVICE_ROLES: DeviceRole[] = ["user"];
+  // Guest: only devices where this user has a user_devices entry with a valid role
+  const devicesUserHasAccessTo = allDevicesInWorkspace.filter((device) =>
+    device.userDevices.some((userDevice) =>
+      VALID_DEVICE_ROLES.includes(userDevice.role as DeviceRole),
+    ),
+  );
+  return devicesUserHasAccessTo;
 }
 
 export async function getDevice(userId: string, deviceId: string) {
@@ -73,7 +76,7 @@ export async function getDevice(userId: string, deviceId: string) {
 
 export async function getUserDeviceRole(
   userId: string,
-  deviceId: string
+  deviceId: string,
 ): Promise<DeviceRole | null> {
   const membership = await prisma.userDevice.findUnique({
     where: {

@@ -1,0 +1,33 @@
+---
+description: Commit changes and open a PR with gh — invoke when asked to commit and create a PR
+alwaysApply: false
+---
+
+# Commit and open PR
+
+When the user asks to commit and create a pull request (e.g. "commit and open a PR", "push and create PR"):
+
+1. **Stage only the changes that belong to the work**  
+   Exclude unrelated files (e.g. `.cursor/rules/*` unless they are part of the change).
+
+2. **Create one informative commit**
+   - Example:
+   - Message format: `Short title` (ignore the task ID here, it's not relevant), then a short body listing what changed (bullet points or short paragraphs).
+     ```
+     Update app code — Team → Device
+
+     - Prisma: Team/UserTeam → Device/UserDevice; add deviceUuid, mqttTopic, mqttUsername; remove isPrivate
+     - Services: team.ts → device.ts (getWorkspaceDevices, getDevice, getUserDeviceRole); workspace roles → admin|member|guest
+     - WorkspaceProvider: DeviceInfo, devices, navigateToDevice, workspaceRole
+     - Sidebar: Devices section, Lightbulb; stories updated. Layout and test utils aligned.
+     ```
+
+3. **Push the current branch to origin**
+   - `git push -u origin <current-branch>`
+
+4. **Open a PR with `gh`**
+   - `gh pr create --base <target-branch> --title "<same as commit title>" --body "<body>"`
+   - Target branch is usually the one the feature was branched from (e.g. `implement-nextjs-app`, `main`). Ask if unclear.
+   - PR body: include Task ID, "What changed" (brief bullets), "How to test", and "Depends on" if relevant.
+
+5. **Return the PR URL** to the user (e.g. from `gh pr create` output).
