@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Search, Home, ListTodo, Users } from "lucide-react";
+import { Search, Home, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,12 +44,9 @@ export function AppSidebar({
   className,
   children,
 }: AppSidebarProps) {
-  const { teams, navigateToTeam, navigateHome } = useWorkspace();
+  const { devices, navigateToDevice, navigateHome } = useWorkspace();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-
-  const privateTeams = teams.filter((t) => t.isPrivate);
-  const sharedTeams = teams.filter((t) => !t.isPrivate);
 
   const handleModalSearch = (query: string) => {
     setSearchQuery(query);
@@ -82,40 +79,18 @@ export function AppSidebar({
               </SidebarGroupContent>
             </SidebarGroup>
 
-            {/* Private Section */}
-            {privateTeams.length > 0 && (
+            {devices.length > 0 && (
               <SidebarGroup>
-                <SidebarGroupLabel>Private</SidebarGroupLabel>
+                <SidebarGroupLabel>Devices</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {privateTeams.map((team) => (
-                      <SidebarMenuItem key={team.id}>
+                    {devices.map((device) => (
+                      <SidebarMenuItem key={device.id}>
                         <SidebarMenuButton
-                          onClick={() => navigateToTeam(team.id)}
+                          onClick={() => navigateToDevice(device.id)}
                         >
-                          <ListTodo className="h-4 w-4" />
-                          <span>{team.name}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            )}
-
-            {/* Team Section */}
-            {sharedTeams.length > 0 && (
-              <SidebarGroup>
-                <SidebarGroupLabel>Team</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {sharedTeams.map((team) => (
-                      <SidebarMenuItem key={team.id}>
-                        <SidebarMenuButton
-                          onClick={() => navigateToTeam(team.id)}
-                        >
-                          <Users className="h-4 w-4" />
-                          <span>{team.name}</span>
+                          <Lightbulb className="h-4 w-4" />
+                          <span>{device.name}</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     ))}

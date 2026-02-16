@@ -1,0 +1,36 @@
+---
+description: Commit changes and open a PR with gh — invoke when asked to commit and create a PR
+alwaysApply: false
+---
+
+# Commit and open PR
+
+When the user asks to commit and create a pull request (e.g. "commit and open a PR", "push and create PR"):
+
+1. **Stage only the changes that belong to the work**  
+   Exclude unrelated files (e.g. `.cursor/rules/*` unless they are part of the change).
+
+2. **Create one informative commit**
+   - Use the repo's git identity so the commit is attributed to the user and CI triggers (agent-run commits often get a bot identity and CI may skip them). Run commit with explicit author and committer from git config:
+     - `GIT_AUTHOR_NAME="$(git config user.name)" GIT_AUTHOR_EMAIL="$(git config user.email)" GIT_COMMITTER_NAME="$(git config user.name)" GIT_COMMITTER_EMAIL="$(git config user.email)" git commit -m "..."`
+   - Message format: `Short title` (ignore the task ID here, it's not relevant), then a short body listing what changed (bullet points or short paragraphs).
+   - Example:
+     ```
+     Update app code — Team → Device
+
+     - Prisma: Team/UserTeam → Device/UserDevice; add deviceUuid, mqttTopic, mqttUsername; remove isPrivate
+     - Services: team.ts → device.ts (getWorkspaceDevices, getDevice, getUserDeviceRole); workspace roles → admin|member|guest
+     - WorkspaceProvider: DeviceInfo, devices, navigateToDevice, workspaceRole
+     - Sidebar: Devices section, Lightbulb; stories updated. Layout and test utils aligned.
+     ```
+
+3. **Push the current branch to origin**
+   - `git push -u origin <current-branch>`
+
+4. **Open a PR with `gh`**
+   - `gh pr create --base <target-branch> --title "<same as commit title>" --body "<body>"`
+   - Target branch is usually the one the feature was branched from (e.g. `implement-nextjs-app`, `main`). Ask if unclear.
+   - PR body: include Task ID, "What changed" (brief bullets), "How to test", and "Depends on" if relevant.
+   - DO NOT add a Cursor attribution
+
+5. **Return the PR URL** to the user (e.g. from `gh pr create` output).

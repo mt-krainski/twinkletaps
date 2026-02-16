@@ -6,11 +6,11 @@ import {
   type SearchResult,
 } from "./component";
 import { expect, fn, within } from "storybook/test";
-import { MockProviders, mockTeams } from "@/test-utils/storybook";
+import { MockProviders, mockDevices } from "@/test-utils/storybook";
 
 type SidebarStoryArgs = AppSidebarProps & {
   onHomeClick: () => void;
-  onTeamClick: (id: string) => void;
+  onDeviceClick: (id: string) => void;
 };
 
 const meta: Meta<SidebarStoryArgs> = {
@@ -51,19 +51,14 @@ const mockSearchResults: SearchResult[] = [
   },
 ];
 
-const privateTeamNames = mockTeams
-  .filter((t) => t.isPrivate)
-  .map((t) => t.name);
-const sharedTeamNames = mockTeams
-  .filter((t) => !t.isPrivate)
-  .map((t) => t.name);
+const deviceNames = mockDevices.map((d) => d.name);
 
 export const Default: Story = {
   args: {
     onSearch: fn(),
     searchResults: mockSearchResults,
     onHomeClick: fn(),
-    onTeamClick: fn(),
+    onDeviceClick: fn(),
   },
   parameters: {
     docs: {
@@ -78,7 +73,7 @@ export const Default: Story = {
       <MockProviders
         workspaceValue={{
           navigateHome: context.args.onHomeClick,
-          navigateToTeam: context.args.onTeamClick,
+          navigateToDevice: context.args.onDeviceClick,
         }}
       >
         <div className="h-screen w-64">
@@ -90,34 +85,27 @@ export const Default: Story = {
   play: async ({ canvasElement, args, userEvent }) => {
     const canvas = within(canvasElement);
 
-    // Check that all expected elements are visible
     await expect(canvas.getByText("Search...")).toBeInTheDocument();
     await expect(canvas.getByText("Home")).toBeInTheDocument();
-    await expect(canvas.getByText("Private")).toBeInTheDocument();
-    await expect(canvas.getByText("Team")).toBeInTheDocument();
+    await expect(canvas.getByText("Devices")).toBeInTheDocument();
 
-    for (const name of [...privateTeamNames, ...sharedTeamNames]) {
+    for (const name of deviceNames) {
       await expect(canvas.getByText(name)).toBeInTheDocument();
     }
 
-    // Test Home button click
     const homeButton = canvas.getByText("Home");
     await userEvent.click(homeButton);
     await expect(args.onHomeClick).toHaveBeenCalled();
 
-    // Test private item clicks
-    await userEvent.click(canvas.getByText(privateTeamNames[0]));
-    await expect(args.onTeamClick).toHaveBeenCalledWith("private-1");
+    await userEvent.click(canvas.getByText(deviceNames[0]));
+    await expect(args.onDeviceClick).toHaveBeenCalledWith(mockDevices[0].id);
 
-    // Test team item clicks
-    await userEvent.click(canvas.getByText(sharedTeamNames[0]));
-    await expect(args.onTeamClick).toHaveBeenCalledWith("team-a");
+    await userEvent.click(canvas.getByText(deviceNames[1]));
+    await expect(args.onDeviceClick).toHaveBeenCalledWith(mockDevices[1].id);
 
-    // Test search functionality
     const searchButton = canvas.getByText("Search...");
     await userEvent.click(searchButton);
 
-    // Wait for modal to open and check search results
     const searchModal = await within(document.body).findByRole("dialog");
     await expect(searchModal).toBeInTheDocument();
 
@@ -127,7 +115,6 @@ export const Default: Story = {
     await userEvent.type(searchInput, "test query");
     await expect(args.onSearch).toHaveBeenCalledWith("test query");
 
-    // Test search result clicks
     const chatResult = within(searchModal).getByText(
       "Chat about React components",
     );
@@ -135,7 +122,7 @@ export const Default: Story = {
   },
 };
 
-export const WithoutTeams: Story = {
+export const WithoutDevices: Story = {
   args: {
     onSearch: fn(),
     onHomeClick: fn(),
@@ -144,7 +131,7 @@ export const WithoutTeams: Story = {
     (Story, context) => (
       <MockProviders
         workspaceValue={{
-          teams: [],
+          devices: [],
           navigateHome: context.args.onHomeClick,
         }}
       >
@@ -157,19 +144,13 @@ export const WithoutTeams: Story = {
   play: async ({ canvasElement, args, userEvent }) => {
     const canvas = within(canvasElement);
 
-    // Check that only basic elements are visible
     await expect(canvas.getByText("Search...")).toBeInTheDocument();
     await expect(canvas.getByText("Home")).toBeInTheDocument();
+    await expect(canvas.queryByText("Devices")).not.toBeInTheDocument();
 
-    // Check that no sections are visible
-    await expect(canvas.queryByText("Private")).not.toBeInTheDocument();
-    await expect(canvas.queryByText("Team")).not.toBeInTheDocument();
-
-    // Test Home button click
     await userEvent.click(canvas.getByText("Home"));
     await expect(args.onHomeClick).toHaveBeenCalled();
 
-    // Test search functionality
     const searchButton = canvas.getByText("Search...");
     await userEvent.click(searchButton);
 
@@ -181,97 +162,5 @@ export const WithoutTeams: Story = {
     );
     await userEvent.type(searchInput, "test query");
     await expect(args.onSearch).toHaveBeenCalledWith("test query");
-  },
-};
-
-export const OnlyPrivateTeams: Story = {
-  args: {
-    onSearch: fn(),
-    onHomeClick: fn(),
-    onTeamClick: fn(),
-  },
-  decorators: [
-    (Story, context) => (
-      <MockProviders
-        workspaceValue={{
-          teams: mockTeams.filter((t) => t.isPrivate),
-          navigateHome: context.args.onHomeClick,
-          navigateToTeam: context.args.onTeamClick,
-        }}
-      >
-        <div className="h-screen w-64">
-          <Story />
-        </div>
-      </MockProviders>
-    ),
-  ],
-  play: async ({ canvasElement, args, userEvent }) => {
-    const canvas = within(canvasElement);
-
-    // Check that expected elements are visible
-    await expect(canvas.getByText("Search...")).toBeInTheDocument();
-    await expect(canvas.getByText("Home")).toBeInTheDocument();
-    await expect(canvas.getByText("Private")).toBeInTheDocument();
-
-    // Check that team section is NOT visible
-    await expect(canvas.queryByText("Team")).not.toBeInTheDocument();
-
-    for (const name of privateTeamNames) {
-      await expect(canvas.getByText(name)).toBeInTheDocument();
-    }
-
-    // Test Home button click
-    await userEvent.click(canvas.getByText("Home"));
-    await expect(args.onHomeClick).toHaveBeenCalled();
-
-    // Test private item clicks
-    await userEvent.click(canvas.getByText(privateTeamNames[0]));
-    await expect(args.onTeamClick).toHaveBeenCalledWith("private-1");
-  },
-};
-
-export const OnlySharedTeams: Story = {
-  args: {
-    onSearch: fn(),
-    onHomeClick: fn(),
-    onTeamClick: fn(),
-  },
-  decorators: [
-    (Story, context) => (
-      <MockProviders
-        workspaceValue={{
-          teams: mockTeams.filter((t) => !t.isPrivate),
-          navigateHome: context.args.onHomeClick,
-          navigateToTeam: context.args.onTeamClick,
-        }}
-      >
-        <div className="h-screen w-64">
-          <Story />
-        </div>
-      </MockProviders>
-    ),
-  ],
-  play: async ({ canvasElement, args, userEvent }) => {
-    const canvas = within(canvasElement);
-
-    // Check that expected elements are visible
-    await expect(canvas.getByText("Search...")).toBeInTheDocument();
-    await expect(canvas.getByText("Home")).toBeInTheDocument();
-    await expect(canvas.getByText("Team")).toBeInTheDocument();
-
-    // Check that private section is NOT visible
-    await expect(canvas.queryByText("Private")).not.toBeInTheDocument();
-
-    for (const name of sharedTeamNames) {
-      await expect(canvas.getByText(name)).toBeInTheDocument();
-    }
-
-    // Test Home button click
-    await userEvent.click(canvas.getByText("Home"));
-    await expect(args.onHomeClick).toHaveBeenCalled();
-
-    // Test team item clicks
-    await userEvent.click(canvas.getByText(sharedTeamNames[0]));
-    await expect(args.onTeamClick).toHaveBeenCalledWith("team-a");
   },
 };

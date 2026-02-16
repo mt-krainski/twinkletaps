@@ -1,6 +1,6 @@
 import { prisma } from "../prisma";
 
-export type WorkspaceRole = "admin" | "editor" | "viewer";
+export type WorkspaceRole = "admin" | "member" | "guest";
 
 export async function getUserWorkspaces(userId: string) {
   return prisma.userWorkspace.findMany({

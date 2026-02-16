@@ -11,7 +11,8 @@ alwaysApply: true
 * Optimize for **small, reviewable, testable increments**:
 
   * Target **~200-300 lines changed** per task (guideline, not a hard cap).
-  * Each task must produce a **coherent, verifiable increment** (not “half a feature”).
+  * **Invariant: the application must build and run successfully after every task.** A task that leaves the app in a broken state (e.g. DB schema out of sync with ORM, missing imports, broken contracts between layers) is not a valid increment — even if a subsequent task would fix it.
+  * Each task must produce a **coherent, verifiable increment** (not "half a feature").
 
 * Make work easy to audit:
 
@@ -169,14 +170,16 @@ Each task file MUST include the following sections:
 
 * ✅ Good splits:
 
-  * “Add auth middleware + tests” (complete behavior + verification)
-  * “Add DB migration + read API endpoint + tests” (complete path)
-  * “Introduce shared utility + refactor two call sites + tests” (coherent cleanup enabling next steps)
+  * "Add auth middleware + tests" (complete behavior + verification)
+  * "Add DB migration + read API endpoint + tests" (complete path)
+  * "Introduce shared utility + refactor two call sites + tests" (coherent cleanup enabling next steps)
 
 * ❌ Bad splits:
 
-  * “Add half of endpoint logic” then “add rest of endpoint logic”
-  * “Add UI skeleton” with nothing runnable or testable
+  * "Add half of endpoint logic" then "add rest of endpoint logic"
+  * "Add UI skeleton" with nothing runnable or testable
+  * "Run DB migration to rename tables" then "update ORM schema and app code to match" — the app is broken between these two tasks
+  * Any split where task N changes a contract (schema, API, types) and task N+1 updates the consumers — the app must not be broken in between
 
 Dos and don'ts:
 - make each task clear and descriptive
@@ -228,6 +231,7 @@ Dos and don'ts:
 * Acceptance criteria satisfied.
 * Test plan implemented and runnable.
 * No obvious lint/type failures introduced.
+* **Application builds and runs successfully** — verify with the project's build command. The app must not be left in a broken state.
 * Task file metadata updated:
 
   * Branch name
@@ -242,7 +246,7 @@ Dos and don'ts:
 
 ### Stage 40: Review & Verification (Second agent + Human → `40_review`)
 
-**Verifier Agent (or “review agent”) must:**
+**Verifier Agent (or "review agent") must:**
 
 * Re-read the task requirements and compare with the change.
 * Check for:
@@ -254,7 +258,7 @@ Dos and don'ts:
   
 * Provide a concise review report in the task file:
 
-  * “Pass / Needs changes”
+  * "Pass / Needs changes"
   * Specific required edits
 
 **Human responsibility**
@@ -309,7 +313,7 @@ Task file must include PR URL once created.
 
 * Follow existing architecture and naming conventions.
 * Prefer reuse over invention.
-* No dead code, commented-out blocks, or “temporary hacks” without explicit task notes.
+* No dead code, commented-out blocks, or "temporary hacks" without explicit task notes.
 * Every behavior change must have:
 
   * Tests OR a clearly documented reason why tests are not feasible, plus manual verification steps.
