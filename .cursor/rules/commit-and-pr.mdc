@@ -29,5 +29,6 @@ When the user asks to commit and create a pull request (e.g. "commit and open a 
    - `gh pr create --base <target-branch> --title "<same as commit title>" --body "<body>"`
    - Target branch is usually the one the feature was branched from (e.g. `implement-nextjs-app`, `main`). Ask if unclear.
    - PR body: include Task ID, "What changed" (brief bullets), "How to test", and "Depends on" if relevant.
+   - DO NOT add a Cursor attribution
 
 5. **Return the PR URL** to the user (e.g. from `gh pr create` output).
