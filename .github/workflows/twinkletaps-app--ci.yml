@@ -27,6 +27,12 @@ jobs:
     with:
       cache-key: ${{ needs.install-dependencies.outputs.cache-key }}
 
+  integration:
+    needs: install-dependencies
+    uses: ./.github/workflows/twinkletaps-app--integration.yml
+    with:
+      cache-key: ${{ needs.install-dependencies.outputs.cache-key }}
+
   e2e:
     needs: install-dependencies
     uses: ./.github/workflows/twinkletaps-app--e2e.yml
