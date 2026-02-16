@@ -1,4 +1,4 @@
-name: Install Dependencies
+name: twinkletaps-app Install Dependencies
 on:
   workflow_call:
     outputs:
@@ -9,6 +9,11 @@ on:
 jobs:
   install-dependencies:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:54322/postgres"
+    defaults:
+      run:
+        working-directory: twinkletaps-app
     permissions:
       contents: read
     outputs:
@@ -24,13 +29,13 @@ jobs:
 
       - name: Set cache key
         id: set-cache-key
-        run: echo "key=package-lock.json.${{ hashFiles('package-lock.json') }}" >> $GITHUB_OUTPUT
+        run: echo "key=package-lock.json.${{ hashFiles('twinkletaps-app/package-lock.json') }}" >> $GITHUB_OUTPUT
 
       - name: Cache dependencies
         id: cache-deps
         uses: actions/cache@v4
         with:
-          path: node_modules
+          path: twinkletaps-app/node_modules
           key: ${{ steps.set-cache-key.outputs.key }}
 
       - name: Install dependencies

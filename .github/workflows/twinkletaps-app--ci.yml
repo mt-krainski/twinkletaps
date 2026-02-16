@@ -1,4 +1,4 @@
-name: CI
+name: twinkletaps-app CI
 on:
   push:
     branches:
@@ -7,28 +7,28 @@ on:
 
 jobs:
   install-dependencies:
-    uses: ./.github/workflows/install-dependencies.yml
+    uses: ./.github/workflows/twinkletaps-app--install-dependencies.yml
 
   lint:
     needs: install-dependencies
-    uses: ./.github/workflows/lint.yml
+    uses: ./.github/workflows/twinkletaps-app--lint.yml
     with:
       cache-key: ${{ needs.install-dependencies.outputs.cache-key }}
 
   build:
     needs: install-dependencies
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/twinkletaps-app--build.yml
     with:
       cache-key: ${{ needs.install-dependencies.outputs.cache-key }}
 
   test:
     needs: install-dependencies
-    uses: ./.github/workflows/test.yml
+    uses: ./.github/workflows/twinkletaps-app--test.yml
     with:
       cache-key: ${{ needs.install-dependencies.outputs.cache-key }}
 
   e2e:
     needs: install-dependencies
-    uses: ./.github/workflows/e2e.yml
+    uses: ./.github/workflows/twinkletaps-app--e2e.yml
     with:
       cache-key: ${{ needs.install-dependencies.outputs.cache-key }}
