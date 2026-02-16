@@ -1,4 +1,4 @@
-name: Lint
+name: twinkletaps-app Lint
 on:
   workflow_call:
     inputs:
@@ -9,6 +9,9 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: twinkletaps-app
     permissions:
       contents: read
     steps:
@@ -22,7 +25,7 @@ jobs:
       - name: Restore dependencies from cache
         uses: actions/cache@v4
         with:
-          path: node_modules
+          path: twinkletaps-app/node_modules
           key: ${{ inputs.cache-key }}
 
       - name: Generate Prisma client

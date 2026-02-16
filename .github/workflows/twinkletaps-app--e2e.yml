@@ -1,4 +1,4 @@
-name: End to End Tests
+name: twinkletaps-app End to End Tests
 on:
   workflow_call:
     inputs:
@@ -9,6 +9,9 @@ on:
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: twinkletaps-app
     permissions:
       contents: read
     steps:
@@ -22,7 +25,7 @@ jobs:
       - name: Restore dependencies from cache
         uses: actions/cache@v4
         with:
-          path: node_modules
+          path: twinkletaps-app/node_modules
           key: ${{ inputs.cache-key }}
 
       - name: Generate Prisma client
@@ -48,7 +51,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-playwright-${{ hashFiles('twinkletaps-app/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-playwright-
 
@@ -70,5 +73,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report-${{ github.run_id }}
-          path: playwright-report/
+          path: twinkletaps-app/playwright-report/
           retention-days: 30
