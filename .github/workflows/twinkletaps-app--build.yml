@@ -1,4 +1,4 @@
-name: Build
+name: twinkletaps-app Build
 on:
   workflow_call:
     inputs:
@@ -9,6 +9,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:54322/postgres"
+    defaults:
+      run:
+        working-directory: twinkletaps-app
     permissions:
       contents: read
     steps:
@@ -22,7 +27,7 @@ jobs:
       - name: Restore dependencies from cache
         uses: actions/cache@v4
         with:
-          path: node_modules
+          path: twinkletaps-app/node_modules
           key: ${{ inputs.cache-key }}
 
       - name: Generate Prisma client
@@ -32,19 +37,13 @@ jobs:
         with:
           path: |
             ~/.npm
-            ${{ github.workspace }}/.next/cache
-          # Generate a new cache whenever packages or source files change.
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-          # If source files changed but packages didn't, rebuild from a prior cache.
+            twinkletaps-app/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('twinkletaps-app/package-lock.json') }}-${{ hashFiles('twinkletaps-app/**/*.js', 'twinkletaps-app/**/*.jsx', 'twinkletaps-app/**/*.ts', 'twinkletaps-app/**/*.tsx') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+            ${{ runner.os }}-nextjs-${{ hashFiles('twinkletaps-app/package-lock.json') }}-
 
       - name: Try build
-        # This step is here mainly to test that the build works. These env vars are
-        # actually baked in into the built artifacts. So if you want ot use the artifacts
-        # produced at this step in production, you need to provide accurate env vars.
         env:
           NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54321"
           NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-key"
-          DATABASE_URL: "postgresql://postgres:postgres@localhost:54322/postgres"
         run: npm run build

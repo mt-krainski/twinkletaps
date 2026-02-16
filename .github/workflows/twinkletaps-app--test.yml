@@ -1,4 +1,4 @@
-name: Unit and Component Tests
+name: twinkletaps-app Unit and Component Tests
 on:
   workflow_call:
     inputs:
@@ -9,6 +9,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:54322/postgres"
+    defaults:
+      run:
+        working-directory: twinkletaps-app
     permissions:
       contents: read
     steps:
@@ -22,7 +27,7 @@ jobs:
       - name: Restore dependencies from cache
         uses: actions/cache@v4
         with:
-          path: node_modules
+          path: twinkletaps-app/node_modules
           key: ${{ inputs.cache-key }}
 
       - name: Generate Prisma client
@@ -32,7 +37,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-playwright-${{ hashFiles('twinkletaps-app/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-playwright-
 

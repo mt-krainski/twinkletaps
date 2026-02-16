@@ -13,3 +13,21 @@ updates:
     directory: "/twinkletaps-ui"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/twinkletaps-app"
+    schedule:
+      interval: "weekly"
+    groups:
+      react-packages:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      node-packages:
+        patterns:
+          - "@types/node"
+          - "node"
+        update-types:
+          - "patch"
+          - "minor"
