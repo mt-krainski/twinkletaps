@@ -11,8 +11,10 @@ When the user asks to commit and create a pull request (e.g. "commit and open a 
    Exclude unrelated files (e.g. `.cursor/rules/*` unless they are part of the change).
 
 2. **Create one informative commit**
-   - Example:
+   - Use the repo's git identity so the commit is attributed to the user and CI triggers (agent-run commits often get a bot identity and CI may skip them). Run commit with explicit author and committer from git config:
+     - `GIT_AUTHOR_NAME="$(git config user.name)" GIT_AUTHOR_EMAIL="$(git config user.email)" GIT_COMMITTER_NAME="$(git config user.name)" GIT_COMMITTER_EMAIL="$(git config user.email)" git commit -m "..."`
    - Message format: `Short title` (ignore the task ID here, it's not relevant), then a short body listing what changed (bullet points or short paragraphs).
+   - Example:
      ```
      Update app code — Team → Device
 
