@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, waitFor, within } from "storybook/test";
 import { RegisterDeviceDialog } from "./component";
 import { MockProviders } from "@/test-utils/storybook";
-import type { RegisterDeviceResult } from "@/app/(authenticated)/devices/actions";
+import type { RegisterDeviceResult } from "@/lib/services/device";
 
 const meta: Meta<typeof RegisterDeviceDialog> = {
   title: "Components/RegisterDevice",

@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext } from "react";
 import { useRouter } from "next/navigation";
 import type { WorkspaceRole } from "@/lib/services/workspace";
+import type { RegisterDeviceResult } from "@/lib/services/device";
 
 export interface WorkspaceInfo {
   id: string;
@@ -14,6 +15,11 @@ export interface DeviceInfo {
   name: string;
 }
 
+export type RegisterDeviceFn = (
+  workspaceId: string,
+  name: string,
+) => Promise<RegisterDeviceResult>;
+
 interface WorkspaceContextType {
   workspaces: WorkspaceInfo[];
   selectedWorkspaceId: string | undefined;
@@ -22,6 +28,7 @@ interface WorkspaceContextType {
   switchWorkspace: (workspaceId: string) => void;
   navigateToDevice: (deviceId: string) => void;
   navigateHome: () => void;
+  registerDevice: RegisterDeviceFn;
 }
 
 export const WorkspaceContext = createContext<
@@ -41,6 +48,7 @@ interface WorkspaceProviderProps {
   selectedWorkspaceId?: string;
   devices: DeviceInfo[];
   workspaceRole: WorkspaceRole | undefined;
+  registerDevice: RegisterDeviceFn;
   children: React.ReactNode;
 }
 
@@ -49,6 +57,7 @@ export function WorkspaceProvider({
   selectedWorkspaceId,
   devices,
   workspaceRole,
+  registerDevice,
   children,
 }: WorkspaceProviderProps) {
   const router = useRouter();
@@ -81,6 +90,7 @@ export function WorkspaceProvider({
         switchWorkspace,
         navigateToDevice,
         navigateHome,
+        registerDevice,
       }}
     >
       {children}

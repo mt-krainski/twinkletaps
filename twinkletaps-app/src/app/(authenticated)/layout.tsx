@@ -4,6 +4,7 @@ import { AuthProvider } from "@/components/auth-provider";
 import { UserProfileProvider } from "@/components/user-profile-provider";
 import { WorkspaceProvider } from "@/components/workspace-provider";
 import DashboardShell from "./dashboard-shell";
+import { registerDevice } from "@/app/(authenticated)/devices/actions";
 import { createClient } from "@/lib/supabase/server";
 import {
   getProfileSummary,
@@ -65,6 +66,7 @@ export default async function AuthenticatedLayout({
           selectedWorkspaceId={selectedWorkspaceId}
           devices={deviceList}
           workspaceRole={workspaceRole ?? undefined}
+          registerDevice={registerDevice}
         >
           <DashboardShell>{children}</DashboardShell>
         </WorkspaceProvider>

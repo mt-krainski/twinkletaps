@@ -86,6 +86,13 @@ export function MockProviders({
     switchWorkspace: fn(),
     navigateToDevice: fn(),
     navigateHome: fn(),
+    registerDevice: async () => ({
+      deviceId: "storybook-device",
+      deviceUuid: "storybook-uuid",
+      mqttTopic: "twinkletaps/devices/storybook-uuid",
+      mqttUsername: "storybook-mqtt-user",
+      mqttPassword: "storybook-password",
+    }),
     ...workspaceValue,
   };
 

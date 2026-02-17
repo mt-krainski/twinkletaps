@@ -21,7 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { config } from "@/lib/config";
-import type { RegisterDeviceResult } from "@/app/(authenticated)/devices/actions";
+import type { RegisterDeviceResult } from "@/lib/services/device";
 
 export interface RegisterDeviceDialogProps {
   open: boolean;

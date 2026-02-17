@@ -7,8 +7,6 @@ import {
   type RegisterDeviceResult,
 } from "@/lib/services/device";
 
-export type { RegisterDeviceResult };
-
 export async function registerDevice(
   workspaceId: string,
   name: string,

@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/sidebar";
 import { useWorkspace } from "@/components/workspace-provider";
 import { RegisterDeviceDialog } from "@/components/RegisterDevice/component";
-import { registerDevice } from "@/app/(authenticated)/devices/actions";
 
 export interface SearchResult {
   id: string;
@@ -54,6 +53,7 @@ export function AppSidebar({
     navigateHome,
     workspaceRole,
     selectedWorkspaceId,
+    registerDevice,
   } = useWorkspace();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
