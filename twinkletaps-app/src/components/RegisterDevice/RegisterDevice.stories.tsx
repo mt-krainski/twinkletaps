@@ -51,14 +51,25 @@ export const Default: Story = {
   args: {
     open: true,
     onOpenChange: fn(),
+    onSubmit: fn().mockImplementation(async () => mockCredentials),
+  },
+  play: async () => {
+    const dialog = getDialog();
+    const canvas = within(dialog);
+    await expect(canvas.getByLabelText("Device name")).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Register" })).toBeInTheDocument();
+  },
+};
+
+export const SubmitToSuccess: Story = {
+  args: {
+    open: true,
+    onOpenChange: fn(),
     onSubmit: resolveSubmit,
   },
   play: async ({ userEvent: u }) => {
     const dialog = getDialog();
     const canvas = within(dialog);
-    await expect(canvas.getByLabelText("Device name")).toBeInTheDocument();
-    await expect(canvas.getByRole("button", { name: "Register" })).toBeInTheDocument();
-
     await u.type(canvas.getByLabelText("Device name"), "My Lamp");
     await u.click(canvas.getByRole("button", { name: "Register" }));
 
