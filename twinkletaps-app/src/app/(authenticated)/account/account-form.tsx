@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,25 +27,29 @@ export default function AccountForm() {
     type: "success" | "error";
   } | null>(null);
 
-  const getProfile = useCallback(async () => {
-    setLoading(true);
-    const result = await getProfileAction();
+  useEffect(() => {
+    let cancelled = false;
 
-    if (result.error) {
-      setMessage({ text: result.error, type: "error" });
-    } else if (result.data) {
-      setFullname(result.data.fullName);
-      setUsername(result.data.username);
-      setWebsite(result.data.website);
-      setAvatarUrl(result.data.avatarUrl);
+    async function loadProfile() {
+      setLoading(true);
+      const result = await getProfileAction();
+      if (cancelled) return;
+
+      if (result.error) {
+        setMessage({ text: result.error, type: "error" });
+      } else if (result.data) {
+        setFullname(result.data.fullName);
+        setUsername(result.data.username);
+        setWebsite(result.data.website);
+        setAvatarUrl(result.data.avatarUrl);
+      }
+
+      setLoading(false);
     }
 
-    setLoading(false);
+    loadProfile();
+    return () => { cancelled = true; };
   }, []);
-
-  useEffect(() => {
-    getProfile();
-  }, [getProfile]);
 
   function handleUpdateProfile() {
     setMessage(null);
