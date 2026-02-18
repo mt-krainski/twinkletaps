@@ -95,13 +95,13 @@ export function RegisterDeviceDialog({
     null,
   );
 
-  const handleOpenChange = (next: boolean) => {
-    if (next) {
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) {
       setError(null);
       setCredentials(null);
       formRef.current?.reset();
     }
-    onOpenChange(next);
+    onOpenChange(isOpen);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
