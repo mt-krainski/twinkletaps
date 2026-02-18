@@ -1,26 +1,41 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { DashboardHomeCard } from "@/components/DashboardHomeCard/component";
+import { RegisterDeviceDialog } from "@/components/RegisterDevice/component";
+import { useWorkspace } from "@/components/workspace-provider";
 
 export default function Home() {
+  const router = useRouter();
+  const {
+    devices,
+    workspaceRole,
+    navigateToDevice,
+    registerDevice,
+    selectedWorkspaceId,
+  } = useWorkspace();
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+
+  const isAdmin = workspaceRole === "admin";
+
   return (
-    <Card className="mx-auto max-w-4xl">
-      <CardHeader>
-        <CardTitle>Dashboard</CardTitle>
-        <CardDescription>
-          Structured layout coming soon. Use the sidebar to explore your
-          workspaces.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex items-center gap-3 text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        <span>Primary dashboard content placeholder.</span>
-      </CardContent>
-    </Card>
+    <>
+      <DashboardHomeCard
+        devices={devices}
+        onDeviceClick={navigateToDevice}
+        emptyState={isAdmin ? "register" : "no-access"}
+        onRegisterClick={() => setIsRegisterOpen(true)}
+      />
+
+      {isAdmin && selectedWorkspaceId && (
+        <RegisterDeviceDialog
+          open={isRegisterOpen}
+          onOpenChange={setIsRegisterOpen}
+          onSubmit={(name) => registerDevice(selectedWorkspaceId, name)}
+          onSuccess={() => router.refresh()}
+        />
+      )}
+    </>
   );
 }

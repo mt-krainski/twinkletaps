@@ -3,7 +3,6 @@
 import { createClient } from "@/lib/supabase/server";
 import {
   registerDeviceForUser,
-  MqttCredentialPoolEmptyError,
   type RegisterDeviceResult,
 } from "@/lib/services/device";
 
@@ -22,5 +21,3 @@ export async function registerDevice(
 
   return registerDeviceForUser(user.id, workspaceId, name);
 }
-
-export { MqttCredentialPoolEmptyError };

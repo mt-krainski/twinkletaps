@@ -13,6 +13,7 @@ export interface WorkspaceInfo {
 export interface DeviceInfo {
   id: string;
   name: string;
+  deviceUuid?: string;
 }
 
 export type RegisterDeviceFn = (

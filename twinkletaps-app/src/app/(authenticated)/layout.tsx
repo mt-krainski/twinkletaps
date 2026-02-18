@@ -49,6 +49,7 @@ export default async function AuthenticatedLayout({
   const deviceList = devices.map((device) => ({
     id: device.id,
     name: device.name,
+    deviceUuid: device.deviceUuid,
   }));
 
   return (
