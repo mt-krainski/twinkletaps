@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Search, Home, Lightbulb } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, Home, Lightbulb, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { useWorkspace } from "@/components/workspace-provider";
+import { RegisterDeviceDialog } from "@/components/RegisterDevice/component";
 
 export interface SearchResult {
   id: string;
@@ -44,9 +46,21 @@ export function AppSidebar({
   className,
   children,
 }: AppSidebarProps) {
-  const { devices, navigateToDevice, navigateHome } = useWorkspace();
+  const router = useRouter();
+  const {
+    devices,
+    navigateToDevice,
+    navigateHome,
+    workspaceRole,
+    selectedWorkspaceId,
+    registerDevice,
+  } = useWorkspace();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
+
+  const isAdmin = workspaceRole === "admin";
+  const canRegisterDevice = isAdmin && selectedWorkspaceId;
 
   const handleModalSearch = (query: string) => {
     setSearchQuery(query);
@@ -79,7 +93,7 @@ export function AppSidebar({
               </SidebarGroupContent>
             </SidebarGroup>
 
-            {devices.length > 0 && (
+            {(devices.length > 0 || canRegisterDevice) && (
               <SidebarGroup>
                 <SidebarGroupLabel>Devices</SidebarGroupLabel>
                 <SidebarGroupContent>
@@ -94,6 +108,16 @@ export function AppSidebar({
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     ))}
+                    {canRegisterDevice && (
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          onClick={() => setIsRegisterDialogOpen(true)}
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span>Register Device</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
@@ -158,6 +182,17 @@ export function AppSidebar({
               </div>
             </DialogContent>
           </Dialog>
+
+          {canRegisterDevice && (
+            <RegisterDeviceDialog
+              open={isRegisterDialogOpen}
+              onOpenChange={setIsRegisterDialogOpen}
+              onSubmit={(name) =>
+                registerDevice(selectedWorkspaceId!, name)
+              }
+              onSuccess={() => router.refresh()}
+            />
+          )}
         </Sidebar>
         {children}
       </div>

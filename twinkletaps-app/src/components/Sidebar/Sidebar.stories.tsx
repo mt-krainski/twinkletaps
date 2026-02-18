@@ -132,6 +132,7 @@ export const WithoutDevices: Story = {
       <MockProviders
         workspaceValue={{
           devices: [],
+          workspaceRole: "member",
           navigateHome: context.args.onHomeClick,
         }}
       >

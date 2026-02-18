@@ -6,6 +6,10 @@ alwaysApply: true
 ## Project Overview
 This is a simple Arduino project. The project follows modern development practices with a focus on performance and developer experience.
 
+## Project conventions
+
+- components in `src/components` are meant to be pure UI components. 
+
 ## Other notes
 - Unless I explicitly ask for it, don't modify the readme or write other documentation files.
 - Be cool and casual, don't use overexaggerated phrases like "You're absolutely right!"
