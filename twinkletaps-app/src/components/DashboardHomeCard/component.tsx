@@ -37,7 +37,7 @@ export function DashboardHomeCard({
         <CardTitle>Dashboard</CardTitle>
         <CardDescription>
           {isEmpty
-            ? "Devices in your workspace."
+            ? "Devices in this workspace will appear here."
             : "Your workspace devices. Click a device to open it."}
         </CardDescription>
       </CardHeader>
