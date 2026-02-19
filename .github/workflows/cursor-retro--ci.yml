@@ -1,4 +1,6 @@
 name: cursor-retro CI
+permissions:
+  contents: read
 on:
   push:
     branches:
