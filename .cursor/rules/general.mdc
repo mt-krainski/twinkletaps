@@ -8,7 +8,10 @@ This is a simple Arduino project. The project follows modern development practic
 
 ## Project conventions
 
-- components in `src/components` are meant to be pure UI components. 
+- **Component layout:** `src/components/ui/` — shadcn primitives (unchanged). `src/components/app/` — app components (shell and domain content); each in its own dir with `ComponentName.tsx`, stories, and `index.ts`. `src/components/providers/` — context providers.
+- **Container/view:** Shell components (e.g. Navbar, Sidebar) that read from context use a thin container (`Navbar.tsx`, `Sidebar.tsx`) that passes props to a presentational component (`NavbarView.tsx`, `SidebarView.tsx`). Stories target the View (props only) where possible. 
+- Use `npm` as the package and script runner
+- "tests" here mean simple unit and integration tests (`npm run test`) and end to end tests (`npm run test:e2e`). Run `test` for a quick check and run `test:e2e` for a final check before completing the work. Also make sure to keep lint clean (`npm run lint`)
 
 ## Other notes
 - Unless I explicitly ask for it, don't modify the readme or write other documentation files.
@@ -18,3 +21,4 @@ This is a simple Arduino project. The project follows modern development practic
 - Before making any bigger changes, be sure to analyze the codebase and used practices and patterns and use them in the new code.
 - If we're in a chain of changes, and some functions changed places, unless there is a good reason, don't change the functions back. E.g. if you originally wrote a declaration in `lib.h` and I moved to a different file, don't change the type declaration back `lib.h`.
 - prefer using package scripts over generic commands
+- tests failing is a jarring issue you must flag in red especially if you think it's an environmental issue or not related to your changes. If it's related to your changes - you should fix the changes to have the tests pass. If it's an environment issue, e.g. playwright browsers not installed, try fixing it too. Otherwise make sure it's clearly visible in your output that tests are failing.

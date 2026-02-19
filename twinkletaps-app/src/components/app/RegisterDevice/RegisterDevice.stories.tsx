@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, waitFor, within } from "storybook/test";
-import { RegisterDeviceDialog } from "./component";
+import { RegisterDeviceDialog } from "./RegisterDevice";
 import { MockProviders } from "@/test-utils/storybook";
 import type { RegisterDeviceResult } from "@/lib/services/device";
 
@@ -38,8 +38,6 @@ function getDialog() {
   return within(document.body).getByRole("dialog");
 }
 
-// Plain async functions instead of fn() mocks — Storybook's instrumented fn()
-// doesn't properly resolve promises back to the component's async flow.
 const resolveSubmit = async () => mockCredentials;
 const rejectSubmit = async () => {
   throw new Error("Only workspace admins can register devices");

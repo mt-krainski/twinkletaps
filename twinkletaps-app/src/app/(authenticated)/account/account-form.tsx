@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useUserProfile } from "@/components/user-profile-provider";
+import { useUserProfile } from "@/components/providers/user-profile-provider";
 import { getProfileAction, updateProfileAction } from "./actions";
 
 export default function AccountForm() {

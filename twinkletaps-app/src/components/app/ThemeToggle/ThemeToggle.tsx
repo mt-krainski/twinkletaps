@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useTheme } from "../ThemeProvider/component";
+import { useTheme } from "@/components/providers/ThemeProvider";
 
 type ThemeToggleVariant = "icon" | "text";
 

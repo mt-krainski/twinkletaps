@@ -22,7 +22,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    // Load theme from localStorage on mount
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme && isValidTheme(savedTheme)) {
       setTheme(savedTheme);
@@ -30,10 +29,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Save theme to localStorage
     localStorage.setItem("theme", theme);
 
-    // Apply theme to document
     const root = document.documentElement;
     root.classList.remove("light", "dark");
 
@@ -51,7 +48,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   useEffect(() => {
-    // Listen for system theme changes
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     const handleChange = () => {

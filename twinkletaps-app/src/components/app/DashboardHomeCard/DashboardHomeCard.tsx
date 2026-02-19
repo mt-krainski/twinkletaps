@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DeviceCard } from "@/components/DeviceCard/component";
+import { DeviceCard } from "@/components/app/DeviceCard";
 
 export interface DashboardHomeCardDevice {
   id: string;

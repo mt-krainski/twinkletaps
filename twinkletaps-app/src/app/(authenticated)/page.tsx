@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { DashboardHomeCard } from "@/components/DashboardHomeCard/component";
-import { RegisterDeviceDialog } from "@/components/RegisterDevice/component";
-import { useWorkspace } from "@/components/workspace-provider";
+import { DashboardHomeCard } from "@/components/app/DashboardHomeCard";
+import { RegisterDeviceDialog } from "@/components/app/RegisterDevice";
+import { useWorkspace } from "@/components/providers/workspace-provider";
 
 export default function Home() {
   const router = useRouter();

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, within } from "storybook/test";
-import { DeviceCard } from "./component";
+import { DeviceCard } from "./DeviceCard";
 
 const meta: Meta<typeof DeviceCard> = {
   title: "Components/DeviceCard",
