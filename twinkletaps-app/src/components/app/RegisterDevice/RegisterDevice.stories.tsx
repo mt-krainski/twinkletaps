@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, waitFor, within } from "storybook/test";
-import { RegisterDeviceDialog } from "./component";
+import { RegisterDeviceDialog } from "./RegisterDevice";
 import { MockProviders } from "@/test-utils/storybook";
 import type { RegisterDeviceResult } from "@/lib/services/device";
 

@@ -3,12 +3,12 @@ import { expect, fn, within, waitFor, type UserEventObject } from "storybook/tes
 import {
   UserProfileContext,
   type UserProfile,
-} from "@/components/user-profile-provider";
+} from "@/components/providers/user-profile-provider";
 import {
   WorkspaceContext,
   type WorkspaceInfo,
   type DeviceInfo,
-} from "@/components/workspace-provider";
+} from "@/components/providers/workspace-provider";
 
 export async function withDropdown(
   triggerElement: HTMLElement,

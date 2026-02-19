@@ -1,28 +1,29 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { useState } from "react";
 import { MessageSquare, FileText as FileIcon } from "lucide-react";
 import {
-  AppSidebar,
-  type AppSidebarProps,
+  SidebarView,
+  type SidebarViewProps,
   type SearchResult,
-} from "./component";
+} from "./SidebarView";
 import { expect, fn, within } from "storybook/test";
-import { MockProviders, mockDevices } from "@/test-utils/storybook";
+import { mockDevices } from "@/test-utils/storybook";
 
-type SidebarStoryArgs = AppSidebarProps & {
+type SidebarViewStoryArgs = SidebarViewProps & {
   onHomeClick: () => void;
   onDeviceClick: (id: string) => void;
 };
 
-const meta: Meta<SidebarStoryArgs> = {
+const meta: Meta<SidebarViewStoryArgs> = {
   title: "Components/Sidebar",
-  component: AppSidebar,
+  component: SidebarView,
   parameters: {
     layout: "fullscreen",
   },
 };
 
 export default meta;
-type Story = StoryObj<SidebarStoryArgs>;
+type Story = StoryObj<SidebarViewStoryArgs>;
 
 const mockSearchResults: SearchResult[] = [
   {
@@ -53,35 +54,61 @@ const mockSearchResults: SearchResult[] = [
 
 const deviceNames = mockDevices.map((d) => d.name);
 
+const defaultArgs: SidebarViewProps = {
+  devices: mockDevices,
+  onDeviceClick: fn(),
+  onHomeClick: fn(),
+  canRegisterDevice: true,
+  onRegisterClick: fn(),
+  searchResults: mockSearchResults,
+  searchQuery: "",
+  onSearchQueryChange: fn(),
+  isSearchModalOpen: false,
+  onSearchModalOpenChange: fn(),
+};
+
+function SidebarViewWithModalState(
+  props: Omit<
+    SidebarViewProps,
+    "isSearchModalOpen" | "onSearchModalOpenChange" | "searchQuery" | "onSearchQueryChange"
+  > & { onSearch?: (q: string) => void }
+) {
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  return (
+    <SidebarView
+      {...props}
+      isSearchModalOpen={isSearchModalOpen}
+      onSearchModalOpenChange={setIsSearchModalOpen}
+      searchQuery={searchQuery}
+      onSearchQueryChange={(q) => {
+        setSearchQuery(q);
+        props.onSearch?.(q);
+      }}
+    />
+  );
+}
+
 export const Default: Story = {
   args: {
+    ...defaultArgs,
     onSearch: fn(),
-    searchResults: mockSearchResults,
     onHomeClick: fn(),
     onDeviceClick: fn(),
   },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          "Click on the search input to open the search modal with search results.",
-      },
-    },
-  },
-  decorators: [
-    (Story, context) => (
-      <MockProviders
-        workspaceValue={{
-          navigateHome: context.args.onHomeClick,
-          navigateToDevice: context.args.onDeviceClick,
-        }}
-      >
-        <div className="h-screen w-64">
-          <Story />
-        </div>
-      </MockProviders>
-    ),
-  ],
+  render: (args) => (
+    <div className="h-screen w-64">
+      <SidebarViewWithModalState
+        onSearch={args.onSearch}
+        searchResults={args.searchResults}
+        devices={args.devices}
+        onDeviceClick={args.onDeviceClick}
+        onHomeClick={args.onHomeClick}
+        canRegisterDevice={true}
+        onRegisterClick={args.onRegisterClick ?? fn()}
+      />
+    </div>
+  ),
   play: async ({ canvasElement, args, userEvent }) => {
     const canvas = within(canvasElement);
 
@@ -124,24 +151,25 @@ export const Default: Story = {
 
 export const WithoutDevices: Story = {
   args: {
+    ...defaultArgs,
+    devices: [],
+    canRegisterDevice: false,
     onSearch: fn(),
     onHomeClick: fn(),
   },
-  decorators: [
-    (Story, context) => (
-      <MockProviders
-        workspaceValue={{
-          devices: [],
-          workspaceRole: "member",
-          navigateHome: context.args.onHomeClick,
-        }}
-      >
-        <div className="h-screen w-64">
-          <Story />
-        </div>
-      </MockProviders>
-    ),
-  ],
+  render: (args) => (
+    <div className="h-screen w-64">
+      <SidebarViewWithModalState
+        onSearch={args.onSearch}
+        searchResults={args.searchResults}
+        devices={args.devices}
+        onDeviceClick={args.onDeviceClick}
+        onHomeClick={args.onHomeClick}
+        canRegisterDevice={false}
+        onRegisterClick={fn()}
+      />
+    </div>
+  ),
   play: async ({ canvasElement, args, userEvent }) => {
     const canvas = within(canvasElement);
 

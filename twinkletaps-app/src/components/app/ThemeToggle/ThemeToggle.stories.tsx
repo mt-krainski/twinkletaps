@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { ThemeToggle } from "./component";
-import { ThemeProvider } from "../ThemeProvider/component";
-import { expect, userEvent, within } from "storybook/test";
+import { ThemeToggle } from "./ThemeToggle";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { expect, within } from "storybook/test";
 import { withDropdown } from "@/test-utils/storybook";
 
 const meta: Meta<typeof ThemeToggle> = {
@@ -89,14 +89,12 @@ export const Icon: Story = {
       await expect(document.documentElement).not.toHaveClass("dark");
     });
 
-    // Test system theme - it will apply either light or dark based on system preference
+    // Test system theme - applies either light or dark based on system preference
     await withDropdown(toggleButton, userEvent, async (menu3) => {
       await userEvent.click(
         within(menu3).getByRole("menuitem", { name: "System" })
       );
 
-      // System theme applies either light or dark class based on system preference
-      // We can't predict which one, so we just verify one of them is applied
       const hasLightClass =
         document.documentElement.classList.contains("light");
       const hasDarkClass = document.documentElement.classList.contains("dark");
@@ -171,14 +169,12 @@ export const Text: Story = {
       await expect(document.documentElement).not.toHaveClass("dark");
     });
 
-    // Test system theme - it will apply either light or dark based on system preference
+    // Test system theme - applies either light or dark based on system preference
     await withDropdown(toggleButton, userEvent, async (menu3) => {
       await userEvent.click(
         within(menu3).getByRole("menuitem", { name: "System" })
       );
 
-      // System theme applies either light or dark class based on system preference
-      // We can't predict which one, so we just verify one of them is applied
       const hasLightClass =
         document.documentElement.classList.contains("light");
       const hasDarkClass = document.documentElement.classList.contains("dark");

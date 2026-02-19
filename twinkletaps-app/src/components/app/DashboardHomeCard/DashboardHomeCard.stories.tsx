@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, within } from "storybook/test";
-import { DashboardHomeCard } from "./component";
+import { DashboardHomeCard } from "./DashboardHomeCard";
 
 const meta: Meta<typeof DashboardHomeCard> = {
   title: "Components/DashboardHomeCard",

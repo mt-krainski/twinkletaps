@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { AuthProvider } from "@/components/auth-provider";
-import { UserProfileProvider } from "@/components/user-profile-provider";
-import { WorkspaceProvider } from "@/components/workspace-provider";
+import { AuthProvider } from "@/components/providers/auth-provider";
+import { UserProfileProvider } from "@/components/providers/user-profile-provider";
+import { WorkspaceProvider } from "@/components/providers/workspace-provider";
 import DashboardShell from "./dashboard-shell";
 import { registerDevice } from "@/app/(authenticated)/devices/actions";
 import { createClient } from "@/lib/supabase/server";

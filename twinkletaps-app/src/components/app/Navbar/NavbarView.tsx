@@ -19,27 +19,33 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useUserProfile } from "@/components/user-profile-provider";
-import { useWorkspace } from "@/components/workspace-provider";
-import { Logo } from "@/components/Logo/component";
+import type { UserProfile } from "@/components/providers/user-profile-provider";
+import type { WorkspaceInfo } from "@/components/providers/workspace-provider";
+import { Logo } from "@/components/app/Logo";
 
-export interface NavbarProps {
+export interface NavbarViewProps {
   className?: string;
+  profile: UserProfile;
+  workspaces: WorkspaceInfo[];
+  selectedWorkspace: WorkspaceInfo | undefined;
+  switchWorkspace: (workspaceId: string) => void;
+  isSigningOut: boolean;
+  signOut: () => Promise<void>;
+  navigateToAccount: () => void;
+  navigateToSettings: () => void;
 }
 
-export function Navbar({ className }: NavbarProps) {
-  const {
-    profile,
-    isSigningOut,
-    signOut,
-    navigateToAccount,
-    navigateToSettings,
-  } = useUserProfile();
-  const { workspaces, selectedWorkspaceId, switchWorkspace } = useWorkspace();
-
-  const selectedWorkspace =
-    workspaces.find((w) => w.id === selectedWorkspaceId) || workspaces[0];
-
+export function NavbarView({
+  className,
+  profile,
+  workspaces,
+  selectedWorkspace,
+  switchWorkspace,
+  isSigningOut,
+  signOut,
+  navigateToAccount,
+  navigateToSettings,
+}: NavbarViewProps) {
   return (
     <>
       <div
@@ -48,7 +54,6 @@ export function Navbar({ className }: NavbarProps) {
           className,
         )}
       >
-        {/* Left: Logo and Workspace Selector */}
         <div className="flex items-center gap-4">
           <Logo />
 
@@ -76,7 +81,6 @@ export function Navbar({ className }: NavbarProps) {
           )}
         </div>
 
-        {/* Right: User Menu */}
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
