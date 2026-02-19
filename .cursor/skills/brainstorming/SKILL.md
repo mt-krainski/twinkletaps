@@ -27,8 +27,8 @@ You MUST create a task for each of these items and complete them in order:
 2. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 3. **Propose 2-3 approaches** — with trade-offs and your recommendation
 4. **Present design** — in sections scaled to their complexity, get user approval after each section
-5. **Write design doc** — save to `docs/plans/YYYY-MM-DD-<topic>-design.md` and commit
-6. **Transition to implementation** — use the writing-plans skill to create implementation plan
+5. **Write plan to kanban** — append to the task file in `.kanban/10_analysis_plan/` and commit
+6. **Transition to implementation** — use the writing-plans skill to break the plan into kanban tasks
 
 ## Process Flow
 
@@ -36,8 +36,8 @@ You MUST create a task for each of these items and complete them in order:
 2. Ask clarifying questions
 3. Propose 2-3 approaches
 4. Present design sections → User approves? If no, revise. If yes, continue.
-5. Write design doc
-6. Use writing-plans skill to create implementation plan
+5. Write plan to kanban task file
+6. Use writing-plans skill to create kanban task files
 
 **The terminal state is using writing-plans.** Do NOT invoke other implementation skills. The ONLY skill you use after brainstorming is writing-plans.
 
@@ -65,12 +65,13 @@ You MUST create a task for each of these items and complete them in order:
 ## After the Design
 
 **Documentation:**
-- Write the validated design to `docs/plans/YYYY-MM-DD-<topic>-design.md`
+- Append the validated design to the task file in `.kanban/10_analysis_plan/`
+- If no task file exists yet, create one following the kanban task template (see `.cursor/rules/workflow.mdc`)
 - Write clearly and concisely
-- Commit the design document to git
+- Commit the task file to git
 
 **Implementation:**
-- Use the writing-plans skill to create a detailed implementation plan
+- Use the writing-plans skill to break the design into kanban task files in `.kanban/20_ready/`
 - Do NOT use any other skill. writing-plans is the next step.
 
 ## Key Principles
