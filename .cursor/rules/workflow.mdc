@@ -55,6 +55,8 @@ Task filename:
 * `T-###__short_slug.md`
   Example: `T-003__add_ws_auth_middleware.md`
 
+First digit (and later digits) is the ID of the epic, the next digits are IDs of individual tasks. E.g. task T-500 is an epic. T-501 to T-599 are implementation tasks. Once we get higher, we can do T-11xx, i.e. 2 digits for epic.
+
 IDs are immutable. If scope changes substantially, create a new task.
 
 ---
