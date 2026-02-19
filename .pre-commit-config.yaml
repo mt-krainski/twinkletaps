@@ -1,0 +1,38 @@
+# Pre-commit hooks for cursor-retro only (monorepo)
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        files: ^cursor-retro/
+      - id: end-of-file-fixer
+        files: ^cursor-retro/
+      - id: check-yaml
+        files: ^cursor-retro/
+      - id: check-ast
+        files: ^cursor-retro/
+      - id: check-json
+        files: ^cursor-retro/
+      - id: check-added-large-files
+        files: ^cursor-retro/
+      - id: check-toml
+        files: ^cursor-retro/
+      - id: pretty-format-json
+        files: ^cursor-retro/
+        args:
+          - "--autofix"
+          - "--indent=2"
+          - "--no-sort-keys"
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
+    hooks:
+      - id: ruff
+        files: ^cursor-retro/
+        args: [--fix]
+      - id: ruff-format
+        files: ^cursor-retro/
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+        files: ^cursor-retro/
