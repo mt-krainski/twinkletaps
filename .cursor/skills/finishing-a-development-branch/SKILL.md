@@ -133,7 +133,16 @@ git branch -D <feature-branch>
 
 Then: If in a worktree, cleanup (Step 5). Otherwise done.
 
-### Step 5: Cleanup Worktree (only if in a worktree)
+### Step 5: Update Kanban
+
+After merge or PR creation:
+1. Move the task file to `.kanban/50_merged/`
+2. Update the task file:
+   - **Status:** Merged
+   - **PR:** link (if Option 2)
+   - Add a brief summary of what was merged under Verification Notes
+
+### Step 6: Cleanup Worktree (only if in a worktree)
 
 **For Options 1, 2, 4 only.** Skip if not in a worktree.
 

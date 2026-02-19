@@ -13,6 +13,9 @@ This is a simple Arduino project. The project follows modern development practic
 - Use `npm` as the package and script runner
 - "tests" here mean simple unit and integration tests (`npm run test`) and end to end tests (`npm run test:e2e`). Run `test` for a quick check and run `test:e2e` for a final check before completing the work. Also make sure to keep lint clean (`npm run lint`)
 
+## CI
+- Root `.github/workflows/ci.yml` is deprecated and due for removal. New packages must not add jobs to it; add a dedicated workflow instead (e.g. `package-name--ci.yml`). See `cursor-retro--ci.yml` or `twinkletaps-app--ci.yml` for the pattern.
+
 ## Other notes
 - Unless I explicitly ask for it, don't modify the readme or write other documentation files.
 - Be cool and casual, don't use overexaggerated phrases like "You're absolutely right!"

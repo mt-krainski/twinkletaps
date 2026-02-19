@@ -1,0 +1,46 @@
+name: cursor-retro CI
+permissions:
+  contents: read
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install tools
+        run: |
+          pipx install poethepoet
+          pipx install pre-commit
+
+      - name: Set up project
+        working-directory: ./cursor-retro
+        run: poe configure
+
+      - name: Run tests
+        working-directory: ./cursor-retro
+        run: poe test-full
+
+      - name: Run lint
+        working-directory: ./cursor-retro
+        run: poe lint
+
+      - name: Run hooks
+        working-directory: ./cursor-retro
+        run: poe hooks-run

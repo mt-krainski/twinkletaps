@@ -1,0 +1,75 @@
+[project]
+name = "cursor-retro"
+version = "0.0.1"
+description = "cursor-retro"
+authors = [{name = "Mateusz Krainski", email = "mt.krainski@gmail.com"}]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "ruff>=0.15.0",
+    "coverage>=7.13.4",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "B",    # flake8-bugbear
+    "A",    # flake8-builtins
+    "C4",   # flake8-comprehensions
+    "D",    # pydocstyle (flake8-docstrings)
+    "ERA",  # eradicate
+    "S",    # flake8-bandit
+]
+ignore = ["D104", "D100", "D101", "D106"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+[tool.ruff.lint.flake8-builtins]
+builtins-ignorelist = ["id"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.poe]
+envfile = ".env"
+
+[tool.poe.executor]
+type = "uv"
+
+[tool.poe.tasks]
+configure = "./scripts/configure.sh"
+update = "./scripts/update.sh"
+hooks-run = "pre-commit run --all-files"
+hooks-update = "pre-commit autoupdate"
+[tool.poe.tasks.test]
+sequence = [
+    { cmd = "coverage run -m pytest --showlocals" },
+    { cmd = "coverage report" },
+]
+
+[tool.poe.tasks.lint]
+sequence = [
+    { cmd = "ruff check ." },
+    { cmd = "ruff format --check ." },
+]
+
+[tool.poe.tasks.test-full]
+sequence = [
+    { ref = "test" },
+]
