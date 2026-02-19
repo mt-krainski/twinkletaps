@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import { AppSidebar } from "@/components";
+import { AppSidebar } from "@/components/app/Sidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
-import { Navbar } from "@/components";
+import { Navbar } from "@/components/app/Navbar";
 
 export default function DashboardShell({ children }: { children: ReactNode }) {
   return (

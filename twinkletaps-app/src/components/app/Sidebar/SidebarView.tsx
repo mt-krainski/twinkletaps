@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { type ReactNode } from "react";
 import { Search, Home, Lightbulb, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -22,8 +21,6 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { useWorkspace } from "@/components/workspace-provider";
-import { RegisterDeviceDialog } from "@/components/RegisterDevice/component";
 
 export interface SearchResult {
   id: string;
@@ -33,40 +30,37 @@ export interface SearchResult {
   onClick?: () => void;
 }
 
-export interface AppSidebarProps {
+export interface SidebarViewProps {
   onSearch?: (query: string) => void;
   searchResults?: SearchResult[];
   className?: string;
   children?: ReactNode;
+  devices: { id: string; name: string }[];
+  onDeviceClick: (id: string) => void;
+  onHomeClick: () => void;
+  canRegisterDevice: boolean;
+  onRegisterClick: () => void;
+  searchQuery: string;
+  onSearchQueryChange: (query: string) => void;
+  isSearchModalOpen: boolean;
+  onSearchModalOpenChange: (open: boolean) => void;
 }
 
-export function AppSidebar({
+export function SidebarView({
   onSearch,
   searchResults = [],
   className,
   children,
-}: AppSidebarProps) {
-  const router = useRouter();
-  const {
-    devices,
-    navigateToDevice,
-    navigateHome,
-    workspaceRole,
-    selectedWorkspaceId,
-    registerDevice,
-  } = useWorkspace();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
-
-  const isAdmin = workspaceRole === "admin";
-  const canRegisterDevice = isAdmin && selectedWorkspaceId;
-
-  const handleModalSearch = (query: string) => {
-    setSearchQuery(query);
-    onSearch?.(query);
-  };
-
+  devices,
+  onDeviceClick,
+  onHomeClick,
+  canRegisterDevice,
+  onRegisterClick,
+  searchQuery,
+  onSearchQueryChange,
+  isSearchModalOpen,
+  onSearchModalOpenChange,
+}: SidebarViewProps) {
   return (
     <SidebarProvider>
       <div className="flex min-h-svh w-full">
@@ -77,14 +71,14 @@ export function AppSidebar({
                 <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      onClick={() => setIsSearchModalOpen(true)}
+                      onClick={() => onSearchModalOpenChange(true)}
                     >
                       <Search className="h-4 w-4" />
                       <span>Search...</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton onClick={navigateHome}>
+                    <SidebarMenuButton onClick={onHomeClick}>
                       <Home className="h-4 w-4" />
                       <span>Home</span>
                     </SidebarMenuButton>
@@ -101,7 +95,7 @@ export function AppSidebar({
                     {devices.map((device) => (
                       <SidebarMenuItem key={device.id}>
                         <SidebarMenuButton
-                          onClick={() => navigateToDevice(device.id)}
+                          onClick={() => onDeviceClick(device.id)}
                         >
                           <Lightbulb className="h-4 w-4" />
                           <span>{device.name}</span>
@@ -110,9 +104,7 @@ export function AppSidebar({
                     ))}
                     {canRegisterDevice && (
                       <SidebarMenuItem>
-                        <SidebarMenuButton
-                          onClick={() => setIsRegisterDialogOpen(true)}
-                        >
+                        <SidebarMenuButton onClick={onRegisterClick}>
                           <Plus className="h-4 w-4" />
                           <span>Register Device</span>
                         </SidebarMenuButton>
@@ -124,8 +116,10 @@ export function AppSidebar({
             )}
           </SidebarContent>
 
-          {/* Search Modal */}
-          <Dialog open={isSearchModalOpen} onOpenChange={setIsSearchModalOpen}>
+          <Dialog
+            open={isSearchModalOpen}
+            onOpenChange={onSearchModalOpenChange}
+          >
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
               <DialogHeader>
                 <DialogTitle className="sr-only">Search</DialogTitle>
@@ -137,7 +131,11 @@ export function AppSidebar({
                   type="text"
                   placeholder="Type a command or search..."
                   value={searchQuery}
-                  onChange={(e) => handleModalSearch(e.target.value)}
+                  onChange={(e) => {
+                    const q = e.target.value;
+                    onSearchQueryChange(q);
+                    onSearch?.(q);
+                  }}
                   className="w-full rounded-md border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   autoFocus
                 />
@@ -153,7 +151,7 @@ export function AppSidebar({
                         className="w-full justify-start gap-3 h-auto p-3 text-left"
                         onClick={() => {
                           result.onClick?.();
-                          setIsSearchModalOpen(false);
+                          onSearchModalOpenChange(false);
                         }}
                       >
                         {result.icon && (
@@ -182,17 +180,6 @@ export function AppSidebar({
               </div>
             </DialogContent>
           </Dialog>
-
-          {canRegisterDevice && (
-            <RegisterDeviceDialog
-              open={isRegisterDialogOpen}
-              onOpenChange={setIsRegisterDialogOpen}
-              onSubmit={(name) =>
-                registerDevice(selectedWorkspaceId!, name)
-              }
-              onSuccess={() => router.refresh()}
-            />
-          )}
         </Sidebar>
         {children}
       </div>

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { Logo } from "./component";
+import { Logo } from "./Logo";
 import { expect, within } from "storybook/test";
 
 const meta: Meta<typeof Logo> = {
@@ -26,12 +26,10 @@ export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // Check that there's an SVG or img element (icon)
     const iconElement =
       canvasElement.querySelector("svg") || canvasElement.querySelector("img");
     await expect(iconElement).toBeInTheDocument();
 
-    // Check that there's text content (any text)
     const textElement = canvas.getByText(/.+/);
     await expect(textElement).toBeInTheDocument();
   },
