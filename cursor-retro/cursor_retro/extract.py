@@ -20,13 +20,12 @@ def get_workspace_composer_ids(
     Returns:
         List of composer dicts (composerId, createdAt, name, ...) in order.
     """
-    conn = sqlite3.connect(workspace_db)
-    cur = conn.execute(
-        "SELECT value FROM ItemTable WHERE key = ?",
-        (WORKSPACE_COMPOSER_KEY,),
-    )
-    row = cur.fetchone()
-    conn.close()
+    with sqlite3.connect(workspace_db) as conn:
+        cur = conn.execute(
+            "SELECT value FROM ItemTable WHERE key = ?",
+            (WORKSPACE_COMPOSER_KEY,),
+        )
+        row = cur.fetchone()
     if not row:
         return []
     data = json.loads(row[0])
@@ -49,28 +48,26 @@ def get_conversation_messages(global_db: Path, composer_id: str) -> list[dict]:
     Returns:
         List of message dicts (type, text, richText, ...) in conversation order.
     """
-    conn = sqlite3.connect(global_db)
-    cur = conn.execute(
-        "SELECT value FROM cursorDiskKV WHERE key = ?",
-        (f"composerData:{composer_id}",),
-    )
-    row = cur.fetchone()
-    if not row:
-        conn.close()
-        return []
-    meta = json.loads(row[0])
-    headers = meta.get("fullConversationHeadersOnly") or []
-    bubble_ids = [h.get("bubbleId") for h in headers if "bubbleId" in h]
-    messages = []
-    for bid in bubble_ids:
+    with sqlite3.connect(global_db) as conn:
         cur = conn.execute(
             "SELECT value FROM cursorDiskKV WHERE key = ?",
-            (f"bubbleId:{composer_id}:{bid}",),
+            (f"composerData:{composer_id}",),
         )
-        r = cur.fetchone()
-        if r:
-            messages.append(json.loads(r[0]))
-    conn.close()
+        row = cur.fetchone()
+        if not row:
+            return []
+        meta = json.loads(row[0])
+        headers = meta.get("fullConversationHeadersOnly") or []
+        bubble_ids = [h.get("bubbleId") for h in headers if "bubbleId" in h]
+        messages = []
+        for bid in bubble_ids:
+            cur = conn.execute(
+                "SELECT value FROM cursorDiskKV WHERE key = ?",
+                (f"bubbleId:{composer_id}:{bid}",),
+            )
+            r = cur.fetchone()
+            if r:
+                messages.append(json.loads(r[0]))
     return messages
 
 
