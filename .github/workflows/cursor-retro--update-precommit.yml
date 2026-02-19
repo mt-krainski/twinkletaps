@@ -1,14 +1,13 @@
-name: Monthly Pre-commit Hook Updates
+name: cursor-retro – Monthly Pre-commit Hook Updates
 
 on:
   schedule:
-    # Run on the 1st of every month at 2 AM UTC
     - cron: "0 2 1 * *"
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch:
 
 jobs:
   update-precommit:
-    name: "Update Pre-commit Hooks"
+    name: "Update Pre-commit Hooks (cursor-retro)"
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -33,9 +32,11 @@ jobs:
           pipx install pre-commit
 
       - name: Install dependencies
+        working-directory: ./cursor-retro
         run: uv sync
 
       - name: Update pre-commit hooks
+        working-directory: ./cursor-retro
         run: poe hooks-update
 
       - name: Check for changes
@@ -55,14 +56,9 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update pre-commit hooks"
-          title: "chore: update pre-commit hooks"
+          commit-message: "chore(cursor-retro): update pre-commit hooks"
+          title: "chore(cursor-retro): update pre-commit hooks"
           body: |
-            This PR was automatically created by the monthly pre-commit hook update workflow.
-
-            Changes include:
-              - Updated pre-commit hooks
-
-            The workflow runs monthly to ensure all pre-commit hooks stay up-to-date.
-          branch: "chore/update-precommit-hooks"
+            This PR was automatically created by the monthly pre-commit hook update workflow for cursor-retro.
+          branch: "chore/cursor-retro-update-precommit-hooks"
           delete-branch: true
