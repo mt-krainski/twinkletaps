@@ -6,7 +6,7 @@ alwaysApply: true
 
 ## Goals
 
-* Mimic a normal software development lifecycle with clear stages: **Intake → Plan → Build → Verify/Review → Merge**.
+* Mimic a normal software development lifecycle with clear stages: **Plan → Build → Review → Merge**.
 * Use a **filesystem Kanban**: each task is a file; board columns are directories.
 * Optimize for **small, reviewable, testable increments**:
 
@@ -29,8 +29,6 @@ Create a directory at repo root:
 
 With these columns (directories):
 
-* `.kanban/00_intake/`
-  Raw user ideas / requests. May be incomplete.
 * `.kanban/10_analysis_plan/`
   Agent-produced plan and proposed tasks, no code changes.
 * `.kanban/20_ready/`
@@ -39,12 +37,8 @@ With these columns (directories):
   A task currently being implemented.
 * `.kanban/40_review/`
   Implemented and ready for code review + verification.
-* `.kanban/50_verified/`
-  Passed verification (tests, checks, manual validation notes).
-* `.kanban/60_merged/`
+* `.kanban/50_merged/`
   Landed in mainline; includes merge/PR reference.
-* `.kanban/90_blocked/`
-  Blocked tasks with reason + needed input.
 
 **Invariant:** A task file exists in **exactly one** column at a time.
 
@@ -111,7 +105,7 @@ Each task file MUST include the following sections:
 
 8. **Risk / Rollback**
 
-   * What could break, and how to rollback safely.
+   * What could break, and how to rollback safely. This is only relevant for changes that actually need a rollback strategy. E.g. database changes. The default rollback strategy is to roll-back the deployment to the previous version. This is only relevant if for some reason that is not possible or dangerous.
 
 9. **Metadata**
 
@@ -124,28 +118,11 @@ Each task file MUST include the following sections:
 
 ## Stage Responsibilities and Rules
 
-### Stage 00: Intake (Human → `00_intake`)
-
-**Human responsibility**
-
-* Capture the request/idea in an intake file.
-* Provide any constraints (time, scope, tech constraints, coding standards).
-
-**Agent responsibility (when invoked on intake)**
-
-* Do not code.
-* Ask clarifying questions when needed. Err on the side of asking questions and clarifications
-
-**Output**
-
-* Move intake file to `10_analysis_plan/` with a completed analysis + task breakdown (see Stage 10).
-
----
-
 ### Stage 10: Analysis & Planning (Agent → `10_analysis_plan`)
 
 **Agent must:**
 
+0. Ask clarifying questions if the request is ambiguous before proceeding. Err on the side of asking.
 1. **Scan the repo** to understand:
 
    * Architecture, conventions, test setup, CI, linters, code ownership patterns.
@@ -240,13 +217,14 @@ Dos and don'ts:
 
 **Then**
 
-* Move task file to `40_review/`.
+* Fire up lint and tests for the repo. 
+* If everything green - move task file to `40_review/`.
 
 ---
 
-### Stage 40: Review & Verification (Second agent + Human → `40_review`)
+### Stage 40: Review & Merge (Human → `40_review` → `50_merged`)
 
-**Verifier Agent (or "review agent") must:**
+**Agent (when invoked for review) must:**
 
 * Re-read the task requirements and compare with the change.
 * Check for:
@@ -255,7 +233,8 @@ Dos and don'ts:
   * Consistency with repo patterns
   * Test adequacy (what's missing)
   * Documentation / comments where needed
-  
+  * Ensure tests pass (this can also be done by checking CI)
+
 * Provide a concise review report in the task file:
 
   * "Pass / Needs changes"
@@ -271,24 +250,9 @@ Dos and don'ts:
 
 **If accepted**
 
-* Move to `50_verified/`.
-
----
-
-### Stage 50: Merge (Human or merge agent → `50_verified` → `60_merged`)
-
-**Merge requirements**
-
-* All CI green (if applicable).
-* Task file includes:
-
-  * PR link
-  * Summary of what merged
-  * Verification evidence (tests run + manual checks)
-
-**After merge**
-
-* Move to `60_merged/`.
+* Verify all CI is green (if applicable).
+* Ensure task file includes PR link, summary of what merged, and verification evidence.
+* Merge and move task file to `50_merged/`.
 * Optionally append release note or changelog reference if your repo uses it.
 
 ---
@@ -327,17 +291,15 @@ Task file must include PR URL once created.
 
 You will typically do:
 
-1. Add/modify an intake file in `00_intake/`.
-2. Invoke **Planner Agent** on that file:
+1. Invoke **Planner Agent** with a description of the work:
 
-   * Output: plan + tasks moved into `20_ready/`.
-3. Pick next task and invoke **Builder Agent** on that task file:
+   * Output: plan + tasks created in `20_ready/`.
+2. Pick next task and invoke **Builder Agent** on that task file:
 
    * Output: code + task moved to `40_review/`.
-4. Invoke **Reviewer Agent** on the review task file:
+3. Invoke **Reviewer Agent** on the review task file:
 
-   * Output: review notes; pass → `50_verified`, fail → `30_in_progress`.
-5. Merge and move to `60_merged/`.
+   * Output: review notes; pass → merge + `50_merged/`, fail → `30_in_progress`.
 
 ---
 
