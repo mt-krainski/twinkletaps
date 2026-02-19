@@ -68,7 +68,7 @@ You MUST create a task for each of these items and complete them in order:
 - Append the validated design to the task file in `.kanban/10_analysis_plan/`
 - If no task file exists yet, create one following the kanban task template (see `.cursor/rules/workflow.mdc`)
 - Write clearly and concisely
-- Commit the task file to git
+- `.kanban/` is gitignored — do NOT attempt to commit kanban files
 
 **Implementation:**
 - Use the writing-plans skill to break the design into kanban task files in `.kanban/20_ready/`
