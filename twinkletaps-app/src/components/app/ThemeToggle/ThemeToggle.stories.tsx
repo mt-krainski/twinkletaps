@@ -45,15 +45,19 @@ export const Icon: Story = {
   play: async ({ canvasElement, userEvent }) => {
     const canvas = within(canvasElement);
 
+    // Check that the theme toggle button exists
     const toggleButton = canvas.getByTestId("theme-toggle");
     await expect(toggleButton).toBeInTheDocument();
 
+    // Check that there are sun and moon icons
     const sunIcon = canvasElement.querySelector('[class*="sun"]');
     const moonIcon = canvasElement.querySelector('[class*="moon"]');
     await expect(sunIcon).toBeInTheDocument();
     await expect(moonIcon).toBeInTheDocument();
 
+    // Test dropdown functionality
     await withDropdown(toggleButton, userEvent, async (menu) => {
+      // Verify all menu items are present
       await expect(
         within(menu).getByRole("menuitem", { name: "Light" })
       ).toBeInTheDocument();
@@ -64,23 +68,28 @@ export const Icon: Story = {
         within(menu).getByRole("menuitem", { name: "System" })
       ).toBeInTheDocument();
 
+      // Test switching to dark theme
       await userEvent.click(
         within(menu).getByRole("menuitem", { name: "Dark" })
       );
 
+      // Verify dark theme is applied
       await expect(document.documentElement).toHaveClass("dark");
       await expect(document.documentElement).not.toHaveClass("light");
     });
 
+    // Reopen dropdown to test light theme
     await withDropdown(toggleButton, userEvent, async (menu2) => {
       await userEvent.click(
         within(menu2).getByRole("menuitem", { name: "Light" })
       );
 
+      // Verify light theme is applied
       await expect(document.documentElement).toHaveClass("light");
       await expect(document.documentElement).not.toHaveClass("dark");
     });
 
+    // Test system theme - applies either light or dark based on system preference
     await withDropdown(toggleButton, userEvent, async (menu3) => {
       await userEvent.click(
         within(menu3).getByRole("menuitem", { name: "System" })
@@ -110,9 +119,11 @@ export const Text: Story = {
   play: async ({ canvasElement, userEvent }) => {
     const canvas = within(canvasElement);
 
+    // Check that the theme toggle button exists
     const toggleButton = canvas.getByTestId("theme-toggle");
     await expect(toggleButton).toBeInTheDocument();
 
+    // Check that there are sun and moon icons with text
     const sunIcon = canvasElement.querySelector('[class*="sun"]');
     const moonIcon = canvasElement.querySelector('[class*="moon"]');
     const chevronIcon = canvasElement.querySelector('[class*="chevron"]');
@@ -120,10 +131,13 @@ export const Text: Story = {
     await expect(moonIcon).toBeInTheDocument();
     await expect(chevronIcon).toBeInTheDocument();
 
+    // Check for text labels
     const lightText = canvas.getByText("Light");
     await expect(lightText).toBeInTheDocument();
 
+    // Test dropdown functionality
     await withDropdown(toggleButton, userEvent, async (menu) => {
+      // Verify all menu items are present
       await expect(
         within(menu).getByRole("menuitem", { name: "Light" })
       ).toBeInTheDocument();
@@ -134,23 +148,28 @@ export const Text: Story = {
         within(menu).getByRole("menuitem", { name: "System" })
       ).toBeInTheDocument();
 
+      // Test switching to dark theme
       await userEvent.click(
         within(menu).getByRole("menuitem", { name: "Dark" })
       );
 
+      // Verify dark theme is applied
       await expect(document.documentElement).toHaveClass("dark");
       await expect(document.documentElement).not.toHaveClass("light");
     });
 
+    // Reopen dropdown to test light theme
     await withDropdown(toggleButton, userEvent, async (menu2) => {
       await userEvent.click(
         within(menu2).getByRole("menuitem", { name: "Light" })
       );
 
+      // Verify light theme is applied
       await expect(document.documentElement).toHaveClass("light");
       await expect(document.documentElement).not.toHaveClass("dark");
     });
 
+    // Test system theme - applies either light or dark based on system preference
     await withDropdown(toggleButton, userEvent, async (menu3) => {
       await userEvent.click(
         within(menu3).getByRole("menuitem", { name: "System" })
