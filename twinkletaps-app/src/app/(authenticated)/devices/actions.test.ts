@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  registerDevice,
-  MqttCredentialPoolEmptyError,
-} from "./actions";
+import { registerDevice } from "./actions";
+import { MqttCredentialPoolEmptyError } from "@/lib/services/device";
 
 const mockGetUser = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({
