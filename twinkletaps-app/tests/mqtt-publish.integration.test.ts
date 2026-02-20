@@ -2,6 +2,7 @@ import "dotenv/config";
 
 import mqtt, { type MqttClient } from "mqtt";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { config } from "../src/lib/config";
 import { publishToDevice } from "../src/lib/services/mqtt";
 
 describe("MQTT publish (integration)", () => {
@@ -10,23 +11,17 @@ describe("MQTT publish (integration)", () => {
   const received: { topic: string; payload: Buffer }[] = [];
 
   beforeAll(async () => {
-    const brokerUrlEnv = process.env.MQTT_BROKER_URL;
-    const usernameEnv = process.env.MQTT_PUBLISHER_USERNAME;
-    const passwordEnv = process.env.MQTT_PUBLISHER_PASSWORD;
-    const topicEnv = process.env.MQTT_TEST_TOPIC;
-    if (!brokerUrlEnv || !usernameEnv || !passwordEnv || !topicEnv) {
+    const { brokerUrl, username, password } = config.mqttPublisher;
+    if (!brokerUrl || !username || !password) {
       throw new Error(
-        "MQTT integration test requires MQTT_BROKER_URL, MQTT_PUBLISHER_USERNAME, MQTT_PUBLISHER_PASSWORD, and MQTT_TEST_TOPIC in .env",
+        "MQTT integration test requires MQTT_BROKER_URL, MQTT_PUBLISHER_USERNAME, MQTT_PUBLISHER_PASSWORD in .env",
       );
     }
-    topic = topicEnv;
-
-    let brokerUrl = brokerUrlEnv;
-    if (!/^mqtts?:\/\//i.test(brokerUrl)) {
-      brokerUrl = `mqtts://${brokerUrl}`;
+    const topicEnv = process.env.MQTT_TEST_TOPIC;
+    if (!topicEnv) {
+      throw new Error("MQTT integration test requires MQTT_TEST_TOPIC in .env");
     }
-    const username = usernameEnv;
-    const password = passwordEnv;
+    topic = topicEnv;
 
     await new Promise<void>((resolve, reject) => {
       subscriber = mqtt.connect(brokerUrl, {
