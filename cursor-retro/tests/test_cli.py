@@ -2,11 +2,15 @@
 
 from datetime import datetime, timezone
 
+from typer.testing import CliRunner
+
 from cursor_retro import cli
 from tests.helpers import create_global_db
 
+runner = CliRunner()
 
-def test_cli_extract_exports_and_prints_summary(tmp_path, monkeypatch, capsys):
+
+def test_cli_extract_exports_and_prints_summary(tmp_path, monkeypatch):
     """Extract subcommand exports conversations and prints count and filenames."""
     workspace_root = tmp_path / "my_project"
     workspace_root.mkdir()
@@ -37,10 +41,13 @@ def test_cli_extract_exports_and_prints_summary(tmp_path, monkeypatch, capsys):
 
     monkeypatch.setattr(cli, "_get_cursor_paths", fake_paths)
 
-    cli.main(["extract", "--workspace", str(workspace_root), "--since", "7"])
+    result = runner.invoke(
+        cli.app,
+        ["extract", "--workspace", str(workspace_root), "--since", "7"],
+    )
 
+    assert result.exit_code == 0
     out_dir = workspace_root / ".cursor-retro" / "conversations"
     assert (out_dir / "conv-1.md").exists()
-    captured = capsys.readouterr()
-    assert "Exported 1 conversation" in captured.out
-    assert "conv-1.md" in captured.out
+    assert "Exported 1 conversation" in result.output
+    assert "conv-1.md" in result.output

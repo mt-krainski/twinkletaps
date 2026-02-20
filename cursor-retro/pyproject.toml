@@ -5,7 +5,7 @@ description = "cursor-retro"
 authors = [{name = "Mateusz Krainski", email = "mt.krainski@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["typer>=0.15.0"]
 
 [project.scripts]
 cursor-retro = "cursor_retro.cli:main"
