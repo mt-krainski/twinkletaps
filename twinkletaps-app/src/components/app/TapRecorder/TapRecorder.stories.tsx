@@ -96,6 +96,9 @@ export const WithSequenceDisplay: Story = {
   },
 };
 
+// Long-press on touch (or right-click) would open the system context menu and block
+// hold-to-record. We prevent that via onContextMenu preventDefault; this story
+// asserts the event is suppressed so the component stays usable.
 export const NoContextMenuOnLongPress: Story = {
   args: {
     onTapComplete: fn(),

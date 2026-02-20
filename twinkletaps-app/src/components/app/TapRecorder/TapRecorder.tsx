@@ -63,6 +63,7 @@ export function TapRecorder({
   const startRecording = useCallback(() => {
     if (intervalRef.current) return;
     setRecordedTaps([true]);
+    pressedThisPeriodRef.current = false;
     setRecording(true);
     intervalRef.current = setInterval(() => {
       setRecordedTaps((prev) => {
