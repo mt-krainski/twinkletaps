@@ -7,6 +7,9 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
 
+[project.scripts]
+cursor-retro = "cursor_retro.cli:main"
+
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",

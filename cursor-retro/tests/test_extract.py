@@ -8,91 +8,123 @@ from pathlib import Path
 from cursor_retro.extract import (
     export_conversation,
     extract_conversations,
+    get_composer_ids,
     get_conversation_messages,
-    get_workspace_composer_ids,
 )
-
-
-def _create_workspace_db(path: Path, all_composers: list[dict]) -> None:
-    """Create minimal workspace state.vscdb with ItemTable and composer.composerData."""
-    conn = sqlite3.connect(path)
-    conn.execute("CREATE TABLE ItemTable (key TEXT PRIMARY KEY, value BLOB)")
-    conn.execute(
-        "INSERT INTO ItemTable (key, value) VALUES (?, ?)",
-        ("composer.composerData", json.dumps({"allComposers": all_composers})),
-    )
-    conn.commit()
-    conn.close()
 
 
 def _create_global_db(
     path: Path,
-    composer_metadata: dict,
-    bubbles: dict[str, dict],
+    composer_metadata: dict | list[dict],
+    bubbles: dict[str, dict] | None = None,
 ) -> None:
-    """Create global state.vscdb with cursorDiskKV (composerData + bubbleId rows)."""
+    """Create global state.vscdb with cursorDiskKV (composerData + bubbleId rows).
+
+    Args:
+        path: Where to create the SQLite file.
+        composer_metadata: A single composer dict or a list of them.
+        bubbles: Mapping of bubbleId to message dict. Applied to the first
+            composer when composer_metadata is a list.
+    """
+    if isinstance(composer_metadata, dict):
+        composer_metadata = [composer_metadata]
+    if bubbles is None:
+        bubbles = {}
+
+    path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path)
     conn.execute("CREATE TABLE cursorDiskKV (key TEXT PRIMARY KEY, value BLOB)")
-    cid = composer_metadata.get("composerId", "test-composer-id")
-    conn.execute(
-        "INSERT INTO cursorDiskKV (key, value) VALUES (?, ?)",
-        (f"composerData:{cid}", json.dumps(composer_metadata)),
-    )
+    for meta in composer_metadata:
+        cid = meta.get("composerId", "test-composer-id")
+        conn.execute(
+            "INSERT INTO cursorDiskKV (key, value) VALUES (?, ?)",
+            (f"composerData:{cid}", json.dumps(meta)),
+        )
+    first_cid = composer_metadata[0].get("composerId", "test-composer-id")
     for bubble_id, bubble in bubbles.items():
         conn.execute(
             "INSERT OR REPLACE INTO cursorDiskKV (key, value) VALUES (?, ?)",
-            (f"bubbleId:{cid}:{bubble_id}", json.dumps(bubble)),
+            (f"bubbleId:{first_cid}:{bubble_id}", json.dumps(bubble)),
         )
     conn.commit()
     conn.close()
 
 
-def test_get_workspace_composer_ids_returns_ids(tmp_path):
-    """get_workspace_composer_ids returns composer IDs from workspace DB."""
-    workspace_db = tmp_path / "state.vscdb"
-    all_composers = [
-        {"composerId": "id1", "createdAt": 1000, "name": "Chat 1"},
-        {"composerId": "id2", "createdAt": 2000, "name": "Chat 2"},
-    ]
-    _create_workspace_db(workspace_db, all_composers)
-    result = get_workspace_composer_ids(workspace_db, since_days=None)
-    assert result == [
-        {"composerId": "id1", "createdAt": 1000, "name": "Chat 1"},
-        {"composerId": "id2", "createdAt": 2000, "name": "Chat 2"},
-    ]
+def test_get_composer_ids_returns_all(tmp_path):
+    """get_composer_ids returns all composers from global DB."""
+    global_db = tmp_path / "state.vscdb"
+    _create_global_db(
+        global_db,
+        [
+            {"composerId": "id1", "createdAt": 1000, "name": "Chat 1"},
+            {"composerId": "id2", "createdAt": 2000, "name": "Chat 2"},
+        ],
+    )
+    result = get_composer_ids(global_db, since_days=None)
+    ids = [c["composerId"] for c in result]
+    assert ids == ["id1", "id2"]
 
 
-def test_get_workspace_composer_ids_filters_by_since_days(tmp_path):
-    """get_workspace_composer_ids filters by createdAt when since_days is set."""
-    workspace_db = tmp_path / "state.vscdb"
+def test_get_composer_ids_filters_by_since_days(tmp_path):
+    """get_composer_ids filters by createdAt when since_days is set."""
+    global_db = tmp_path / "state.vscdb"
     now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
     old_ms = int((datetime.now(timezone.utc) - timedelta(days=10)).timestamp() * 1000)
-    all_composers = [
-        {"composerId": "recent", "createdAt": now_ms, "name": "Recent"},
-        {"composerId": "old", "createdAt": old_ms, "name": "Old"},
-    ]
-    _create_workspace_db(workspace_db, all_composers)
-    result = get_workspace_composer_ids(workspace_db, since_days=7)
+    _create_global_db(
+        global_db,
+        [
+            {"composerId": "recent", "createdAt": now_ms, "name": "Recent"},
+            {"composerId": "old", "createdAt": old_ms, "name": "Old"},
+        ],
+    )
+    result = get_composer_ids(global_db, since_days=7)
     assert len(result) == 1
     assert result[0]["composerId"] == "recent"
+
+
+def test_get_composer_ids_filters_by_workspace_path(tmp_path):
+    """get_composer_ids only returns composers referencing the workspace path."""
+    global_db = tmp_path / "state.vscdb"
+    ws = Path("/projects/my-app")
+    _create_global_db(
+        global_db,
+        [
+            {
+                "composerId": "match",
+                "createdAt": 1000,
+                "allAttachedFileCodeChunksUris": [f"file://{ws}/src/main.ts"],
+            },
+            {
+                "composerId": "other",
+                "createdAt": 2000,
+                "allAttachedFileCodeChunksUris": ["file:///other/project/foo.py"],
+            },
+            {
+                "composerId": "none",
+                "createdAt": 3000,
+            },
+        ],
+    )
+    result = get_composer_ids(global_db, since_days=None, workspace_path=ws)
+    ids = [c["composerId"] for c in result]
+    assert ids == ["match"]
 
 
 def test_get_conversation_messages_returns_ordered_messages(tmp_path):
     """get_conversation_messages returns messages in header order."""
     global_db = tmp_path / "global.vscdb"
-    composer_metadata = {
-        "composerId": "cid",
-        "name": "Test",
-        "fullConversationHeadersOnly": [
-            {"bubbleId": "b1"},
-            {"bubbleId": "b2"},
-        ],
-    }
-    bubbles = {
-        "b1": {"type": 1, "text": "Hello"},
-        "b2": {"type": 2, "text": "Hi there"},
-    }
-    _create_global_db(global_db, composer_metadata, bubbles)
+    _create_global_db(
+        global_db,
+        {
+            "composerId": "cid",
+            "name": "Test",
+            "fullConversationHeadersOnly": [
+                {"bubbleId": "b1"},
+                {"bubbleId": "b2"},
+            ],
+        },
+        {"b1": {"type": 1, "text": "Hello"}, "b2": {"type": 2, "text": "Hi there"}},
+    )
     messages = get_conversation_messages(global_db, "cid")
     assert len(messages) == 2
     assert messages[0]["text"] == "Hello" and messages[0]["type"] == 1
@@ -120,46 +152,40 @@ def test_export_conversation_writes_markdown(tmp_path):
 
 def test_extract_conversations_skips_existing_file(tmp_path):
     """extract_conversations skips composer when output file already exists."""
-    workspace_db = tmp_path / "ws.vscdb"
     global_db = tmp_path / "global.vscdb"
     output_dir = tmp_path / "exports"
     output_dir.mkdir()
     (output_dir / "existing-id.md").write_text("existing", encoding="utf-8")
-    _create_workspace_db(
-        workspace_db,
-        [
-            {"composerId": "existing-id", "createdAt": 2000, "name": "Existing"},
-        ],
+    _create_global_db(
+        global_db,
+        {
+            "composerId": "existing-id",
+            "createdAt": 2000,
+            "name": "Existing",
+            "fullConversationHeadersOnly": [{"bubbleId": "b1"}],
+        },
+        {"b1": {"type": 1, "text": "x"}},
     )
-    composer_metadata = {
-        "composerId": "existing-id",
-        "fullConversationHeadersOnly": [{"bubbleId": "b1"}],
-    }
-    _create_global_db(global_db, composer_metadata, {"b1": {"type": 1, "text": "x"}})
-    extract_conversations(workspace_db, global_db, output_dir, since_days=None)
+    extract_conversations(global_db, output_dir, since_days=None)
     assert (output_dir / "existing-id.md").read_text(encoding="utf-8") == "existing"
 
 
 def test_extract_conversations_writes_new_export(tmp_path):
     """extract_conversations writes new markdown for composers without existing file."""
-    workspace_db = tmp_path / "ws.vscdb"
     global_db = tmp_path / "global.vscdb"
     output_dir = tmp_path / "exports"
     output_dir.mkdir()
-    _create_workspace_db(
-        workspace_db,
-        [
-            {"composerId": "new-id", "createdAt": 3000, "name": "New Chat"},
-        ],
+    _create_global_db(
+        global_db,
+        {
+            "composerId": "new-id",
+            "name": "New Chat",
+            "createdAt": 3000,
+            "fullConversationHeadersOnly": [{"bubbleId": "b1"}],
+        },
+        {"b1": {"type": 1, "text": "Hi"}},
     )
-    composer_metadata = {
-        "composerId": "new-id",
-        "name": "New Chat",
-        "createdAt": 3000,
-        "fullConversationHeadersOnly": [{"bubbleId": "b1"}],
-    }
-    _create_global_db(global_db, composer_metadata, {"b1": {"type": 1, "text": "Hi"}})
-    extract_conversations(workspace_db, global_db, output_dir, since_days=None)
+    extract_conversations(global_db, output_dir, since_days=None)
     out_file = output_dir / "new-id.md"
     assert out_file.exists()
     assert "New Chat" in out_file.read_text(encoding="utf-8")
