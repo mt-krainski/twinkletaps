@@ -17,4 +17,9 @@ export const config = {
   mqtt: {
     brokerUrl: process.env.NEXT_PUBLIC_MQTT_BROKER_URL,
   },
+  mqttPublisher: {
+    brokerUrl: process.env.MQTT_BROKER_URL,
+    username: process.env.MQTT_PUBLISHER_USERNAME,
+    password: process.env.MQTT_PUBLISHER_PASSWORD,
+  },
 } as const;
