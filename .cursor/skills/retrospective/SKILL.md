@@ -24,10 +24,10 @@ Default `--since 7` limits to the last 7 days; adjust if the user wants a differ
 
 ## Step 2 — Parallel analysis
 
-For **each** `.md` file in `.cursor-retro/conversations/`, fire a **fast** subagent using the Task tool with `model: "fast"`.
+For **each** `.md` file in `.cursor-retro/conversations/`, fire the **default** subagent using the Task tool with `model: "default"`.
 
 **Subagent instruction (adapt per file):**  
-"Read the conversation at the given path (one `.cursor-retro/conversations/*.md` file) and return a structured summary (plain text or markdown) with:
+"Read the conversation at the given path (one `.cursor-retro/conversations/*.md` file) and return a concise but structured summary (plain text or markdown) with:
 
 1. **Friction points:** Repeated corrections, misunderstandings, wasted cycles, rule/skill violations, unclear instructions.
 2. **What went well:** Smooth flows, good patterns, effective rule or skill usage.
@@ -43,12 +43,11 @@ Invoke one subagent per conversation file. Do not combine files in a single suba
    mkdir -p .cursor/retrospectives
    ```
 
-2. **Load past retros:** Read every `.cursor/retrospectives/*.md`. Parse out past improvement actions (e.g. "Try X", "Add rule Y", "Use skill Z").
+2. **Load past retros:** Read the last 3 months worth of retrospectives from `.cursor/retrospectives/*.md`.
 
 3. **Classify past actions:** For each past action, check whether the targeted friction still appears in the current run's analysis (from Step 2). Classify as:
-   - **Helped** — friction no longer appears or decreased.
-   - **Didn't help** — same friction still present.
-   - **Inconclusive** — not enough evidence or different context.
+   - **Helped** — friction no longer appears or decreased - only do this ONCE for action. If the issue was already highlighted as solved in a previous retrospective, don't repeat it.
+   - **Didn't help** — friction still present. Highlight if it's the same level or perhaps something got a bit better just didn't solve the issue completely
 
 ## Step 4 — Targeted research
 
@@ -60,7 +59,7 @@ For **each** distinct friction point from Steps 2–3, actively search for solut
 - https://github.com/openai/skills
 - https://github.com/anthropics/skills
 
-Not passive browsing — run concrete queries per friction point and note which repo/page had relevant content.
+Make this a targeted research aimed at solving the specific problems we identified. Run concrete queries per friction point and note which repo/page had relevant content.
 
 ## Step 5 — Present summary
 
@@ -68,8 +67,8 @@ Produce a **structured summary** in the chat with these sections:
 
 1. **What's going well** — from "what went well" and positive adherence.
 2. **What could be improved** — friction points, grouped by theme if useful.
-3. **Past improvement status** — table or list: action → helped / didn't help / inconclusive.
-4. **Ideas for improvement** — concrete ideas with **evidence** (which external repo or page, and what it suggests).
+3. **Past improvement status** — table or list: action → helped / didn't help.
+4. **Ideas for improvement** — concrete ideas with **evidence** (which external repo or page, and what it suggests). Limit to top 5 ideas for improvement.
 
 Keep each section concise; use bullets or short paragraphs.
 
@@ -86,12 +85,12 @@ Explicitly open the conversation: "Which of these improvements do you want to im
    - Past action status
    - Ideas for improvement (with source links/repos)
    - Any follow-up actions the user agreed to (or "None" if not yet decided).
-3. Stage and commit the new file (e.g. `git add .cursor/retrospectives/YYYY-MM-DD-retro.md` and commit with message like "chore: add YYYY-MM-DD retrospective"). Use repo git identity (see commit-and-pr skill if needed).
+3. Stage and commit the new file (e.g. `git add .cursor/retrospectives/YYYY-MM-DD-retro.md` and commit with message like "chore: add YYYY-MM-DD retrospective"). Commit and PR.
 
 ## Checklist
 
 - [ ] Extract run from workspace root with `cursor-retro extract`
-- [ ] One fast subagent per conversation file; structured output (friction / wins / adherence)
+- [ ] One default subagent per conversation file; structured output (friction / wins / adherence)
 - [ ] Past retros loaded from `.cursor/retrospectives/`; past actions classified
 - [ ] Each friction point researched in the listed external repos with targeted queries
 - [ ] Summary has: going well, could improve, past action status, ideas with evidence
