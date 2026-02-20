@@ -9,8 +9,8 @@ pre-commit install
 
 if [ ! -f .env ]; then
   cat > .env <<EOL
-GITHUB_OWNER=mt-krainski
-GITHUB_REPO=twinkletaps
-TASK_BRANCH_PREFIX=task/
+GITHUB_OWNER=
+GITHUB_REPO=
+TASK_BRANCH_PREFIX=
 EOL
 fi
