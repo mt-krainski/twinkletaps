@@ -5,16 +5,18 @@ description = "cursor-retro"
 authors = [{name = "Mateusz Krainski", email = "mt.krainski@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["typer>=0.15.0"]
+dependencies = [
+    "typer>=0.24.0,<0.25.0",
+]
 
 [project.scripts]
 cursor-retro = "cursor_retro.cli:main"
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.2",
-    "ruff>=0.15.0",
-    "coverage>=7.13.4",
+    "coverage>=7.13.4,<8.0.0",
+    "pytest>=9.0.2,<10.0.0",
+    "ruff>=0.15.1,<0.16.0",
 ]
 
 [build-system]
@@ -48,6 +50,10 @@ builtins-ignorelist = ["id"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.uv]
+add-bounds = "major"
+preview = true
 
 [tool.poe]
 envfile = ".env"
