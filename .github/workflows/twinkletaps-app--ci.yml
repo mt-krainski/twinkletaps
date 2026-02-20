@@ -26,12 +26,14 @@ jobs:
     uses: ./.github/workflows/twinkletaps-app--test.yml
     with:
       cache-key: ${{ needs.install-dependencies.outputs.cache-key }}
+    secrets: inherit
 
   integration:
     needs: install-dependencies
     uses: ./.github/workflows/twinkletaps-app--integration.yml
     with:
       cache-key: ${{ needs.install-dependencies.outputs.cache-key }}
+    secrets: inherit
 
   e2e:
     needs: install-dependencies
