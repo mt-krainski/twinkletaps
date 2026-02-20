@@ -1,24 +1,15 @@
-# Pre-commit hooks for cursor-retro and agent-utils (monorepo)
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        files: ^cursor-retro/|^agent-utils/
       - id: end-of-file-fixer
-        files: ^cursor-retro/|^agent-utils/
       - id: check-yaml
-        files: ^cursor-retro/|^agent-utils/
       - id: check-ast
-        files: ^cursor-retro/|^agent-utils/
       - id: check-json
-        files: ^cursor-retro/|^agent-utils/
       - id: check-added-large-files
-        files: ^cursor-retro/|^agent-utils/
       - id: check-toml
-        files: ^cursor-retro/|^agent-utils/
       - id: pretty-format-json
-        files: ^cursor-retro/|^agent-utils/
         args:
           - "--autofix"
           - "--indent=2"
@@ -27,12 +18,9 @@ repos:
     rev: v0.15.0
     hooks:
       - id: ruff
-        files: ^cursor-retro/|^agent-utils/
         args: [--fix]
       - id: ruff-format
-        files: ^cursor-retro/|^agent-utils/
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.0
     hooks:
       - id: gitleaks
-        files: ^cursor-retro/|^agent-utils/
