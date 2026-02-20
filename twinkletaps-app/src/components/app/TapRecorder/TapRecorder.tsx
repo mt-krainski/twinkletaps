@@ -39,6 +39,7 @@ export function TapRecorder({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clickActiveRef = useRef(false);
+  const pressedThisPeriodRef = useRef(false);
   clickActiveRef.current = clickActive;
 
   const finishRecording = useCallback(
@@ -64,7 +65,12 @@ export function TapRecorder({
     setRecordedTaps([true]);
     setRecording(true);
     intervalRef.current = setInterval(() => {
-      setRecordedTaps((prev) => [...prev, clickActiveRef.current]);
+      setRecordedTaps((prev) => {
+        const heldAtEnd = clickActiveRef.current;
+        const pressedDuringPeriod = pressedThisPeriodRef.current;
+        pressedThisPeriodRef.current = false;
+        return [...prev, heldAtEnd || pressedDuringPeriod];
+      });
     }, STEP_MS);
   }, []);
 
@@ -76,6 +82,7 @@ export function TapRecorder({
 
   const handlePress = useCallback(() => {
     if (disabled || cooldown) return;
+    pressedThisPeriodRef.current = true;
     setClickActive(true);
     if (!recording) {
       startRecording();
@@ -119,6 +126,7 @@ export function TapRecorder({
           handleRelease();
         }}
         onTouchCancel={handleRelease}
+        onContextMenu={(e) => e.preventDefault()}
         aria-label="Record tap sequence"
       >
         {cooldown ? (
@@ -129,6 +137,7 @@ export function TapRecorder({
       </Button>
       <pre
         className="font-mono text-lg tabular-nums"
+        style={{ fontFamily: "ui-monospace, monospace" }}
         aria-label="Tap sequence"
       >
         {sequenceDisplay(recordedTaps, MAX_STEPS)}

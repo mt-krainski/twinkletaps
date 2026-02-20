@@ -60,6 +60,9 @@ export const Disabled: Story = {
   },
 };
 
+const STEPS_HELD_BEFORE_RELEASE = 5;
+const HOLD_MS = STEP_MS * STEPS_HELD_BEFORE_RELEASE;
+
 export const WithSequenceDisplay: Story = {
   args: {
     onTapComplete: fn(),
@@ -70,21 +73,45 @@ export const WithSequenceDisplay: Story = {
       name: "Record tap sequence",
     });
     dispatchMouse(button, "mousedown");
-    await new Promise((r) => setTimeout(r, PLAY_WAIT_MS));
+    await new Promise((r) => setTimeout(r, HOLD_MS));
     dispatchMouse(button, "mouseup");
+    await new Promise((r) => setTimeout(r, PLAY_WAIT_MS - HOLD_MS));
     await waitFor(
       () => {
         expect(args.onTapComplete).toHaveBeenCalledTimes(1);
         const [sequence] = (args.onTapComplete as ReturnType<typeof fn>).mock
           .calls[0];
-        expect(sequence).toMatch(/^[01]{1,12}$/);
+        expect(sequence).toMatch(/^[01]+$/);
         expect(sequence.length).toBe(MAX_STEPS);
+        const ones = (sequence.match(/1/g) ?? []).length;
+        const zeros = (sequence.match(/0/g) ?? []).length;
+        expect(ones).toBeGreaterThanOrEqual(2);
+        expect(zeros).toBeGreaterThanOrEqual(2);
       },
       { timeout: PLAY_WAIT_MS + 1000 },
     );
   },
   parameters: {
-    // Full recording takes ~3s + cooldown assertion
     chromatic: { delay: PLAY_WAIT_MS + 1500 },
+  },
+};
+
+export const NoContextMenuOnLongPress: Story = {
+  args: {
+    onTapComplete: fn(),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole("button", {
+      name: "Record tap sequence",
+    });
+    const e = new MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+    });
+    button.dispatchEvent(e);
+    expect(e.defaultPrevented).toBe(true);
+    await expect(canvas.getByLabelText("Tap sequence")).toBeInTheDocument();
   },
 };
