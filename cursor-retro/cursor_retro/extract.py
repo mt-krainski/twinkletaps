@@ -31,7 +31,7 @@ def get_composer_ids(
             (datetime.now(timezone.utc) - timedelta(days=since_days)).timestamp() * 1000
         )
 
-    ws_needle = str(workspace_path) if workspace_path else None
+    ws_needle = (str(workspace_path) + "/") if workspace_path else None
 
     composers = []
     with sqlite3.connect(global_db) as conn:

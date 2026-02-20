@@ -18,6 +18,9 @@ def cmd_extract(args: argparse.Namespace) -> int:
     workspace_path = Path(args.workspace).resolve()
     paths = _get_cursor_paths()
     global_db = paths.global_storage / "state.vscdb"
+    if not global_db.exists():
+        print(f"Error: global Cursor DB not found: {global_db}", file=sys.stderr)
+        return 1
     output_dir = workspace_path / ".cursor-retro" / "conversations"
 
     existing = set(output_dir.glob("*.md")) if output_dir.is_dir() else set()

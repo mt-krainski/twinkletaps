@@ -1,34 +1,9 @@
 """Tests for cursor_retro.cli."""
 
-import json
-import sqlite3
 from datetime import datetime, timezone
-from pathlib import Path
 
 from cursor_retro import cli
-
-
-def _create_global_db(
-    path: Path,
-    composer_metadata: dict,
-    bubbles: dict[str, dict],
-) -> None:
-    """Create global state.vscdb with cursorDiskKV (composerData + bubbleId rows)."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(path)
-    conn.execute("CREATE TABLE cursorDiskKV (key TEXT PRIMARY KEY, value BLOB)")
-    cid = composer_metadata.get("composerId", "test-composer-id")
-    conn.execute(
-        "INSERT INTO cursorDiskKV (key, value) VALUES (?, ?)",
-        (f"composerData:{cid}", json.dumps(composer_metadata)),
-    )
-    for bubble_id, bubble in bubbles.items():
-        conn.execute(
-            "INSERT OR REPLACE INTO cursorDiskKV (key, value) VALUES (?, ?)",
-            (f"bubbleId:{cid}:{bubble_id}", json.dumps(bubble)),
-        )
-    conn.commit()
-    conn.close()
+from tests.helpers import create_global_db
 
 
 def test_cli_extract_exports_and_prints_summary(tmp_path, monkeypatch, capsys):
@@ -40,7 +15,7 @@ def test_cli_extract_exports_and_prints_summary(tmp_path, monkeypatch, capsys):
     global_db = global_storage / "state.vscdb"
 
     now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
-    _create_global_db(
+    create_global_db(
         global_db,
         {
             "composerId": "conv-1",
@@ -67,5 +42,5 @@ def test_cli_extract_exports_and_prints_summary(tmp_path, monkeypatch, capsys):
     out_dir = workspace_root / ".cursor-retro" / "conversations"
     assert (out_dir / "conv-1.md").exists()
     captured = capsys.readouterr()
-    assert "1" in captured.out
+    assert "Exported 1 conversation" in captured.out
     assert "conv-1.md" in captured.out
