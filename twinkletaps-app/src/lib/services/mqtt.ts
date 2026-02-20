@@ -8,12 +8,13 @@ export async function publishToDevice(
   topic: string,
   payload: Record<string, unknown>,
 ): Promise<void> {
-  const { brokerUrl, username, password } = config.mqttPublisher;
-  if (!brokerUrl || !username || !password) {
+  const { brokerUrl: rawUrl, username, password } = config.mqttPublisher;
+  if (!rawUrl || !username || !password) {
     throw new Error(
       "MQTT publisher not configured: set MQTT_BROKER_URL, MQTT_PUBLISHER_USERNAME, MQTT_PUBLISHER_PASSWORD",
     );
   }
+  const brokerUrl = /^mqtts?:\/\//i.test(rawUrl) ? rawUrl : `mqtts://${rawUrl}`;
 
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
