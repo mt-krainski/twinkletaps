@@ -60,7 +60,6 @@ type = "uv"
 configure = "./scripts/configure.sh"
 update = "./scripts/update.sh"
 hooks-run = "pre-commit run --all-files"
-hooks-update = "pre-commit autoupdate"
 [tool.poe.tasks.test]
 sequence = [
     { cmd = "coverage run -m pytest --showlocals" },
