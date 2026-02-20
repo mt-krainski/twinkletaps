@@ -1,200 +1,117 @@
 ---
 name: finishing-a-development-branch
-description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup
+description: Use when user says "wrap", "wrap up", "wrap development", "wrap it up", or similar — runs review, applies fixes, lints, tests, and creates a commit + PR
 ---
 
-# Finishing a Development Branch
+# Wrap Development Branch
 
-## Overview
+Automated pipeline to finish a development branch: review → fix → lint → test → commit & PR.
 
-Guide completion of development work by presenting clear options and handling chosen workflow.
+**Trigger:** User says "wrap", "wrap up", "wrap development", "wrap it up", or similar.
 
-**Core principle:** Verify tests → Present options → Execute choice → Clean up.
+**Announce at start:** "Wrapping up — running review → fix → lint → test → commit & PR."
 
-**Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
+## Pipeline
 
-## The Process
-
-### Step 1: Verify Tests
-
-**Before presenting options, verify tests pass:**
+### Step 1: Determine Context
 
 ```bash
-# Run project's test suite
-npm test / cargo test / pytest / go test ./...
+CURRENT_BRANCH=$(git branch --show-current)
+BASE_BRANCH=$(git log --oneline --decorate --all | grep -oP 'origin/\K[^ ,)]+' | head -1)
+# fallback
+BASE_BRANCH=${BASE_BRANCH:-main}
+
+BASE_SHA=$(git merge-base HEAD origin/$BASE_BRANCH)
+HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-**If tests fail:**
-```
-Tests failing (<N> failures). Must fix before completing:
+Find the in-progress kanban task (if any) in `.kanban/30_in_progress/`. Read it for context on what was implemented and what the requirements are.
 
-[Show failures]
+### Step 2: Code Review
 
-Cannot proceed with merge/PR until tests pass.
-```
+Dispatch the **code-reviewer** subagent using the template at `requesting-code-review/code-reviewer.md`.
 
-Stop. Don't proceed to Step 2.
+Fill placeholders from the kanban task and git range:
 
-**If tests pass:** Continue to Step 2.
+- `{WHAT_WAS_IMPLEMENTED}` — from task title/description
+- `{PLAN_OR_REQUIREMENTS}` — from task acceptance criteria / plan reference
+- `{BASE_SHA}` / `{HEAD_SHA}` — from Step 1
+- `{DESCRIPTION}` — brief summary of changes
 
-### Step 2: Determine Base Branch
+**Wait for the review result.**
+
+### Step 3: Apply Review Fixes
+
+Act on the review feedback:
+
+| Severity  | Action                                          |
+| --------- | ----------------------------------------------- |
+| Critical  | Fix immediately. If unclear, ask.               |
+| Important | Fix before proceeding.                          |
+| Minor     | Fix if quick (<2 min). Otherwise note and skip. |
+
+If there are no Critical or Important issues, skip to Step 4.
+
+After applying fixes, **stage and commit** the fixes (don't create a PR yet — just a fixup commit so the changes are captured).
+
+### Step 4: Lint
 
 ```bash
-# Try common base branches
-git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null
+npm run lint
 ```
 
-Or ask: "This branch split from main - is that correct?"
+If lint errors were introduced by our changes, fix them. Pre-existing lint issues unrelated to our work can be ignored.
 
-### Step 3: Present Options
-
-Present exactly these 4 options:
-
-```
-Implementation complete. What would you like to do?
-
-1. Merge back to <base-branch> locally
-2. Push and create a Pull Request
-3. Keep the branch as-is (I'll handle it later)
-4. Discard this work
-
-Which option?
-```
-
-**Don't add explanation** - keep options concise.
-
-### Step 4: Execute Choice
-
-#### Option 1: Merge Locally
+### Step 5: Test
 
 ```bash
-# Switch to base branch
-git checkout <base-branch>
-
-# Pull latest
-git pull
-
-# Merge feature branch
-git merge <feature-branch>
-
-# Verify tests on merged result
-<test command>
-
-# If tests pass
-git branch -d <feature-branch>
+npm run test
+npm run test:e2e
 ```
 
-Then: If in a worktree, cleanup (Step 5). Otherwise done.
+**If tests fail on our changes:** Fix and re-run. Do not proceed until green.
 
-#### Option 2: Push and Create PR
+**If tests fail on unrelated issues:** Flag clearly in red, note the failures, but proceed.
 
-```bash
-# Push branch
-git push -u origin <feature-branch>
+### Step 6: Commit & PR
 
-# Create PR
-gh pr create --title "<title>" --body "$(cat <<'EOF'
-## Summary
-<2-3 bullets of what changed>
+Follow the **commit-and-pr** skill (`/Users/mateusz/Projects/twinkletaps/.cursor/skills/commit-and-pr/SKILL.md`):
 
-## Test Plan
-- [ ] <verification steps>
-EOF
-)"
-```
+1. Stage relevant files (squash fixup commits if any from Step 3 into a clean history)
+2. Create commit with repo git identity
+3. Push branch
+4. Open PR with `gh pr create`
+5. Return the PR URL
 
-Then: If in a worktree, cleanup (Step 5). Otherwise done.
+### Step 7: Update Kanban
 
-#### Option 3: Keep As-Is
+If a kanban task was found in Step 1:
 
-Report: "Keeping branch <name>." (If in a worktree: "Worktree preserved at <path>.")
-
-**Don't remove worktree.**
-
-#### Option 4: Discard
-
-**Confirm first:**
-```
-This will permanently delete:
-- Branch <name>
-- All commits: <commit-list>
-(If in a worktree: also worktree at <path>)
-
-Type 'discard' to confirm.
-```
-
-Wait for exact confirmation.
-
-If confirmed:
-```bash
-git checkout <base-branch>
-git branch -D <feature-branch>
-```
-
-Then: If in a worktree, cleanup (Step 5). Otherwise done.
-
-### Step 5: Update Kanban
-
-After merge or PR creation:
 1. Move the task file to `.kanban/50_merged/`
-2. Update the task file:
-   - **Status:** Merged
-   - **PR:** link (if Option 2)
-   - Add a brief summary of what was merged under Verification Notes
+2. Update status to Merged, add PR link, brief summary
 
-### Step 6: Cleanup Worktree (only if in a worktree)
+## Failure Modes
 
-**For Options 1, 2, 4 only.** Skip if not in a worktree.
+**Review finds critical architectural issues:**
+Stop. Report to user. Don't force through.
 
-Check: `git worktree list` — if current directory is listed as a worktree path:
+**Tests fail and can't be fixed quickly:**
+Stop. Report failing tests with output. Don't create PR with failing tests.
 
-```bash
-git worktree remove <worktree-path>
-```
-
-**For Option 3:** Keep worktree; do not remove.
-
-## Quick Reference
-
-| Option | Merge | Push | Keep Worktree | Cleanup Branch |
-|--------|-------|------|---------------|----------------|
-| 1. Merge locally | ✓ | - | - | ✓ |
-| 2. Create PR | - | ✓ | ✓ | - |
-| 3. Keep as-is | - | - | ✓ | - |
-| 4. Discard | - | - | - | ✓ (force) |
-
-## Common Mistakes
-
-**Skipping test verification**
-- **Problem:** Merge broken code, create failing PR
-- **Fix:** Always verify tests before offering options
-
-**Open-ended questions**
-- **Problem:** "What should I do next?" → ambiguous
-- **Fix:** Present exactly 4 structured options
-
-**Worktree cleanup**
-- **Problem:** Remove worktree when user might need it (Option 2, 3)
-- **Fix:** Only cleanup worktree for Options 1 and 4, and only when current dir is actually a worktree
-
-**No confirmation for discard**
-- **Problem:** Accidentally delete work
-- **Fix:** Require typed "discard" confirmation
+**No kanban task found:**
+That's fine — skip kanban-related steps (1 context, 7 update). Derive PR description from git log instead.
 
 ## Red Flags
 
 **Never:**
-- Proceed with failing tests
-- Merge without verifying tests on result
-- Delete work without confirmation
+
+- Skip the review step
+- Create a PR with failing tests
+- Claim tests pass without running them (verification-before-completion)
 - Force-push without explicit request
 
 **Always:**
-- Verify tests before offering options
-- Present exactly 4 options
-- Get typed confirmation for Option 4
-- Clean up worktree for Options 1 & 4 only (when in a worktree)
 
-## Related
-
-**Use after:** executing-plans (Step 5) when all batches are complete.
+- Run lint and tests fresh before the PR
+- Include evidence of passing tests in your output
+- Stop and ask if review reveals fundamental issues
