@@ -38,12 +38,16 @@ Follow the task's Implementation Plan:
 
 ### Step 4: Verify
 
-Before claiming completion:
+**Use the verification-before-completion skill** (`/Users/mateusz/Projects/twinkletaps/.cursor/skills/verification-before-completion/SKILL.md`). No completion claims without fresh evidence.
+
 1. Run the project's test suite (`npm run test` or equivalent)
 2. Run lint (`npm run lint` or equivalent)
-3. Verify the app builds and runs successfully
-4. Check acceptance criteria against actual results
-5. Update the task file metadata (Branch name, notes about what changed)
+3. Run e2e tests (`npm run test:e2e` or equivalent)
+4. Verify the app builds and runs successfully
+5. Check acceptance criteria against actual results
+6. Update the task file metadata (Branch name, notes about what changed)
+
+Every claim in Step 5 must be backed by command output from this step.
 
 ### Step 5: Move to Review
 

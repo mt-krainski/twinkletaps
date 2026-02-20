@@ -64,6 +64,8 @@ If lint errors were introduced by our changes, fix them. Pre-existing lint issue
 
 ### Step 5: Test
 
+**Use the verification-before-completion skill** (`/Users/mateusz/Projects/twinkletaps/.cursor/skills/verification-before-completion/SKILL.md`). No completion claims without fresh evidence.
+
 ```bash
 npm run test
 npm run test:e2e
@@ -72,6 +74,8 @@ npm run test:e2e
 **If tests fail on our changes:** Fix and re-run. Do not proceed until green.
 
 **If tests fail on unrelated issues:** Flag clearly in red, note the failures, but proceed.
+
+Every claim in Step 6's PR description must be backed by command output from this step.
 
 ### Step 6: Commit & PR
 
@@ -87,8 +91,10 @@ Follow the **commit-and-pr** skill (`/Users/mateusz/Projects/twinkletaps/.cursor
 
 If a kanban task was found in Step 1:
 
-1. Move the task file to `.kanban/50_merged/`
-2. Update status to Merged, add PR link, brief summary
+1. Move the task file to `.kanban/40_review/`
+2. Update status to "Review", add PR link, brief summary
+
+**Do NOT move to `50_merged/`.** The task moves to `50_merged` only after the PR is actually merged to mainline (per `workflow.mdc`).
 
 ## Failure Modes
 
