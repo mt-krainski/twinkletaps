@@ -1,40 +1,57 @@
-"""Extract Cursor composer conversations from workspace and global DBs to markdown."""
+"""Extract Cursor composer conversations from global DB to markdown."""
 
 import json
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-WORKSPACE_COMPOSER_KEY = "composer.composerData"
 
-
-def get_workspace_composer_ids(
-    workspace_db: Path, since_days: int | None
+def get_composer_ids(
+    global_db: Path,
+    since_days: int | None,
+    workspace_path: Path | None = None,
 ) -> list[dict]:
-    """Read composer metadata from workspace DB, optionally filtered by age.
+    """Read composer metadata from global DB, filtered by age and workspace.
+
+    Enumerates composerData entries from the global cursorDiskKV table.
+    When workspace_path is given, only returns composers whose raw JSON
+    references that path (via file selections, folder context, etc.).
 
     Args:
-        workspace_db: Path to workspace state.vscdb.
+        global_db: Path to global state.vscdb.
         since_days: If set, only return composers with createdAt within last N days.
+        workspace_path: If set, only return composers referencing this workspace.
 
     Returns:
-        List of composer dicts (composerId, createdAt, name, ...) in order.
+        List of composer dicts (composerId, createdAt, name, ...) sorted by createdAt.
     """
-    with sqlite3.connect(workspace_db) as conn:
-        cur = conn.execute(
-            "SELECT value FROM ItemTable WHERE key = ?",
-            (WORKSPACE_COMPOSER_KEY,),
-        )
-        row = cur.fetchone()
-    if not row:
-        return []
-    data = json.loads(row[0])
-    composers = data.get("allComposers") or []
+    cutoff_ms = None
     if since_days is not None:
         cutoff_ms = int(
             (datetime.now(timezone.utc) - timedelta(days=since_days)).timestamp() * 1000
         )
-        composers = [c for c in composers if (c.get("createdAt") or 0) >= cutoff_ms]
+
+    ws_needle = (str(workspace_path) + "/") if workspace_path else None
+
+    composers = []
+    with sqlite3.connect(global_db) as conn:
+        cur = conn.execute(
+            "SELECT value FROM cursorDiskKV WHERE key LIKE 'composerData:%'"
+        )
+        for (value,) in cur:
+            if not value:
+                continue
+            if ws_needle and ws_needle not in value:
+                continue
+            data = json.loads(value)
+            if not data.get("composerId"):
+                continue
+            created = data.get("createdAt") or 0
+            if cutoff_ms is not None and created < cutoff_ms:
+                continue
+            composers.append(data)
+
+    composers.sort(key=lambda c: c.get("createdAt") or 0)
     return composers
 
 
@@ -122,21 +139,21 @@ def export_conversation(
 
 
 def extract_conversations(
-    workspace_db: Path,
     global_db: Path,
     output_dir: Path,
     since_days: int | None = None,
+    workspace_path: Path | None = None,
 ) -> None:
-    """Extract all workspace conversations to markdown; skip already-exported.
+    """Extract conversations to markdown; skip already-exported.
 
     Args:
-        workspace_db: Path to workspace state.vscdb.
         global_db: Path to global state.vscdb.
         output_dir: Directory for markdown files (one per composer).
         since_days: If set, only export composers from last N days.
+        workspace_path: If set, only export composers referencing this workspace.
     """
     output_dir = Path(output_dir)
-    composers = get_workspace_composer_ids(workspace_db, since_days)
+    composers = get_composer_ids(global_db, since_days, workspace_path)
     for meta in composers:
         cid = meta.get("composerId")
         if not cid:
