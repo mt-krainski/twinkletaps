@@ -1,4 +1,7 @@
-name: cursor-retro – Monthly Pre-commit Hook Updates
+name: Monthly Pre-commit Hook Updates
+permissions:
+  contents: write
+  pull-requests: write
 
 on:
   schedule:
@@ -7,11 +10,7 @@ on:
 
 jobs:
   update-precommit:
-    name: "Update Pre-commit Hooks (cursor-retro)"
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -21,23 +20,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
-
-      - name: Install tools
-        run: |
-          pipx install poethepoet
-          pipx install pre-commit
-
-      - name: Install dependencies
-        working-directory: ./cursor-retro
-        run: uv sync
+      - name: Install pre-commit
+        run: pipx install pre-commit
 
       - name: Update pre-commit hooks
-        working-directory: ./cursor-retro
-        run: poe hooks-update
+        run: pre-commit autoupdate
 
       - name: Check for changes
         id: check-changes
@@ -56,9 +43,9 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore(cursor-retro): update pre-commit hooks"
-          title: "chore(cursor-retro): update pre-commit hooks"
+          commit-message: "chore: update pre-commit hooks"
+          title: "chore: update pre-commit hooks"
           body: |
-            This PR was automatically created by the monthly pre-commit hook update workflow for cursor-retro.
-          branch: "chore/cursor-retro-update-precommit-hooks"
+            Automated monthly update of pre-commit hook versions in the root `.pre-commit-config.yaml`.
+          branch: "chore/update-precommit-hooks"
           delete-branch: true

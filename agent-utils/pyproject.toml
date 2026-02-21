@@ -1,16 +1,11 @@
 [project]
-name = "cursor-retro"
+name = "agent-utils"
 version = "0.0.1"
-description = "cursor-retro"
+description = "agent-utils"
 authors = [{name = "Mateusz Krainski", email = "mt.krainski@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-    "typer>=0.24.0,<0.25.0",
-]
-
-[project.scripts]
-cursor-retro = "cursor_retro.cli:main"
+dependencies = []
 
 [dependency-groups]
 dev = [
