@@ -225,7 +225,16 @@ When creating a Story, use this structure in the Jira description (Markdown):
 
 ### Stage 40: Review & Merge (Review → Done)
 
-**Agent (when invoked for review) must:**
+**When an agent is assigned a task in `Review` status**, it means the human has handed it back for action. The agent must first determine what is being asked:
+
+1. Fetch Jira issue comments: `jira_get_issue` (check the `comment` field or use `jira_search` with `expand: "comments"`).
+2. Fetch PR comments: use `gh api` on the PR linked in the issue Metadata (both review comments and general conversation — see the `addressing-pr-comments` skill).
+3. Determine the intent:
+   - If there are clear review comments or change requests → address them using the **addressing-pr-comments** skill, then re-run lint/tests, push, and leave a reply.
+   - If the issue was transitioned back to `In Progress` by the human → pick it up as a normal development task.
+   - If there is **no clear indication** of what is needed → read `humanAtlassianId` from `.cursor.workflow`, reassign the issue to the human via `jira_update_issue`, and add a `jira_add_comment` explicitly asking: "Assigned back to you — could you clarify what you'd like me to do? (e.g. address specific comments, make a change, or something else)"
+
+**Agent (when invoked for a code review pass) must:**
 
 * Re-read the issue requirements and compare with the change.
 * Check for:
