@@ -2,12 +2,12 @@
 alwaysApply: true
 ---
 
-# Agentic Development Rules: File-Based Kanban + Small Reviewable Increments
+# Agentic Development Rules: Jira + Small Reviewable Increments
 
 ## Goals
 
 * Mimic a normal software development lifecycle with clear stages: **Plan → Build → Review → Merge**.
-* Use a **filesystem Kanban**: each task is a file; board columns are directories.
+* Use **Jira** (project `GFD`) as the source of truth for tasks and status.
 * Optimize for **small, reviewable, testable increments**:
 
   * Target **~200-300 lines changed** per task (guideline, not a hard cap).
@@ -16,111 +16,119 @@ alwaysApply: true
 
 * Make work easy to audit:
 
-  * Every change set links back to a **task ID**.
+  * Every change set links back to a **Jira issue key**.
   * Each task includes verification steps, test plan, and (when applicable) PR/branch metadata.
 
 ---
 
-## Kanban Board in the Repository
+## Jira Workflow
 
-Create a directory at repo root:
+**Project:** `GFD` — https://gravitalforge.atlassian.net  
+**MCP server:** `user-gravitalforge-atlassian`
 
-* `./.kanban/`
+Issue statuses and their transition IDs:
 
-With these columns (directories):
+| Status      | Transition ID | Meaning                                  |
+| ----------- | ------------- | ---------------------------------------- |
+| To Do       | `11`          | Approved and ready to implement          |
+| In Progress | `21`          | Currently being implemented              |
+| Review      | `2`           | Implemented; PR open, awaiting review    |
+| Done        | `31`          | Merged to mainline                       |
 
-* `.kanban/10_analysis_plan/`
-  Agent-produced plan and proposed tasks, no code changes.
-* `.kanban/20_ready/`
-  Approved tasks ready to implement (one file per task).
-* `.kanban/30_in_progress/`
-  A task currently being implemented.
-* `.kanban/40_review/`
-  Implemented and ready for code review + verification.
-* `.kanban/50_merged/`
-  Landed in mainline; includes merge/PR reference.
+Use `jira_transition_issue` to move issues between statuses.  
+Use `jira_get_issue` / `jira_search` to read issue content.  
+Use `jira_create_issue` to create new issues.  
+Use `jira_update_issue` to update fields (e.g. add branch/PR link to description).  
+Use `jira_get_board_issues` with `board_id: "1"` to verify issues appear on the board.
 
-**Invariant:** A task file exists in **exactly one** column at a time.
+**Board vs backlog:** Newly created issues may land in the backlog instead of the board. After creating any issue, verify it appears on the board using `jira_get_board_issues`. If it doesn't, flag it to the user — it needs to be moved to the board manually via the Jira UI (backlog view → right-click → "Send to board"), since the MCP server does not expose the board-placement API.
 
----
-
-## Task ID and File Naming
-
-Every task has a unique ID:
-
-* Format: `T-###` (e.g., `T-003`)
-
-Task filename:
-
-* `T-###__short_slug.md`
-  Example: `T-003__add_ws_auth_middleware.md`
-
-First digit (and later digits) is the ID of the epic, the next digits are IDs of individual tasks. E.g. task T-500 is an epic. T-501 to T-599 are implementation tasks. Once we get higher, we can do T-11xx, i.e. 2 digits for epic.
-
-IDs are immutable. If scope changes substantially, create a new task.
+**Issue types:**
+- `Epic` — a feature or theme grouping related tasks
+- `Story` — a user-facing task or increment
 
 ---
 
-## Task File Template (Required Fields)
+## Task IDs
 
-Each task file MUST include the following sections:
+Issue keys are auto-assigned by Jira (e.g. `GFD-42`). IDs are immutable.
 
-1. **Header**
+Epics group related stories. Stories reference their parent Epic via the `parent` field.
 
-   * `Task ID:`
-   * `Title:`
-   * `Owner:` (Human / Agent name)
-   * `Status:` (mirrors directory column)
-   * `Created:` / `Updated:`
+---
 
-2. **Problem / Goal**
+## Jira Issue Description Template
 
-   * What user value this delivers.
-   * Non-goals (explicitly state what is out of scope).
+When creating a Story, use this structure in the Jira description (Markdown):
 
-3. **Acceptance Criteria**
+```markdown
+## Problem / Goal
 
-   * Bullet list of observable outcomes.
-   * Must include how to verify the feature works.
+[What user value this delivers. 1-3 sentences.]
 
-4. **Repo Context**
+### Non-Goals
 
-   * Files/components likely involved (paths).
-   * Existing patterns to follow (frameworks, architectural constraints).
-   * Relevant prior code / modules and why.
+[Explicitly state what is out of scope.]
 
-5. **Implementation Plan (Small & Concrete)**
+---
 
-   * Steps with expected code touchpoints.
-   * Expected change size estimate (rough LOC delta).
+## Acceptance Criteria
 
-6. **Test Plan**
+- [Observable outcome 1]
+- [Observable outcome 2]
+- [How to verify the feature works]
 
-   * Unit/integration/e2e updates required.
-   * Commands to run (exact).
-   * Any fixtures/mocks needed.
+---
 
-7. **Verification Notes**
+## Repo Context
 
-   * Manual validation steps (if applicable).
-   * Screenshots/log snippets expected (optional).
+- **Files:** [paths to files/components involved]
+- **Patterns:** [existing patterns to follow]
+- **Related:** [relevant prior code/modules]
 
-8. **Risk / Rollback**
+---
 
-   * What could break, and how to rollback safely. This is only relevant for changes that actually need a rollback strategy. E.g. database changes. The default rollback strategy is to roll-back the deployment to the previous version. This is only relevant if for some reason that is not possible or dangerous.
+## Implementation Plan
 
-9. **Metadata**
+[Steps with expected code touchpoints. Include exact file paths.]
 
-   * `Branch:` (if used)
-   * `PR:` (link or placeholder)
-   * `Depends on:` (Task IDs)
-   * `Related:` (Issue/Jira IDs, optional)
+**Estimated size:** ~NNN LOC.
+
+---
+
+## Test Plan
+
+- [Unit/integration/e2e updates required]
+- [Exact commands to run]
+- [Fixtures/mocks needed]
+
+---
+
+## Verification Notes
+
+[Manual validation steps if applicable.]
+
+---
+
+## Risk / Rollback
+
+[What could break. Default: revert the commit.]
+
+---
+
+## Metadata
+
+- **Epic:** [GFD-### — Epic title]
+- **Branch:** `task/GFD-###/short-slug`
+- **PR:** (placeholder)
+- **Depends on:** [GFD-### if applicable]
+```
 
 ---
 
 ## Stage Responsibilities and Rules
 
-### Stage 10: Analysis & Planning (Agent → `10_analysis_plan`)
+### Stage 10: Analysis & Planning
 
 **Agent must:**
 
@@ -137,13 +145,13 @@ Each task file MUST include the following sections:
 
 3. Produce an **implementation plan**:
 
-   * implementation plan should consist of an overview of work needed to be done - think of this as an explicit list of thigs to do
-   * implementation plan breaks the work down into smaller tasks:
+   * Overview of all work to be done.
+   * Break down into smaller tasks:
       * Each task is a coherent increment (not half a feature).
       * Aim for ~200-300 LOC change per task.
       * Each task must be testable/verifiable in isolation.
-      * If one feature is large, split by **vertical slices** (thin end-to-end capability) or by **preparatory refactor** that is independently valuable.
-      * After each change, the application must remain functioning. E.g. it's not acceptable to have one task modify the database schema and a second task modify the prisma orm definition of that schema
+      * Split by **vertical slices** or **preparatory refactors** that are independently valuable.
+      * After each task, the application must remain functioning.
 
 **Task decomposition rules**
 
@@ -160,47 +168,41 @@ Each task file MUST include the following sections:
   * "Run DB migration to rename tables" then "update ORM schema and app code to match" — the app is broken between these two tasks
   * Any split where task N changes a contract (schema, API, types) and task N+1 updates the consumers — the app must not be broken in between
 
-Dos and don'ts:
-- make each task clear and descriptive
-
-
 **Output artifacts**
 
-* Append the plan to the original task as a new section (Plan)
-* Ask human for review
-* After human accepts the plan, create separate task files in `.kanban/20_ready/` for each proposed task.
-* Tasks should reference the plan document
+* Present the plan and **wait for human approval**.
+* After approval, create a Jira Epic (if one doesn't exist) and individual Story issues with status `To Do` using `jira_create_issue`.
 
 ---
 
-### Stage 20: Ready (Human gate → `20_ready`)
+### Stage 20: Ready (To Do)
 
 **Human responsibility**
 
-* Select next task(s) to execute.
-* Optionally edit acceptance criteria or priorities.
+* Select next issue to execute.
+* Optionally edit acceptance criteria or priorities in Jira.
 
 **Agent responsibility**
 
 * Do not start multiple tasks in parallel unless explicitly instructed.
-* When starting a task: move exactly one file to `30_in_progress/`.
-* Focus on exactly one work item at a time. Feel free to reference Epic for additional context.
+* When starting a task: the user provides the issue key. Transition it to `In Progress` via `jira_transition_issue`. If no key is provided, query with `jira_search` using `project = GFD AND status = "To Do" ORDER BY priority`.
+* Focus on exactly one work item at a time. Feel free to read the Epic for additional context.
 
 ---
 
-### Stage 30: Development (Agent → `30_in_progress`)
+### Stage 30: Development (In Progress)
 
 **Agent must:**
 
-0. Move task to the in-progress directory. Prefer `mv` to recreating the file.
-1. Create a branch (if branch workflow used):
+0. Transition issue to `In Progress`.
+1. Create a branch:
 
-   * `task/<TASK_ID>/<slug>`
+   * `task/<ISSUE_KEY>/<slug>` (e.g. `task/GFD-42/add-ws-auth-middleware`)
 
-2. Implement strictly according to the task scope.
+2. Implement strictly according to the issue scope.
 3. Keep changes within the targeted review size; if scope expands:
 
-   * Stop and create a follow-up task; do not silently balloon.
+   * Stop and create a follow-up issue in Jira; do not silently balloon.
 
 4. Update tests and docs necessary for the increment.
 5. Run the project's standard checks locally (as available).
@@ -211,24 +213,21 @@ Dos and don'ts:
 * Test plan implemented and runnable.
 * No obvious lint/type failures introduced.
 * **Application builds and runs successfully** — verify with the project's build command. The app must not be left in a broken state.
-* Task file metadata updated:
-
-  * Branch name
-  * PR link/placeholder
-  * Notes about what changed
+* After branching: update the description's Metadata section with the branch name via `jira_update_issue`.
+* After PR is opened: update the Metadata section with the PR URL via `jira_update_issue`.
 
 **Then**
 
-* Fire up lint and tests for the repo. 
-* If everything green - move task file to `40_review/`.
+* Fire up lint and tests for the repo.
+* If everything green — invoke the **finishing-a-development-branch** skill ("wrap"). That skill owns the Review transition, PR creation, user assignment, and Jira comment. **Do not transition to `Review` directly from development.**
 
 ---
 
-### Stage 40: Review & Merge (Human → `40_review` → `50_merged`)
+### Stage 40: Review & Merge (Review → Done)
 
 **Agent (when invoked for review) must:**
 
-* Re-read the task requirements and compare with the change.
+* Re-read the issue requirements and compare with the change.
 * Check for:
 
   * Correctness, edge cases, security/regression risks
@@ -237,7 +236,7 @@ Dos and don'ts:
   * Documentation / comments where needed
   * Ensure tests pass (this can also be done by checking CI)
 
-* Provide a concise review report in the task file:
+* Provide a concise review report:
 
   * "Pass / Needs changes"
   * Specific required edits
@@ -248,30 +247,27 @@ Dos and don'ts:
 
 **If changes required**
 
-* Move back to `30_in_progress/` with explicit review notes.
+* Transition issue back to `In Progress` with a comment explaining the required changes.
 
 **If accepted**
 
 * Verify all CI is green (if applicable).
-* Ensure task file includes PR link, summary of what merged, and verification evidence.
-* Merge and move task file to `50_merged/`.
-* Optionally append release note or changelog reference if your repo uses it.
+* Merge the PR.
+* Transition issue to `Done`.
 
 ---
 
 ## Pull Requests and Linking
 
-If using PRs:
-
-* PR title format: `[TASK_ID] <Title>`
+* PR title format: `[GFD-###] <Title>`
 * PR description must include:
 
-  * Task ID
+  * Issue key (`GFD-###`)
   * What changed
   * How to test
   * Risks/rollback notes
 
-Task file must include PR URL once created.
+Update the Jira issue's description Metadata section with the PR URL after creation.
 
 ---
 
@@ -279,7 +275,7 @@ Task file must include PR URL once created.
 
 * Follow existing architecture and naming conventions.
 * Prefer reuse over invention.
-* No dead code, commented-out blocks, or "temporary hacks" without explicit task notes.
+* No dead code, commented-out blocks, or "temporary hacks" without explicit issue notes.
 * Every behavior change must have:
 
   * Tests OR a clearly documented reason why tests are not feasible, plus manual verification steps.
@@ -289,24 +285,49 @@ Task file must include PR URL once created.
 
 ---
 
+## User-Specific Configuration
+
+Workflow parameters that vary per user are stored in `.cursor.workflow` at the repo root (shell `key=value` format). **Read this file before any step that requires user-specific values.**
+
+If `.cursor.workflow` does not exist, **stop and ask the user to create it** before continuing. Explain that the file should be placed at the repo root and contain:
+
+```sh
+humanAtlassianId="<your Jira username>"   # plain username, not email — e.g. "matt"
+```
+
+To find the correct username: it is the short login name shown in Jira profile settings (not the display name, not the email address).
+
+| Key                 | Usage                                                        |
+| ------------------- | ------------------------------------------------------------ |
+| `humanAtlassianId`  | Jira username of the human — used when assigning tasks to the human for review or decision |
+
+**Assignee format:** Jira's `assignee` field requires a plain string username — not an email address and not an object. Example: `fields: {"assignee": "matt"}`. Read the value from `humanAtlassianId` in `.cursor.workflow`.
+
+**Identity clarification:**
+- `humanAtlassianId` — the human developer. Use this when handing off a task to the human (review, blocker resolution, etc.).
+- The Atlassian MCP credentials belong to the **AI bot** (the agent itself). When the user says "assign to you" or refers to the agent as the owner of a task, the bot's identity is already embedded in the MCP connection — no explicit assignee field is needed.
+
+---
+
 ## Operating Mode: How You (the Human) Invoke Agents
 
 You will typically do:
 
 1. Invoke **Planner Agent** with a description of the work:
 
-   * Output: plan + tasks created in `20_ready/`.
-2. Pick next task and invoke **Builder Agent** on that task file:
+   * Output: plan presented for approval → Epic + Stories created in Jira (`To Do`).
+2. Pick next issue and invoke **Builder Agent** on that Jira issue:
 
-   * Output: code + task moved to `40_review/`.
-3. Invoke **Reviewer Agent** on the review task file:
+   * Output: code + issue transitioned to `Review`.
+3. Invoke **Reviewer Agent** on the issue:
 
-   * Output: review notes; pass → merge + `50_merged/`, fail → `30_in_progress`.
+   * Output: review notes; pass → merge + transition to `Done`, fail → back to `In Progress`.
 
 ---
 
 ## Default Assumptions (Override Per Repo)
 
-* Branch naming: `task/<TASK_ID>/<slug>`
-* Commit messages: `<TASK_ID>: <short message>`
+* Branch naming: `task/GFD-###/<slug>`
+* Commit messages: `GFD-###: <short message>`
+* PR title: `[GFD-###] <Title>`
 * Test commands: use the repo's documented defaults; if missing, the agent must infer and document the commands used.
