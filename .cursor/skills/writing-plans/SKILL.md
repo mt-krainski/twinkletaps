@@ -7,7 +7,7 @@ description: Use when you have a spec or requirements for a multi-step task, bef
 
 ## Overview
 
-Break a design or spec into Jira Story issues, each a coherent, reviewable, testable increment. Stories are created in project `GFD` with status `To Do` via the `user-gravitalforge-atlassian` MCP server.
+Break a design or spec into Jira Task issues, each a coherent, reviewable, testable increment. Tasks are created in project `GFD` with status `To Do` via the `user-gravitalforge-atlassian` MCP server.
 
 Assume the engineer executing each task has zero context for our codebase and questionable taste. Document everything they need: which files to touch, code, testing, docs to check, how to verify. DRY. YAGNI. TDD. Frequent commits.
 
@@ -51,7 +51,7 @@ For each task, call `jira_create_issue`:
 ```
 project_key: "GFD"
 summary: "<task title>"
-issue_type: "Story"
+issue_type: "Task"
 description: <full description following the template below>
 additional_fields: {"parent": "GFD-###"}  // Epic key from above
 ```
@@ -121,9 +121,7 @@ The description must follow this template:
 - **Depends on:** [GFD-### if applicable]
 ````
 
-After Jira creates the issue and returns the key:
-1. Update the Branch field in the description via `jira_update_issue`.
-2. Verify the issue appears on the board: `jira_get_board_issues` with `board_id: "1"` and `jql: "key = GFD-###"`. If it doesn't show up, flag it to the user — it landed in the backlog and needs to be moved to the board via the Jira UI before work can start.
+Issues created via `jira_create_issue` are automatically placed on the board — no manual step required.
 
 After **all** issues are created, create blocking links for each dependency using `jira_create_issue_link`:
 

@@ -49,15 +49,13 @@ Follow the issue's Implementation Plan:
 3. Run e2e tests (`npm run test:e2e` or equivalent)
 4. Verify the app builds and runs successfully
 5. Check acceptance criteria against actual results
-6. Update the Jira issue description's Metadata section (branch name, notes) via `jira_update_issue`
+6. Post branch name as a Jira comment via `jira_add_comment` (if not already posted in Step 2)
 
 Every claim in Step 5 must be backed by command output from this step.
 
 ### Step 5: Wrap Up
 
-**Do NOT transition the issue to `Review` directly.** Moving to Review, creating the PR, assigning to the user, and adding the Jira comment are all owned by the **finishing-a-development-branch** skill.
-
-If everything is green, invoke **finishing-a-development-branch** immediately — do not wait for the user to say "wrap".
+If everything is green, invoke **finishing-a-development-branch** immediately.
 
 ## When to Stop and Ask for Help
 
@@ -91,4 +89,4 @@ If everything is green, invoke **finishing-a-development-branch** immediately �
 ## Related
 
 - **writing-plans** — Creates the Jira issues this skill executes
-- **finishing-a-development-branch** — **Must be run after implementation is done.** Owns the Review transition, PR creation, user assignment, and Jira comment. Never transition to Review without it.
+- **finishing-a-development-branch** — Run after implementation is done. Owns the Review transition, PR creation, user assignment, and Jira comment.

@@ -38,14 +38,14 @@ Issue statuses and their transition IDs:
 Use `jira_transition_issue` to move issues between statuses.  
 Use `jira_get_issue` / `jira_search` to read issue content.  
 Use `jira_create_issue` to create new issues.  
-Use `jira_update_issue` to update fields (e.g. add branch/PR link to description).  
-Use `jira_get_board_issues` with `board_id: "1"` to verify issues appear on the board.
+Use `jira_update_issue` to update fields.  
+Use `jira_add_comment` to post branch name, PR URL, or status updates as comments.
 
-**Board vs backlog:** Newly created issues may land in the backlog instead of the board. After creating any issue, verify it appears on the board using `jira_get_board_issues`. If it doesn't, flag it to the user — it needs to be moved to the board manually via the Jira UI (backlog view → right-click → "Send to board"), since the MCP server does not expose the board-placement API.
+**Board placement:** Issues created via `jira_create_issue` are automatically placed on the board with a rank assigned. No manual step required.
 
 **Issue types:**
 - `Epic` — a feature or theme grouping related tasks
-- `Story` — a user-facing task or increment
+- `Task` — an implementation task linked to an Epic
 
 ---
 
@@ -53,13 +53,13 @@ Use `jira_get_board_issues` with `board_id: "1"` to verify issues appear on the 
 
 Issue keys are auto-assigned by Jira (e.g. `GFD-42`). IDs are immutable.
 
-Epics group related stories. Stories reference their parent Epic via the `parent` field.
+Epics group related tasks. Tasks reference their parent Epic via the `parent` field.
 
 ---
 
 ## Jira Issue Description Template
 
-When creating a Story, use this structure in the Jira description (Markdown):
+When creating a Task, use this structure in the Jira description (Markdown):
 
 ```markdown
 ## Problem / Goal
@@ -88,7 +88,7 @@ When creating a Story, use this structure in the Jira description (Markdown):
 
 ---
 
-## Implementation Plan
+## Implementation Plan (Small & Concrete)
 
 [Steps with expected code touchpoints. Include exact file paths.]
 
@@ -106,29 +106,22 @@ When creating a Story, use this structure in the Jira description (Markdown):
 
 ## Verification Notes
 
-[Manual validation steps if applicable.]
+[Manual validation steps (if applicable). Screenshots/log snippets expected (optional).]
 
 ---
 
 ## Risk / Rollback
 
-[What could break. Default: revert the commit.]
-
----
-
-## Metadata
-
-- **Epic:** [GFD-### — Epic title]
-- **Branch:** `task/GFD-###/short-slug`
-- **PR:** (placeholder)
-- **Depends on:** [GFD-### if applicable]
+[What could break, and how to rollback safely. This is only relevant for changes that actually need a rollback strategy. E.g. database changes. The default rollback strategy is to roll-back the deployment to the previous version. This is only relevant if for some reason that is not possible or dangerous.]
 ```
+
+Branch name and PR URL are posted as **Jira comments** on the issue, not embedded in the description body.
 
 ---
 
 ## Stage Responsibilities and Rules
 
-### Stage 10: Analysis & Planning
+### Analysis & Planning
 
 **Agent must:**
 
@@ -145,13 +138,13 @@ When creating a Story, use this structure in the Jira description (Markdown):
 
 3. Produce an **implementation plan**:
 
-   * Overview of all work to be done.
-   * Break down into smaller tasks:
+   * implementation plan should consist of an overview of work needed to be done - think of this as an explicit list of things to do
+   * implementation plan breaks the work down into smaller tasks:
       * Each task is a coherent increment (not half a feature).
       * Aim for ~200-300 LOC change per task.
       * Each task must be testable/verifiable in isolation.
-      * Split by **vertical slices** or **preparatory refactors** that are independently valuable.
-      * After each task, the application must remain functioning.
+      * If one feature is large, split by **vertical slices** (thin end-to-end capability) or by **preparatory refactor** that is independently valuable.
+      * After each change, the application must remain functioning. E.g. it's not acceptable to have one task modify the database schema and a second task modify the prisma orm definition of that schema
 
 **Task decomposition rules**
 
@@ -168,18 +161,23 @@ When creating a Story, use this structure in the Jira description (Markdown):
   * "Run DB migration to rename tables" then "update ORM schema and app code to match" — the app is broken between these two tasks
   * Any split where task N changes a contract (schema, API, types) and task N+1 updates the consumers — the app must not be broken in between
 
+Dos and don'ts:
+- make each task clear and descriptive
+
+
 **Output artifacts**
 
 * Present the plan and **wait for human approval**.
-* After approval, create a Jira Epic (if one doesn't exist) and individual Story issues with status `To Do` using `jira_create_issue`.
+* After human accepts the plan, create a Jira Epic (if one doesn't exist) and individual Task issues in Jira using `jira_create_issue`.
+* Tasks should reference the parent Epic.
 
 ---
 
-### Stage 20: Ready (To Do)
+### Ready (Human gate)
 
 **Human responsibility**
 
-* Select next issue to execute.
+* Select next task(s) to execute.
 * Optionally edit acceptance criteria or priorities in Jira.
 
 **Agent responsibility**
@@ -190,19 +188,19 @@ When creating a Story, use this structure in the Jira description (Markdown):
 
 ---
 
-### Stage 30: Development (In Progress)
+### Development
 
 **Agent must:**
 
-0. Transition issue to `In Progress`.
+0. Transition issue to `In Progress` via `jira_transition_issue`.
 1. Create a branch:
 
-   * `task/<ISSUE_KEY>/<slug>` (e.g. `task/GFD-42/add-ws-auth-middleware`)
+   * `task/<ISSUE_KEY>/<slug>`
 
-2. Implement strictly according to the issue scope.
+2. Implement strictly according to the task scope.
 3. Keep changes within the targeted review size; if scope expands:
 
-   * Stop and create a follow-up issue in Jira; do not silently balloon.
+   * Stop and create a follow-up task in Jira; do not silently balloon.
 
 4. Update tests and docs necessary for the increment.
 5. Run the project's standard checks locally (as available).
@@ -213,8 +211,7 @@ When creating a Story, use this structure in the Jira description (Markdown):
 * Test plan implemented and runnable.
 * No obvious lint/type failures introduced.
 * **Application builds and runs successfully** — verify with the project's build command. The app must not be left in a broken state.
-* After branching: update the description's Metadata section with the branch name via `jira_update_issue`.
-* After PR is opened: update the Metadata section with the PR URL via `jira_update_issue`.
+* Post branch name and PR URL as Jira comments on the issue via `jira_add_comment` (branch name once branched; PR URL once opened).
 
 **Then**
 
@@ -223,20 +220,19 @@ When creating a Story, use this structure in the Jira description (Markdown):
 
 ---
 
-### Stage 40: Review & Merge (Review → Done)
+### Review & Merge
 
 **When an agent is assigned a task in `Review` status**, it means the human has handed it back for action. The agent must first determine what is being asked:
 
-1. Fetch Jira issue comments: `jira_get_issue` (check the `comment` field or use `jira_search` with `expand: "comments"`).
-2. Fetch PR comments: use `gh api` on the PR linked in the issue Metadata (both review comments and general conversation — see the `addressing-pr-comments` skill).
+1. Fetch Jira issue comments: `jira_get_issue` (check the `comment` field).
+2. Fetch PR comments: use `gh api` on the PR linked in the issue comments (both review comments and general conversation — see the `addressing-pr-comments` skill).
 3. Determine the intent:
    - If there are clear review comments or change requests → address them using the **addressing-pr-comments** skill, then re-run lint/tests, push, and leave a reply.
-   - If the issue was transitioned back to `In Progress` by the human → pick it up as a normal development task.
    - If there is **no clear indication** of what is needed → read `humanAtlassianId` from `.cursor.workflow`, reassign the issue to the human via `jira_update_issue`, and add a `jira_add_comment` explicitly asking: "Assigned back to you — could you clarify what you'd like me to do? (e.g. address specific comments, make a change, or something else)"
 
 **Agent (when invoked for a code review pass) must:**
 
-* Re-read the issue requirements and compare with the change.
+* Re-read the task requirements and compare with the change.
 * Check for:
 
   * Correctness, edge cases, security/regression risks
@@ -256,13 +252,14 @@ When creating a Story, use this structure in the Jira description (Markdown):
 
 **If changes required**
 
-* Transition issue back to `In Progress` with a comment explaining the required changes.
+* Leave the issue in `Review`. Add a Jira comment with the required changes and re-assign the issue to the agent (bot) to address.
 
 **If accepted**
 
 * Verify all CI is green (if applicable).
-* Merge the PR.
-* Transition issue to `Done`.
+* Ensure the Jira issue has the PR link posted as a comment and verification evidence.
+* Merge the PR and transition issue to `Done` via `jira_transition_issue`.
+* Optionally append release note or changelog reference if your repo uses it.
 
 ---
 
@@ -276,7 +273,7 @@ When creating a Story, use this structure in the Jira description (Markdown):
   * How to test
   * Risks/rollback notes
 
-Update the Jira issue's description Metadata section with the PR URL after creation.
+Post the PR URL as a Jira comment on the issue after creation.
 
 ---
 
@@ -284,7 +281,7 @@ Update the Jira issue's description Metadata section with the PR URL after creat
 
 * Follow existing architecture and naming conventions.
 * Prefer reuse over invention.
-* No dead code, commented-out blocks, or "temporary hacks" without explicit issue notes.
+* No dead code, commented-out blocks, or "temporary hacks" without explicit task notes.
 * Every behavior change must have:
 
   * Tests OR a clearly documented reason why tests are not feasible, plus manual verification steps.
@@ -324,13 +321,13 @@ You will typically do:
 
 1. Invoke **Planner Agent** with a description of the work:
 
-   * Output: plan presented for approval → Epic + Stories created in Jira (`To Do`).
+   * Output: plan presented for approval → Epic + Tasks created in Jira (`To Do`).
 2. Pick next issue and invoke **Builder Agent** on that Jira issue:
 
    * Output: code + issue transitioned to `Review`.
 3. Invoke **Reviewer Agent** on the issue:
 
-   * Output: review notes; pass → merge + transition to `Done`, fail → back to `In Progress`.
+   * Output: review notes; pass → merge + transition to `Done`, fail → leave in `Review` with comment for agent.
 
 ---
 
