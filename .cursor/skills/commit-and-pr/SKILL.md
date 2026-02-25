@@ -19,12 +19,12 @@ Use the repo's git identity so the commit is attributed to the user and CI runs 
 GIT_AUTHOR_NAME="$(git config user.name)" GIT_AUTHOR_EMAIL="$(git config user.email)" GIT_COMMITTER_NAME="$(git config user.name)" GIT_COMMITTER_EMAIL="$(git config user.email)" git commit -m "..."
 ```
 
-**Message format:** `<TASK_ID>: <short title>`, then a short body with what changed (bullets or short paragraphs). If there is a task ID in the current kanban workflow, always include it. If no task context exists, use a descriptive title without a task ID.
+**Message format:** `<ISSUE_KEY>: <short title>`, then a short body with what changed (bullets or short paragraphs). If there is a Jira issue key in context (infer from branch name `task/GFD-###/slug` if needed), always include it. If no issue context exists, use a descriptive title without a key.
 
 **Example:**
 
 ```
-T-003: Update app code — Team → Device
+GFD-42: Update app code — Team → Device
 
 - Prisma: Team/UserTeam → Device/UserDevice; add deviceUuid, mqttTopic, mqttUsername; remove isPrivate
 - Services: team.ts → device.ts (getWorkspaceDevices, getDevice, getUserDeviceRole); workspace roles → admin|member|guest
@@ -43,10 +43,10 @@ git push -u origin <current-branch>
 **No Cursor attribution** — no mention of Cursor, Cursor Agent, or Cursor branding/links in title or body.
 
 ```bash
-gh pr create --base <target-branch> --title "[<TASK_ID>] <Title>" --body "<body>"
+gh pr create --base <target-branch> --title "[GFD-###] <Title>" --body "<body>"
 ```
 
-- **PR title format:** `[TASK_ID] <Title>` (e.g. `[T-003] Update app code — Team → Device`). If no task context, use a descriptive title without brackets.
+- **PR title format:** `[GFD-###] <Title>` (e.g. `[GFD-42] Update app code — Team → Device`). If no issue context, use a descriptive title without brackets.
 - **Target branch:** Usually the branch this was branched from (e.g. `main`, `implement-nextjs-app`). Ask if unclear.
 - **PR body:** Task ID, "What changed" (brief bullets), "How to test", "Depends on" if relevant. Nothing else.
 

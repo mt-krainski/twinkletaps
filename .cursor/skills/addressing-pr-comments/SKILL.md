@@ -147,11 +147,11 @@ After all comments are addressed and replies posted:
    - <brief bullet per change>"
    ```
 
-   If there is a task ID in context (branch name, kanban), prefix with the task ID.
+   If there is a Jira issue key in context (infer from branch name `task/GFD-###/slug` if needed), prefix with the issue key.
 
 3. Push to the current branch. **Always specify the full branch name verbatim** — no variables, no `HEAD`, no subshells. This is required so the push can be allow-listed to task branches only.
    ```bash
-   git push origin task/T-123/my-slug
+   git push origin task/GFD-123/my-slug
    ```
 
 ### If no code changes were made

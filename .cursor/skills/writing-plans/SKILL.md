@@ -7,13 +7,13 @@ description: Use when you have a spec or requirements for a multi-step task, bef
 
 ## Overview
 
-Break a design or spec into kanban task files, each a coherent, reviewable, testable increment. Tasks are created in `.kanban/20_ready/` following the project's kanban workflow (see `.cursor/rules/workflow.mdc`).
+Break a design or spec into Jira Task issues, each a coherent, reviewable, testable increment. Tasks are created in project `GFD` with status `To Do` via the `user-gravitalforge-atlassian` MCP server.
 
 Assume the engineer executing each task has zero context for our codebase and questionable taste. Document everything they need: which files to touch, code, testing, docs to check, how to verify. DRY. YAGNI. TDD. Frequent commits.
 
 Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
 
-**Announce at start:** "I'm using the writing-plans skill to create kanban task files."
+**Announce at start:** "I'm using the writing-plans skill to create Jira issues."
 
 ## Task Sizing — The Hard Constraint
 
@@ -36,24 +36,29 @@ Each task MUST be:
 
 ## Task ID Assignment
 
-Check `.kanban/` for the highest existing T-### ID across all columns and increment from there. Task IDs are immutable.
+Issue keys are auto-assigned by Jira when you call `jira_create_issue`. Do not pre-assign IDs.
 
-## Kanban Task File Template
+## Creating Jira Issues
 
-Each task file MUST be saved to `.kanban/20_ready/T-###__short_slug.md` and include ALL of these sections:
+If no Epic exists for this feature area, create one first:
+```
+jira_create_issue: project_key="GFD", issue_type="Epic", summary="<feature name>"
+```
+Then use its returned key as the parent for all Stories.
+
+For each task, call `jira_create_issue`:
+
+```
+project_key: "GFD"
+summary: "<task title>"
+issue_type: "Task"
+description: <full description following the template below>
+additional_fields: {"parent": "GFD-###"}  // Epic key from above
+```
+
+The description must follow this template:
 
 ````markdown
-# T-###: [Title]
-
-**Task ID:** T-###
-**Title:** [Title]
-**Owner:** Agent
-**Status:** Ready
-**Created:** [YYYY-MM-DD]
-**Updated:** [YYYY-MM-DD]
-
----
-
 ## Problem / Goal
 
 [What user value this delivers. 1-3 sentences.]
@@ -110,16 +115,32 @@ Each task file MUST be saved to `.kanban/20_ready/T-###__short_slug.md` and incl
 
 ## Metadata
 
-- **Epic:** [Reference to parent plan in `.kanban/10_analysis_plan/`]
-- **Branch:** `task/T-###/short-slug`
+- **Epic:** [GFD-### — Epic title]
+- **Branch:** `task/GFD-###/short-slug`  ← fill in after Jira assigns the key
 - **PR:** (placeholder)
-- **Depends on:** [Task IDs]
-- **Related:** [Issue IDs, optional]
+- **Depends on:** [GFD-### if applicable]
 ````
+
+Issues created via `jira_create_issue` are automatically placed on the board — no manual step required.
+
+After **all** issues are created, create blocking links for each dependency using `jira_create_issue_link`:
+
+```
+link_type: "Blocks"
+inward_issue_key: <the blocked issue>   // shows as "is blocked by" on this issue
+outward_issue_key: <the blocker issue>  // shows as "blocks" on that issue
+```
+
+Example — if GFD-22 depends on GFD-21 (GFD-21 must be done first):
+```
+jira_create_issue_link(link_type="Blocks", inward_issue_key="GFD-22", outward_issue_key="GFD-21")
+```
+
+Create one link per dependency pair. Do not skip this step — these links are what the executor uses to enforce the implementation order.
 
 ## Commit Format
 
-All commits during task execution use: `T-###: <short message>`
+All commits during task execution use: `GFD-###: <short message>`
 
 ## Implementation Details in Tasks
 
@@ -131,16 +152,16 @@ Each task's Implementation Plan should include:
 
 ## Execution Handoff
 
-After creating all task files, present:
+After creating all issues, present:
 
-**"Tasks created in `.kanban/20_ready/`. Which task should I start?"**
+**"Issues created in Jira. Which task should I start?"**
 
-The user picks a task. Execution follows the kanban workflow:
-1. Move task to `.kanban/30_in_progress/`
-2. Create branch `task/T-###/short-slug`
+The user picks a task. Execution follows the workflow:
+1. Transition issue to `In Progress` (transition ID `21`)
+2. Create branch `task/GFD-###/short-slug`
 3. Implement following the task's plan
 4. Run tests and lint
-5. Move task to `.kanban/40_review/`
+5. Transition issue to `Review` (transition ID `2`)
 
 ## Remember
 - Exact file paths always
@@ -148,5 +169,5 @@ The user picks a task. Execution follows the kanban workflow:
 - Exact commands with expected output
 - DRY, YAGNI, TDD, frequent commits
 - ~200-300 LOC per task — each task leaves the app in a working state
-- Task IDs are sequential and immutable
-- All tasks reference their parent epic in `.kanban/10_analysis_plan/`
+- Issue IDs are assigned by Jira — don't pre-assign
+- All tasks reference their parent Epic

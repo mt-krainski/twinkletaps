@@ -7,7 +7,7 @@ description: Use when user says "wrap", "wrap up", "wrap development", "wrap it 
 
 Automated pipeline to finish a development branch: review → fix → lint → test → commit & PR.
 
-**Trigger:** User says "wrap", "wrap up", "wrap development", "wrap it up", or similar.
+**Trigger:** User says "wrap", "wrap up", "wrap development", "wrap it up", or similar. Also invoked automatically by `executing-plans` when implementation is complete.
 
 **Announce at start:** "Wrapping up — running review → fix → lint → test → commit & PR."
 
@@ -25,16 +25,16 @@ BASE_SHA=$(git merge-base HEAD origin/$BASE_BRANCH)
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-Find the in-progress kanban task (if any) in `.kanban/30_in_progress/`. Read it for context on what was implemented and what the requirements are.
+Infer the Jira issue key from the branch name (e.g. `task/GFD-42/slug` → `GFD-42`). If found, read the issue with `jira_get_issue` for context on what was implemented and what the requirements are.
 
 ### Step 2: Code Review
 
 Dispatch the **code-reviewer** subagent using the template at `requesting-code-review/code-reviewer.md`.
 
-Fill placeholders from the kanban task and git range:
+Fill placeholders from the Jira issue and git range:
 
-- `{WHAT_WAS_IMPLEMENTED}` — from task title/description
-- `{PLAN_OR_REQUIREMENTS}` — from task acceptance criteria / plan reference
+- `{WHAT_WAS_IMPLEMENTED}` — from issue title/description
+- `{PLAN_OR_REQUIREMENTS}` — from issue acceptance criteria / plan reference
 - `{BASE_SHA}` / `{HEAD_SHA}` — from Step 1
 - `{DESCRIPTION}` — brief summary of changes
 
@@ -87,14 +87,15 @@ Follow the **commit-and-pr** skill (`/Users/mateusz/Projects/twinkletaps/.cursor
 4. Open PR with `gh pr create`
 5. Return the PR URL
 
-### Step 7: Update Kanban
+### Step 7: Update Jira
 
-If a kanban task was found in Step 1:
+If a Jira issue was found in Step 1:
 
-1. Move the task file to `.kanban/40_review/`
-2. Update status to "Review", add PR link, brief summary
+1. Transition the issue to `Review`: `jira_transition_issue` with `transition_id: "2"`
+2. Read `humanAtlassianId` from `.cursor.workflow` and assign the issue to the human + update Metadata with the PR URL: `jira_update_issue` with `fields: {"assignee": "<humanAtlassianId>"}` (plain string username) and the updated description
+3. Add a comment via `jira_add_comment` with a short summary of what was implemented and a clear ask: e.g. "Implementation complete. PR: [link]. Please review and merge, or leave feedback."
 
-**Do NOT move to `50_merged/`.** The task moves to `50_merged` only after the PR is actually merged to mainline (per `workflow.mdc`).
+**Do NOT transition to `Done`.** The issue moves to `Done` only after the PR is actually merged to mainline (per `workflow.mdc`).
 
 ## Failure Modes
 
@@ -104,8 +105,8 @@ Stop. Report to user. Don't force through.
 **Tests fail and can't be fixed quickly:**
 Stop. Report failing tests with output. Don't create PR with failing tests.
 
-**No kanban task found:**
-That's fine — skip kanban-related steps (1 context, 7 update). Derive PR description from git log instead.
+**No Jira issue found:**
+That's fine — skip Jira-related steps (1 context, 7 update). Derive PR description from git log instead.
 
 ## Red Flags
 

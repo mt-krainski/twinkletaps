@@ -27,7 +27,7 @@ describe("MQTT publish (integration)", () => {
       subscriber = mqtt.connect(brokerUrl, {
         username,
         password,
-        connectTimeout: 5000,
+        connectTimeout: 30_000,
       });
       subscriber.on("connect", () => resolve());
       subscriber.on("error", reject);
@@ -39,7 +39,7 @@ describe("MQTT publish (integration)", () => {
     subscriber.on("message", (topic, payload) => {
       received.push({ topic, payload });
     });
-  }, 15000);
+  }, 35_000);
 
   afterAll(async () => {
     if (subscriber) {
@@ -48,14 +48,14 @@ describe("MQTT publish (integration)", () => {
     }
   }, 5000);
 
-  it("sends message via publishToDevice and subscriber receives it", async () => {
+  it("sends message via publishToDevice and subscriber receives it", { timeout: 35_000 }, async () => {
     const payload = { sequence: "010" };
     received.length = 0;
 
     const receivedPromise = new Promise<{ topic: string; payload: Buffer }>((resolve, reject) => {
       const timeout = setTimeout(
-        () => reject(new Error("No message received within 5s")),
-        5000,
+        () => reject(new Error("No message received within 30s")),
+        30_000,
       );
       const onMessage = (topic: string, payload: Buffer) => {
         clearTimeout(timeout);
