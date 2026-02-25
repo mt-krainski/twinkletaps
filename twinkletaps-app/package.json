@@ -24,7 +24,7 @@
     "supr:push": "supabase db push --linked",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "vitest run",
+    "test": "vitest run --project unit --project storybook",
     "test:integration": "vitest run --project integration",
     "test:e2e": "playwright test",
     "test:watch": "vitest"
