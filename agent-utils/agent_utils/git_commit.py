@@ -1,10 +1,10 @@
 """Git commit with author/committer from git config."""
 
-import argparse
 import os
 import subprocess
-import sys
 from pathlib import Path
+
+import typer
 
 
 def _git_config(repo: Path, key: str) -> str | None:
@@ -28,26 +28,32 @@ def _has_staged_changes(repo: Path) -> bool:
     return result.returncode != 0
 
 
-def main(repo: Path | None = None, argv: list[str] | None = None) -> int:
-    """Run git commit with author/committer from repo git config. Returns exit code."""
-    repo = repo or Path.cwd()
-    parser = argparse.ArgumentParser(description="Commit with identity from git config")
-    parser.add_argument("-m", "--message", required=True, help="Commit message")
-    args = parser.parse_args(argv)
+app = typer.Typer(invoke_without_command=True)
+
+
+@app.callback()
+def main(
+    message: str = typer.Option(..., "-m", "--message", help="Commit message"),
+) -> None:
+    """Run git commit with author/committer from repo git config."""
+    repo = Path.cwd()
 
     user_name = _git_config(repo, "user.name")
     if not user_name:
-        print("git-commit: git config user.name is not set", file=sys.stderr)
-        return 1
+        typer.echo("git-commit: git config user.name is not set", err=True)
+        raise typer.Exit(1)
 
     user_email = _git_config(repo, "user.email")
     if not user_email:
-        print("git-commit: git config user.email is not set", file=sys.stderr)
-        return 1
+        typer.echo("git-commit: git config user.email is not set", err=True)
+        raise typer.Exit(1)
 
     if not _has_staged_changes(repo):
-        print("git-commit: nothing staged; stage changes with git add", file=sys.stderr)
-        return 1
+        typer.echo(
+            "git-commit: nothing staged; stage changes with git add",
+            err=True,
+        )
+        raise typer.Exit(1)
 
     env = os.environ.copy()
     env["GIT_AUTHOR_NAME"] = user_name
@@ -56,12 +62,12 @@ def main(repo: Path | None = None, argv: list[str] | None = None) -> int:
     env["GIT_COMMITTER_EMAIL"] = user_email
 
     result = subprocess.run(
-        ["git", "commit", "-m", args.message],
+        ["git", "commit", "-m", message],
         cwd=repo,
         env=env,
     )
-    return result.returncode
+    raise typer.Exit(result.returncode)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    app()

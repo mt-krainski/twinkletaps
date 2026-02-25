@@ -132,7 +132,6 @@ export async function getDevice(userId: string, deviceId: string) {
   return {
     ...device,
     userRole: device.userDevices[0]?.role as DeviceRole | undefined,
-    workspaceRole,
   };
 }
 
