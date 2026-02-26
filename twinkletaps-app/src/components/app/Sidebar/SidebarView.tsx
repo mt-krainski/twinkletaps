@@ -16,6 +16,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarFooter,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -119,21 +120,20 @@ export function SidebarView({
               </SidebarGroup>
             )}
 
-            {canInviteToWorkspace && (
-              <SidebarGroup>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton onClick={onInviteClick}>
-                        <UserPlus className="h-4 w-4" />
-                        <span>Invite to workspace</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            )}
           </SidebarContent>
+
+          {canInviteToWorkspace && (
+            <SidebarFooter className="pb-4">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton onClick={onInviteClick}>
+                    <UserPlus className="h-4 w-4" />
+                    <span>Invite to workspace</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarFooter>
+          )}
 
           <Dialog
             open={isSearchModalOpen}

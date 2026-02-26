@@ -154,6 +154,35 @@ export const Default: Story = {
   },
 };
 
+export const InviteToWorkspace: Story = {
+  args: {
+    ...defaultArgs,
+    onInviteClick: fn(),
+  },
+  render: (args) => (
+    <div className="h-screen w-64">
+      <SidebarViewWithModalState
+        devices={args.devices}
+        onDeviceClick={args.onDeviceClick}
+        onHomeClick={args.onHomeClick}
+        canRegisterDevice={false}
+        onRegisterClick={fn()}
+        canInviteToWorkspace={true}
+        onInviteClick={args.onInviteClick ?? fn()}
+      />
+    </div>
+  ),
+  play: async ({ canvasElement, args, userEvent }) => {
+    const canvas = within(canvasElement);
+
+    const inviteButton = canvas.getByText("Invite to workspace");
+    await expect(inviteButton).toBeInTheDocument();
+
+    await userEvent.click(inviteButton);
+    await expect(args.onInviteClick).toHaveBeenCalled();
+  },
+};
+
 export const WithoutDevices: Story = {
   args: {
     ...defaultArgs,
