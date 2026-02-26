@@ -15,9 +15,11 @@ model Profile {
   avatarUrl String?   @map("avatar_url")
   website   String?
 
-  userWorkspaces UserWorkspace[]
-  userDevices    UserDevice[]
-  roleAuditLogs  RoleAuditLog[]
+  userWorkspaces   UserWorkspace[]
+  userDevices      UserDevice[]
+  roleAuditLogs    RoleAuditLog[]
+  invitationsSent  Invitation[]    @relation("InvitationInviter")
+  invitationsAccepted Invitation[] @relation("InvitationAcceptedBy")
 
   @@map("profiles")
 }
@@ -32,6 +34,7 @@ model Workspace {
 
   devices        Device[]
   userWorkspaces UserWorkspace[]
+  invitations    Invitation[]
 
   @@map("workspaces")
 }
@@ -50,6 +53,7 @@ model Device {
 
   workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   userDevices UserDevice[]
+  invitations Invitation[]
 
   @@unique([name, workspaceId], map: "devices_name_workspace_unique")
   @@index([deletedAt], map: "devices_deleted_at_idx")
@@ -106,6 +110,28 @@ model RoleAuditLog {
   @@index([tableName, recordId], map: "role_audit_log_table_record_idx")
   @@index([userId], map: "role_audit_log_user_id_idx")
   @@map("role_audit_log")
+}
+
+model Invitation {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type        String
+  token       String    @unique
+  inviterId   String    @map("inviter_id") @db.Uuid
+  workspaceId String    @map("workspace_id") @db.Uuid
+  deviceId    String?   @map("device_id") @db.Uuid
+  role        String
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  expiresAt   DateTime  @map("expires_at") @db.Timestamptz
+  acceptedAt  DateTime? @map("accepted_at") @db.Timestamptz
+  acceptedBy  String?   @map("accepted_by") @db.Uuid
+
+  inviter    Profile   @relation("InvitationInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  workspace  Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  device     Device?   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  acceptedByProfile Profile? @relation("InvitationAcceptedBy", fields: [acceptedBy], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, type], map: "invitations_workspace_id_type_idx")
+  @@map("invitations")
 }
 
 model MqttCredential {
