@@ -5,7 +5,7 @@ description = "agent-utils"
 authors = [{name = "Mateusz Krainski", email = "mt.krainski@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["typer>=0.12.0,<0.15.0"]
+dependencies = ["typer>=0.15.0,<1.0.0"]
 
 [dependency-groups]
 dev = [
@@ -45,6 +45,9 @@ ignore = ["D104", "D100", "D101", "D106"]
 "agent_utils/git_commit.py" = ["S603", "S607"]
 "agent_utils/git_push.py" = ["S603", "S607"]
 "agent_utils/gh_pr_create.py" = ["S603", "S607"]
+"agent_utils/gh_pr_fetch.py" = ["S603", "S607"]
+"agent_utils/gh_pr_reply.py" = ["S603", "S607"]
+"agent_utils/gh_pr_checks.py" = ["S603", "S607"]
 
 [tool.ruff.lint.flake8-builtins]
 builtins-ignorelist = ["id"]
@@ -69,6 +72,9 @@ hooks-run = "pre-commit run --all-files"
 git-commit = "python -m agent_utils.git_commit"
 git-push = "python -m agent_utils.git_push"
 gh-pr-create = "python -m agent_utils.gh_pr_create"
+gh-pr-fetch = "python -m agent_utils.gh_pr_fetch"
+gh-pr-reply = "python -m agent_utils.gh_pr_reply"
+gh-pr-checks = "python -m agent_utils.gh_pr_checks"
 
 [tool.poe.tasks.test]
 sequence = [
