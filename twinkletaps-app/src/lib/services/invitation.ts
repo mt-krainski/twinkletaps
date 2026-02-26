@@ -52,7 +52,7 @@ export async function createInvitation(
 export async function getInvitationByToken(token: string) {
   const invitation = await prisma.invitation.findUnique({
     where: { token },
-    include: { workspace: true, device: true },
+    include: { workspace: true, device: true, inviter: true },
   });
 
   if (!invitation) return null;

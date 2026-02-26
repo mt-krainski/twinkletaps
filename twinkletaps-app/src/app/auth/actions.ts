@@ -3,9 +3,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+function isSafeRedirect(url: string | null): url is string {
+  return typeof url === "string" && url.startsWith("/") && !url.startsWith("//");
+}
+
 export async function sendOtp(formData: FormData) {
   const supabase = await createClient();
   const email = formData.get("email") as string;
+  const redirectParam = formData.get("redirect") as string | null;
 
   try {
     const { error } = await supabase.auth.signInWithOtp({
@@ -25,13 +30,19 @@ export async function sendOtp(formData: FormData) {
     redirect("/error");
   }
 
-  redirect(`/auth/verify-otp?email=${encodeURIComponent(email)}`);
+  const verifyUrl = new URL("/auth/verify-otp", "http://localhost");
+  verifyUrl.searchParams.set("email", email);
+  if (isSafeRedirect(redirectParam)) {
+    verifyUrl.searchParams.set("redirect", redirectParam);
+  }
+  redirect(verifyUrl.pathname + verifyUrl.search);
 }
 
 export async function verifyOtp(formData: FormData) {
   const supabase = await createClient();
   const email = formData.get("email") as string;
   const token = formData.get("token") as string;
+  const redirectParam = formData.get("redirect") as string | null;
 
   try {
     const { error } = await supabase.auth.verifyOtp({
@@ -50,12 +61,13 @@ export async function verifyOtp(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/account");
+  redirect(isSafeRedirect(redirectParam) ? redirectParam : "/account");
 }
 
 export async function resendOtp(formData: FormData) {
   const supabase = await createClient();
   const email = formData.get("email") as string;
+  const redirectParam = formData.get("redirect") as string | null;
 
   try {
     const { error } = await supabase.auth.signInWithOtp({
@@ -75,5 +87,11 @@ export async function resendOtp(formData: FormData) {
     redirect("/error");
   }
 
-  redirect(`/auth/verify-otp?email=${encodeURIComponent(email)}&resent=true`);
+  const verifyUrl = new URL("/auth/verify-otp", "http://localhost");
+  verifyUrl.searchParams.set("email", email);
+  verifyUrl.searchParams.set("resent", "true");
+  if (isSafeRedirect(redirectParam)) {
+    verifyUrl.searchParams.set("redirect", redirectParam);
+  }
+  redirect(verifyUrl.pathname + verifyUrl.search);
 }

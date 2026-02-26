@@ -58,6 +58,7 @@ function VerifyOtpContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
   const resent = searchParams.get("resent") === "true";
+  const redirect = searchParams.get("redirect") ?? "";
   const [showMessage, setShowMessage] = useState(resent);
 
   useEffect(() => {
@@ -90,6 +91,7 @@ function VerifyOtpContent() {
       {/* Verification Form */}
       <form className="space-y-4" action={verifyOtp}>
         <input type="hidden" name="email" value={email} />
+        <input type="hidden" name="redirect" value={redirect} />
         <div className="space-y-2">
           <Label
             htmlFor="token"
@@ -114,6 +116,7 @@ function VerifyOtpContent() {
       {/* Resend Code Form */}
       <form className="text-center" action={resendOtp}>
         <input type="hidden" name="email" value={email} />
+        <input type="hidden" name="redirect" value={redirect} />
         <ResendButton />
       </form>
 

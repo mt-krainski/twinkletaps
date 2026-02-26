@@ -111,6 +111,7 @@ describe("getInvitationByToken", () => {
       acceptedAt: null,
       workspace: { id: "ws-1" },
       device: null,
+      inviter: { id: "inviter-1", fullName: "Alice", username: "alice" },
     };
     mockInvitationFindUnique.mockResolvedValue(invitation);
 
