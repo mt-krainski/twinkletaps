@@ -50,4 +50,11 @@ jobs:
           npx playwright install --with-deps
 
       - name: Test
-        run: npm run test
+        run: npm run test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./twinkletaps-app/coverage/lcov.info
+          flags: unit-storybook
+          token: ${{ secrets.CODECOV_TOKEN }}

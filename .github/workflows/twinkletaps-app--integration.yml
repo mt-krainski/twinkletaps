@@ -60,4 +60,11 @@ jobs:
           MQTT_PUBLISHER_USERNAME: ${{ vars.MQTT_PUBLISHER_USERNAME }}
           MQTT_PUBLISHER_PASSWORD: ${{ secrets.MQTT_PUBLISHER_PASSWORD }}
           MQTT_TEST_TOPIC: ${{ vars.MQTT_TEST_TOPIC }}
-        run: npm run test:integration
+        run: npm run test:integration:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./twinkletaps-app/coverage/lcov.info
+          flags: integration
+          token: ${{ secrets.CODECOV_TOKEN }}

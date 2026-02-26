@@ -1,0 +1,19 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+    patch:
+      default:
+        target: auto
+
+comment:
+  layout: reach,diff,flags
+
+flags:
+  unit-storybook:
+    paths:
+      - twinkletaps-app/src/
+  integration:
+    paths:
+      - twinkletaps-app/src/
