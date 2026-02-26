@@ -73,7 +73,7 @@ def run_gh_pr_reply(
 
 @app.callback()
 def main(
-    pr_number: int = typer.Argument(..., help="PR number"),
+    pr_number: int = typer.Option(..., "--pr", help="PR number"),
     body: str = typer.Option(..., "--body", help="Comment body"),
     comment_id: int | None = typer.Option(
         None, "--comment-id", help="Reply to this inline comment ID"

@@ -88,7 +88,7 @@ def run_gh_pr_checks(
 
 @app.callback()
 def main(
-    pr_number: int = typer.Argument(..., help="PR number"),
+    pr_number: int = typer.Option(..., "--pr", help="PR number"),
 ) -> None:
     """Show CI check statuses; fetch failed run logs if any checks failed."""
     try:
