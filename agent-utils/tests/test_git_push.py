@@ -17,6 +17,13 @@ def _run_git(repo: Path, *args: str) -> subprocess.CompletedProcess:
     )
 
 
+def _init_repo(repo: Path) -> None:
+    """Init a repo with user identity (CI has no global git config)."""
+    _run_git(repo, "init")
+    _run_git(repo, "config", "user.name", "Test")
+    _run_git(repo, "config", "user.email", "test@test.com")
+
+
 def _run_git_push(
     repo: Path,
     *args: str,
@@ -38,7 +45,7 @@ def test_push_succeeds_on_task_branch_with_prefix(tmp_path: Path) -> None:
     _run_git(bare, "init", "--bare")
     repo = tmp_path / "repo"
     repo.mkdir()
-    _run_git(repo, "init")
+    _init_repo(repo)
     _run_git(repo, "remote", "add", "origin", str(bare))
     _run_git(repo, "checkout", "-b", "task/T-123/my-slug")
     (repo / "f").write_text("x")
@@ -51,7 +58,7 @@ def test_push_succeeds_on_task_branch_with_prefix(tmp_path: Path) -> None:
 
 
 def test_refuses_push_on_main(tmp_path: Path) -> None:
-    _run_git(tmp_path, "init")
+    _init_repo(tmp_path)
     _run_git(tmp_path, "checkout", "-b", "main")
     result = _run_git_push(tmp_path, env={"TASK_BRANCH_PREFIX": "task/"})
     assert result.returncode != 0
@@ -59,7 +66,7 @@ def test_refuses_push_on_main(tmp_path: Path) -> None:
 
 
 def test_refuses_push_on_master(tmp_path: Path) -> None:
-    _run_git(tmp_path, "init")
+    _init_repo(tmp_path)
     _run_git(tmp_path, "branch", "-m", "master")
     result = _run_git_push(tmp_path, env={"TASK_BRANCH_PREFIX": "task/"})
     assert result.returncode != 0
@@ -67,7 +74,7 @@ def test_refuses_push_on_master(tmp_path: Path) -> None:
 
 
 def test_refuses_push_when_branch_has_no_prefix(tmp_path: Path) -> None:
-    _run_git(tmp_path, "init")
+    _init_repo(tmp_path)
     _run_git(tmp_path, "checkout", "-b", "feature/something")
     (tmp_path / "f").write_text("x")
     _run_git(tmp_path, "add", "f")
@@ -81,7 +88,7 @@ def test_refuses_push_when_branch_has_no_prefix(tmp_path: Path) -> None:
 
 
 def test_refuses_when_detached_head(tmp_path: Path) -> None:
-    _run_git(tmp_path, "init")
+    _init_repo(tmp_path)
     (tmp_path / "f").write_text("x")
     _run_git(tmp_path, "add", "f")
     _run_git(tmp_path, "commit", "-m", "x")
@@ -109,7 +116,7 @@ def test_uses_verbatim_branch_name_in_push_command(tmp_path: Path) -> None:
             return subprocess.CompletedProcess(cmd, 0, "", "")
         return subprocess.CompletedProcess(cmd, 0, "", "")
 
-    _run_git(tmp_path, "init")
+    _init_repo(tmp_path)
     _run_git(tmp_path, "checkout", "-b", branch_name)
     (tmp_path / "f").write_text("x")
     _run_git(tmp_path, "add", "f")
