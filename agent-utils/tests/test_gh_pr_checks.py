@@ -78,13 +78,13 @@ def test_handles_empty_output_gracefully() -> None:
 
 
 def test_fails_with_clear_error_when_github_owner_not_set() -> None:
-    result = _run_cli("--pr", "1", env={"GITHUB_OWNER": "", "GITHUB_REPO": "repo"})
+    result = _run_cli("1", env={"GITHUB_OWNER": "", "GITHUB_REPO": "repo"})
     assert result.returncode != 0
     assert "GITHUB_OWNER" in (result.stderr + result.stdout)
 
 
 def test_fails_with_clear_error_when_github_repo_not_set() -> None:
-    result = _run_cli("--pr", "1", env={"GITHUB_OWNER": "owner", "GITHUB_REPO": ""})
+    result = _run_cli("1", env={"GITHUB_OWNER": "owner", "GITHUB_REPO": ""})
     assert result.returncode != 0
     assert "GITHUB_REPO" in (result.stderr + result.stdout)
 

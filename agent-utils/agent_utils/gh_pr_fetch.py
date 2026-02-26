@@ -66,7 +66,7 @@ def run_gh_pr_fetch(
 
 @app.callback()
 def main(
-    pr_number: int = typer.Option(..., "--pr", help="PR number"),
+    pr_number: int = typer.Argument(..., help="PR number"),
 ) -> None:
     """Fetch all PR feedback and output as combined JSON."""
     try:
