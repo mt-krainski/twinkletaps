@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "gravitalforge-atlassian": {
+      "command": "uvx",
+      "args": ["mcp-atlassian", "--env-file", ".env"]
+    }
+  }
+}
