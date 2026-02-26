@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { sendTap } from "@/app/(authenticated)/devices/actions";
+import { sendTap, generateShareLink } from "@/app/(authenticated)/devices/actions";
 import { TapRecorder } from "@/components/app/TapRecorder";
+import { ShareDialog } from "@/components/app/ShareDialog";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -13,6 +15,7 @@ import type { WorkspaceRole } from "@/lib/services/workspace";
 
 export interface DeviceViewProps {
   deviceId: string;
+  workspaceId: string;
   deviceName: string;
   deviceUuid: string;
   mqttTopic: string;
@@ -24,6 +27,7 @@ type SendStatus = "idle" | "sending" | "success" | "error";
 
 export function DeviceView({
   deviceId,
+  workspaceId,
   deviceName,
   deviceUuid,
   mqttTopic,
@@ -33,6 +37,7 @@ export function DeviceView({
   const [lastSequence, setLastSequence] = useState<string | null>(null);
   const [sendStatus, setSendStatus] = useState<SendStatus>("idle");
   const [sendError, setSendError] = useState<string | null>(null);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 
   const handleTapComplete = useCallback(
     async (sequence: string) => {
@@ -81,25 +86,45 @@ export function DeviceView({
       </div>
 
       {isAdmin && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Device settings</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2 font-mono text-sm">
-            <div>
-              <span className="text-muted-foreground">UUID: </span>
-              <span className="break-all">{deviceUuid}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">MQTT topic: </span>
-              <span className="break-all">{mqttTopic}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">MQTT username: </span>
-              <span className="break-all">{mqttUsername ?? "—"}</span>
-            </div>
-          </CardContent>
-        </Card>
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Device settings</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2 font-mono text-sm">
+              <div>
+                <span className="text-muted-foreground">UUID: </span>
+                <span className="break-all">{deviceUuid}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">MQTT topic: </span>
+                <span className="break-all">{mqttTopic}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">MQTT username: </span>
+                <span className="break-all">{mqttUsername ?? "—"}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Button
+            variant="outline"
+            className="self-start"
+            onClick={() => setIsShareDialogOpen(true)}
+          >
+            Share
+          </Button>
+
+          <ShareDialog
+            type="device"
+            targetName={deviceName}
+            open={isShareDialogOpen}
+            onOpenChange={setIsShareDialogOpen}
+            onGenerateLink={() =>
+              generateShareLink("device", workspaceId, deviceId)
+            }
+          />
+        </>
       )}
     </div>
   );

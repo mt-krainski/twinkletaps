@@ -27,6 +27,7 @@ export default async function DevicePage({ params }: PageProps) {
   return (
     <DeviceView
       deviceId={device.id}
+      workspaceId={device.workspaceId}
       deviceName={device.name}
       deviceUuid={device.deviceUuid}
       mqttTopic={device.mqttTopic}
