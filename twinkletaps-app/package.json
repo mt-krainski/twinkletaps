@@ -25,7 +25,9 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest run --project unit --project storybook",
+    "test:coverage": "vitest run --project unit --project storybook --coverage",
     "test:integration": "vitest run --project integration",
+    "test:integration:coverage": "vitest run --project integration --coverage",
     "test:e2e": "playwright test",
     "test:watch": "vitest"
   },
