@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { Search, Home, Lightbulb, Plus } from "lucide-react";
+import { Search, Home, Lightbulb, Plus, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +40,8 @@ export interface SidebarViewProps {
   onHomeClick: () => void;
   canRegisterDevice: boolean;
   onRegisterClick: () => void;
+  canInviteToWorkspace: boolean;
+  onInviteClick: () => void;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   isSearchModalOpen: boolean;
@@ -56,6 +58,8 @@ export function SidebarView({
   onHomeClick,
   canRegisterDevice,
   onRegisterClick,
+  canInviteToWorkspace,
+  onInviteClick,
   searchQuery,
   onSearchQueryChange,
   isSearchModalOpen,
@@ -110,6 +114,21 @@ export function SidebarView({
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     )}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
+
+            {canInviteToWorkspace && (
+              <SidebarGroup>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton onClick={onInviteClick}>
+                        <UserPlus className="h-4 w-4" />
+                        <span>Invite to workspace</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>

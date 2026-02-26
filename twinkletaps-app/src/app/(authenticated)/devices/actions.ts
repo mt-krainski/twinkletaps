@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import {
   getDevice,
@@ -7,6 +8,10 @@ import {
   type RegisterDeviceResult,
 } from "@/lib/services/device";
 import { publishToDevice } from "@/lib/services/mqtt";
+import {
+  createInvitation,
+  type InvitationType,
+} from "@/lib/services/invitation";
 
 const TAP_SEQUENCE_REGEX = /^[01]{1,12}$/;
 
@@ -51,4 +56,32 @@ export async function sendTap(
   }
 
   await publishToDevice(device.mqttTopic, { sequence });
+}
+
+export async function generateShareLink(
+  type: InvitationType,
+  workspaceId: string,
+  deviceId?: string,
+): Promise<string> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+
+  const { token } = await createInvitation(user.id, workspaceId, {
+    type,
+    role: type === "workspace" ? "member" : "guest",
+    deviceId,
+  });
+
+  const headersList = await headers();
+  const host = headersList.get("host") ?? "localhost:3000";
+  const proto = headersList.get("x-forwarded-proto") ?? "http";
+  const origin = `${proto}://${host}`;
+
+  return `${origin}/invite/${token}`;
 }
