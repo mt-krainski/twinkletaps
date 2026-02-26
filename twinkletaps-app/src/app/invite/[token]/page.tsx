@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getInvitationByToken } from "@/lib/services/invitation";
-import { AcceptInvite } from "./accept-invite";
+import { AcceptInvite } from "@/components/app/AcceptInvite";
 import { Logo } from "@/components/app/Logo";
 
 type PageProps = {

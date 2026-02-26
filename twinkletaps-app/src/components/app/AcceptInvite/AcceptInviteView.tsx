@@ -1,8 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { acceptInvitationAction } from "@/app/invite/actions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,40 +10,27 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-interface AcceptInviteProps {
-  token: string;
+export interface AcceptInviteViewProps {
   workspaceName: string;
   deviceName: string | null;
   role: string;
   type: "workspace" | "device";
   inviterName: string;
+  loading: boolean;
+  error: string | null;
+  onAccept: () => void;
 }
 
-export function AcceptInvite({
-  token,
+export function AcceptInviteView({
   workspaceName,
   deviceName,
   role,
   type,
   inviterName,
-}: AcceptInviteProps) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleAccept() {
-    setLoading(true);
-    setError(null);
-    try {
-      const { redirectTo } = await acceptInvitationAction(token);
-      router.push(redirectTo);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  }
-
+  loading,
+  error,
+  onAccept,
+}: AcceptInviteViewProps) {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
@@ -79,7 +63,7 @@ export function AcceptInvite({
           <p className="text-sm text-destructive w-full">{error}</p>
         )}
         <Button
-          onClick={handleAccept}
+          onClick={onAccept}
           disabled={loading}
           className="w-full"
         >

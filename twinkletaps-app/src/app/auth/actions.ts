@@ -30,12 +30,9 @@ export async function sendOtp(formData: FormData) {
     redirect("/error");
   }
 
-  const verifyUrl = new URL("/auth/verify-otp", "http://localhost");
-  verifyUrl.searchParams.set("email", email);
-  if (isSafeRedirect(redirectParam)) {
-    verifyUrl.searchParams.set("redirect", redirectParam);
-  }
-  redirect(verifyUrl.pathname + verifyUrl.search);
+  const params = new URLSearchParams({ email });
+  if (isSafeRedirect(redirectParam)) params.set("redirect", redirectParam);
+  redirect(`/auth/verify-otp?${params}`);
 }
 
 export async function verifyOtp(formData: FormData) {
@@ -87,11 +84,7 @@ export async function resendOtp(formData: FormData) {
     redirect("/error");
   }
 
-  const verifyUrl = new URL("/auth/verify-otp", "http://localhost");
-  verifyUrl.searchParams.set("email", email);
-  verifyUrl.searchParams.set("resent", "true");
-  if (isSafeRedirect(redirectParam)) {
-    verifyUrl.searchParams.set("redirect", redirectParam);
-  }
-  redirect(verifyUrl.pathname + verifyUrl.search);
+  const params = new URLSearchParams({ email, resent: "true" });
+  if (isSafeRedirect(redirectParam)) params.set("redirect", redirectParam);
+  redirect(`/auth/verify-otp?${params}`);
 }
