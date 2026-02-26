@@ -44,6 +44,7 @@ ignore = ["D104", "D100", "D101", "D106"]
 "tests/**" = ["S101", "S603", "S607", "D103"]
 "agent_utils/git_commit.py" = ["S603", "S607"]
 "agent_utils/git_push.py" = ["S603", "S607"]
+"agent_utils/gh_pr_create.py" = ["S603", "S607"]
 
 [tool.ruff.lint.flake8-builtins]
 builtins-ignorelist = ["id"]
@@ -67,6 +68,7 @@ update = "./scripts/update.sh"
 hooks-run = "pre-commit run --all-files"
 git-commit = "python -m agent_utils.git_commit"
 git-push = "python -m agent_utils.git_push"
+gh-pr-create = "python -m agent_utils.gh_pr_create"
 
 [tool.poe.tasks.test]
 sequence = [
