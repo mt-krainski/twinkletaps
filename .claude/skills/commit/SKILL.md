@@ -11,6 +11,12 @@ Stage only files that belong to the change. Exclude unrelated files.
 
 ## 2. Create One Informative Commit
 
+Use the repo's git identity so the commit is attributed to the user and CI runs correctly:
+
+```bash
+GIT_AUTHOR_NAME="$(git config user.name)" GIT_AUTHOR_EMAIL="$(git config user.email)" GIT_COMMITTER_NAME="$(git config user.name)" GIT_COMMITTER_EMAIL="$(git config user.email)" git commit -m "..."
+```
+
 **Message format:** `<ISSUE_KEY>: <short title>`, then a short body with what changed (bullets or short paragraphs). Infer issue key from branch name `task/GFD-###/slug` if needed. If no issue context, use a descriptive title without a key.
 
 **Example:**
@@ -25,6 +31,8 @@ GFD-42: Update app code — Team → Device
 ```
 
 ## 3. Push the Branch
+
+**Always specify the branch explicitly** — never use a bare `git push`.
 
 ```bash
 git push -u origin <current-branch>

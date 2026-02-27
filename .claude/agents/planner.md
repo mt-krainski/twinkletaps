@@ -137,7 +137,7 @@ Each Task description must include: Problem/Goal, Non-Goals, Acceptance Criteria
 
 Each story's **Implementation Plan** should include:
 - Exact file paths for every file to create or modify
-- Code snippets showing the key implementation
+- Code snippets showing the key implementation (not "add validation" — show the actual code)
 - Exact test commands with expected output
 - TDD steps: write failing test → verify fail → implement → verify pass
 
