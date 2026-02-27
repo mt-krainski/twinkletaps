@@ -5,8 +5,6 @@ description: "Request a code review on completed work. Use after completing feat
 
 # Requesting Code Review
 
-Use a Task sub-agent to review code changes and catch issues before they cascade.
-
 **Core principle:** Review early, review often.
 
 ## When to Request Review
@@ -28,9 +26,9 @@ BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-**2. Spawn a code review sub-agent:**
+**2. Spawn the `code-reviewer` agent:**
 
-Use the Task tool to spawn a general-purpose sub-agent. Provide the review template from `.claude/docs/code-reviewer-template.md` with context:
+Use the Task tool with `subagent_type: "code-reviewer"`. Provide the review template from `.claude/docs/code-reviewer-template.md` with context:
 
 - `{WHAT_WAS_IMPLEMENTED}` — what you just built
 - `{PLAN_OR_REQUIREMENTS}` — what it should do
