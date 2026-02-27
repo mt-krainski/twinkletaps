@@ -60,6 +60,8 @@ const defaultArgs: SidebarViewProps = {
   onHomeClick: fn(),
   canRegisterDevice: true,
   onRegisterClick: fn(),
+  canInviteToWorkspace: true,
+  onInviteClick: fn(),
   searchResults: mockSearchResults,
   searchQuery: "",
   onSearchQueryChange: fn(),
@@ -106,6 +108,8 @@ export const Default: Story = {
         onHomeClick={args.onHomeClick}
         canRegisterDevice={true}
         onRegisterClick={args.onRegisterClick ?? fn()}
+        canInviteToWorkspace={true}
+        onInviteClick={args.onInviteClick ?? fn()}
       />
     </div>
   ),
@@ -115,6 +119,7 @@ export const Default: Story = {
     await expect(canvas.getByText("Search...")).toBeInTheDocument();
     await expect(canvas.getByText("Home")).toBeInTheDocument();
     await expect(canvas.getByText("Devices")).toBeInTheDocument();
+    await expect(canvas.getByText("Invite to workspace")).toBeInTheDocument();
 
     for (const name of deviceNames) {
       await expect(canvas.getByText(name)).toBeInTheDocument();
@@ -149,11 +154,41 @@ export const Default: Story = {
   },
 };
 
+export const InviteToWorkspace: Story = {
+  args: {
+    ...defaultArgs,
+    onInviteClick: fn(),
+  },
+  render: (args) => (
+    <div className="h-screen w-64">
+      <SidebarViewWithModalState
+        devices={args.devices}
+        onDeviceClick={args.onDeviceClick}
+        onHomeClick={args.onHomeClick}
+        canRegisterDevice={false}
+        onRegisterClick={fn()}
+        canInviteToWorkspace={true}
+        onInviteClick={args.onInviteClick ?? fn()}
+      />
+    </div>
+  ),
+  play: async ({ canvasElement, args, userEvent }) => {
+    const canvas = within(canvasElement);
+
+    const inviteButton = canvas.getByText("Invite to workspace");
+    await expect(inviteButton).toBeInTheDocument();
+
+    await userEvent.click(inviteButton);
+    await expect(args.onInviteClick).toHaveBeenCalled();
+  },
+};
+
 export const WithoutDevices: Story = {
   args: {
     ...defaultArgs,
     devices: [],
     canRegisterDevice: false,
+    canInviteToWorkspace: false,
     onSearch: fn(),
     onHomeClick: fn(),
   },
@@ -167,6 +202,8 @@ export const WithoutDevices: Story = {
         onHomeClick={args.onHomeClick}
         canRegisterDevice={false}
         onRegisterClick={fn()}
+        canInviteToWorkspace={false}
+        onInviteClick={fn()}
       />
     </div>
   ),
@@ -176,6 +213,7 @@ export const WithoutDevices: Story = {
     await expect(canvas.getByText("Search...")).toBeInTheDocument();
     await expect(canvas.getByText("Home")).toBeInTheDocument();
     await expect(canvas.queryByText("Devices")).not.toBeInTheDocument();
+    await expect(canvas.queryByText("Invite to workspace")).not.toBeInTheDocument();
 
     await userEvent.click(canvas.getByText("Home"));
     await expect(args.onHomeClick).toHaveBeenCalled();

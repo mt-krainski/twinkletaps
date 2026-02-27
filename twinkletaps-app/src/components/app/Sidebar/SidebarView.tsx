@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { Search, Home, Lightbulb, Plus } from "lucide-react";
+import { Search, Home, Lightbulb, Plus, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarFooter,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -40,6 +41,8 @@ export interface SidebarViewProps {
   onHomeClick: () => void;
   canRegisterDevice: boolean;
   onRegisterClick: () => void;
+  canInviteToWorkspace: boolean;
+  onInviteClick: () => void;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   isSearchModalOpen: boolean;
@@ -56,6 +59,8 @@ export function SidebarView({
   onHomeClick,
   canRegisterDevice,
   onRegisterClick,
+  canInviteToWorkspace,
+  onInviteClick,
   searchQuery,
   onSearchQueryChange,
   isSearchModalOpen,
@@ -114,7 +119,21 @@ export function SidebarView({
                 </SidebarGroupContent>
               </SidebarGroup>
             )}
+
           </SidebarContent>
+
+          {canInviteToWorkspace && (
+            <SidebarFooter className="pb-4">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton onClick={onInviteClick}>
+                    <UserPlus className="h-4 w-4" />
+                    <span>Invite to workspace</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarFooter>
+          )}
 
           <Dialog
             open={isSearchModalOpen}
