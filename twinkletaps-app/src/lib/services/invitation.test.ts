@@ -118,7 +118,7 @@ describe("getInvitationByToken", () => {
     mockInvitationFindUnique.mockResolvedValue(invitation);
 
     const result = await getInvitationByToken("valid-token");
-    expect(result).toEqual({ ...invitation, inviterEmail: null });
+    expect(result).toEqual(invitation);
   });
 
   it("returns null when invitation is expired", async () => {
@@ -149,49 +149,6 @@ describe("getInvitationByToken", () => {
     expect(result).toBeNull();
   });
 
-  it("includes inviterEmail when inviter has no fullName or username", async () => {
-    const invitation = {
-      id: "inv-1",
-      type: "workspace" as const,
-      token: "valid-token",
-      workspaceId: "ws-1",
-      inviterId: "inviter-1",
-      deviceId: null,
-      role: "member",
-      expiresAt: new Date(Date.now() + 3600000),
-      acceptedAt: null,
-      workspace: { id: "ws-1" },
-      device: null,
-      inviter: { id: "inviter-1", fullName: null, username: null },
-    };
-    mockInvitationFindUnique.mockResolvedValue(invitation);
-    mockQueryRaw.mockResolvedValue([{ email: "inviter@example.com" }]);
-
-    const result = await getInvitationByToken("valid-token");
-    expect(result?.inviterEmail).toBe("inviter@example.com");
-  });
-
-  it("sets inviterEmail to null when inviter has fullName", async () => {
-    const invitation = {
-      id: "inv-1",
-      type: "workspace" as const,
-      token: "valid-token",
-      workspaceId: "ws-1",
-      inviterId: "inviter-1",
-      deviceId: null,
-      role: "member",
-      expiresAt: new Date(Date.now() + 3600000),
-      acceptedAt: null,
-      workspace: { id: "ws-1" },
-      device: null,
-      inviter: { id: "inviter-1", fullName: "Alice", username: "alice" },
-    };
-    mockInvitationFindUnique.mockResolvedValue(invitation);
-
-    const result = await getInvitationByToken("valid-token");
-    expect(result?.inviterEmail).toBeNull();
-    expect(mockQueryRaw).not.toHaveBeenCalled();
-  });
 });
 
 describe("acceptInvitation", () => {

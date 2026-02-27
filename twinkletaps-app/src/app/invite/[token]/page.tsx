@@ -58,7 +58,6 @@ export default async function InvitePage({ params }: PageProps) {
           inviterName={
             invitation.inviter.fullName ??
             invitation.inviter.username ??
-            invitation.inviterEmail ??
             "Someone"
           }
         />

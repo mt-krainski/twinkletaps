@@ -59,16 +59,7 @@ export async function getInvitationByToken(token: string) {
   if (invitation.acceptedAt) return null;
   if (new Date() >= invitation.expiresAt) return null;
 
-  // Fetch inviter email from auth.users as fallback when profile has no name
-  let inviterEmail: string | null = null;
-  if (!invitation.inviter.fullName && !invitation.inviter.username) {
-    const rows = await prisma.$queryRaw<{ email: string }[]>`
-      SELECT email FROM auth.users WHERE id = ${invitation.inviterId}::uuid LIMIT 1
-    `;
-    inviterEmail = rows[0]?.email ?? null;
-  }
-
-  return { ...invitation, inviterEmail };
+  return invitation;
 }
 
 export async function acceptInvitation(
