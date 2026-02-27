@@ -22,6 +22,7 @@ const mockUserWorkspaceFindUnique = vi.fn();
 const mockUserDeviceCreate = vi.fn();
 const mockUserDeviceFindUnique = vi.fn();
 const mockTransaction = vi.fn();
+const mockQueryRaw = vi.fn();
 
 vi.mock("../prisma", () => ({
   prisma: {
@@ -41,6 +42,7 @@ vi.mock("../prisma", () => ({
       findUnique: (args: unknown) => mockUserDeviceFindUnique(args),
     },
     $transaction: (fn: (tx: unknown) => Promise<unknown>) => mockTransaction(fn),
+    $queryRaw: (...args: unknown[]) => mockQueryRaw(...args),
   },
 }));
 
@@ -116,7 +118,7 @@ describe("getInvitationByToken", () => {
     mockInvitationFindUnique.mockResolvedValue(invitation);
 
     const result = await getInvitationByToken("valid-token");
-    expect(result).toEqual(invitation);
+    expect(result).toEqual({ ...invitation, inviterEmail: null });
   });
 
   it("returns null when invitation is expired", async () => {
@@ -145,6 +147,50 @@ describe("getInvitationByToken", () => {
     mockInvitationFindUnique.mockResolvedValue(null);
     const result = await getInvitationByToken("missing");
     expect(result).toBeNull();
+  });
+
+  it("includes inviterEmail when inviter has no fullName or username", async () => {
+    const invitation = {
+      id: "inv-1",
+      type: "workspace" as const,
+      token: "valid-token",
+      workspaceId: "ws-1",
+      inviterId: "inviter-1",
+      deviceId: null,
+      role: "member",
+      expiresAt: new Date(Date.now() + 3600000),
+      acceptedAt: null,
+      workspace: { id: "ws-1" },
+      device: null,
+      inviter: { id: "inviter-1", fullName: null, username: null },
+    };
+    mockInvitationFindUnique.mockResolvedValue(invitation);
+    mockQueryRaw.mockResolvedValue([{ email: "inviter@example.com" }]);
+
+    const result = await getInvitationByToken("valid-token");
+    expect(result?.inviterEmail).toBe("inviter@example.com");
+  });
+
+  it("sets inviterEmail to null when inviter has fullName", async () => {
+    const invitation = {
+      id: "inv-1",
+      type: "workspace" as const,
+      token: "valid-token",
+      workspaceId: "ws-1",
+      inviterId: "inviter-1",
+      deviceId: null,
+      role: "member",
+      expiresAt: new Date(Date.now() + 3600000),
+      acceptedAt: null,
+      workspace: { id: "ws-1" },
+      device: null,
+      inviter: { id: "inviter-1", fullName: "Alice", username: "alice" },
+    };
+    mockInvitationFindUnique.mockResolvedValue(invitation);
+
+    const result = await getInvitationByToken("valid-token");
+    expect(result?.inviterEmail).toBeNull();
+    expect(mockQueryRaw).not.toHaveBeenCalled();
   });
 });
 
@@ -202,7 +248,7 @@ describe("acceptInvitation", () => {
     });
   });
 
-  it("creates device membership for device invite", async () => {
+  it("creates device and workspace membership for device invite", async () => {
     const invitation = {
       id: "inv-2",
       type: "device" as const,
@@ -210,11 +256,20 @@ describe("acceptInvitation", () => {
       deviceId: "dev-1",
       role: "user" as const,
     };
+    mockUserWorkspaceFindUnique.mockResolvedValue(null);
+    mockUserWorkspaceCreate.mockResolvedValue({});
     mockUserDeviceFindUnique.mockResolvedValue(null);
     mockUserDeviceCreate.mockResolvedValue({});
 
     await acceptInvitation("acceptee-1", invitation);
 
+    expect(mockUserWorkspaceCreate).toHaveBeenCalledWith({
+      data: {
+        userId: "acceptee-1",
+        workspaceId: "ws-1",
+        role: "guest",
+      },
+    });
     expect(mockUserDeviceCreate).toHaveBeenCalledWith({
       data: {
         userId: "acceptee-1",
@@ -222,17 +277,24 @@ describe("acceptInvitation", () => {
         role: "user",
       },
     });
-    expect(mockInvitationUpdateMany).toHaveBeenCalledWith({
-      where: {
-        id: "inv-2",
-        acceptedAt: null,
-        expiresAt: { gt: expect.any(Date) },
-      },
-      data: {
-        acceptedAt: expect.any(Date),
-        acceptedBy: "acceptee-1",
-      },
-    });
+  });
+
+  it("skips workspace creation for device invite when already a member", async () => {
+    const invitation = {
+      id: "inv-2",
+      type: "device" as const,
+      workspaceId: "ws-1",
+      deviceId: "dev-1",
+      role: "user" as const,
+    };
+    mockUserWorkspaceFindUnique.mockResolvedValue({ role: "member" });
+    mockUserDeviceFindUnique.mockResolvedValue(null);
+    mockUserDeviceCreate.mockResolvedValue({});
+
+    await acceptInvitation("acceptee-1", invitation);
+
+    expect(mockUserWorkspaceCreate).not.toHaveBeenCalled();
+    expect(mockUserDeviceCreate).toHaveBeenCalled();
   });
 
   it("upgrades existing guest to member when accepting workspace invite", async () => {

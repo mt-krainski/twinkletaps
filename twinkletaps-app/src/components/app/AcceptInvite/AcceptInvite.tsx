@@ -37,6 +37,10 @@ export function AcceptInvite({
     }
   }
 
+  function handleDashboard() {
+    router.push("/");
+  }
+
   return (
     <AcceptInviteView
       workspaceName={workspaceName}
@@ -46,6 +50,7 @@ export function AcceptInvite({
       loading={loading}
       error={error}
       onAccept={handleAccept}
+      onDashboard={handleDashboard}
     />
   );
 }

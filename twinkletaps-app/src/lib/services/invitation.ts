@@ -59,7 +59,16 @@ export async function getInvitationByToken(token: string) {
   if (invitation.acceptedAt) return null;
   if (new Date() >= invitation.expiresAt) return null;
 
-  return invitation;
+  // Fetch inviter email from auth.users as fallback when profile has no name
+  let inviterEmail: string | null = null;
+  if (!invitation.inviter.fullName && !invitation.inviter.username) {
+    const rows = await prisma.$queryRaw<{ email: string }[]>`
+      SELECT email FROM auth.users WHERE id = ${invitation.inviterId}::uuid LIMIT 1
+    `;
+    inviterEmail = rows[0]?.email ?? null;
+  }
+
+  return { ...invitation, inviterEmail };
 }
 
 export async function acceptInvitation(
@@ -105,6 +114,23 @@ export async function acceptInvitation(
     }
 
     if (invitation.type === "device" && invitation.deviceId) {
+      // Device access requires workspace membership — add as guest if not already a member
+      const existingWorkspace = await tx.userWorkspace.findUnique({
+        where: {
+          userId_workspaceId: { userId, workspaceId: invitation.workspaceId },
+          deletedAt: null,
+        },
+      });
+      if (!existingWorkspace) {
+        await tx.userWorkspace.create({
+          data: {
+            userId,
+            workspaceId: invitation.workspaceId,
+            role: "guest" as WorkspaceRole,
+          },
+        });
+      }
+
       const existing = await tx.userDevice.findUnique({
         where: {
           userId_deviceId: { userId, deviceId: invitation.deviceId },

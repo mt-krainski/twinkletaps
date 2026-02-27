@@ -17,6 +17,7 @@ export interface AcceptInviteViewProps {
   loading: boolean;
   error: string | null;
   onAccept: () => void;
+  onDashboard: () => void;
 }
 
 export function AcceptInviteView({
@@ -27,6 +28,7 @@ export function AcceptInviteView({
   loading,
   error,
   onAccept,
+  onDashboard,
 }: AcceptInviteViewProps) {
   return (
     <Card className="w-full max-w-sm">
@@ -55,6 +57,14 @@ export function AcceptInviteView({
           ) : (
             "Accept Invitation"
           )}
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={onDashboard}
+          disabled={loading}
+          className="w-full"
+        >
+          Go to Dashboard
         </Button>
       </CardFooter>
     </Card>

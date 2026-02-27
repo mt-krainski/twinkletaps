@@ -22,6 +22,7 @@ const baseArgs = {
   loading: false,
   error: null,
   onAccept: fn(),
+  onDashboard: fn(),
 };
 
 export const WorkspaceInvite: Story = {
@@ -31,6 +32,7 @@ export const WorkspaceInvite: Story = {
     await expect(canvas.getByText("You're invited!")).toBeInTheDocument();
     await expect(canvas.getByText("Alice has invited you to join My Workspace")).toBeInTheDocument();
     await expect(canvas.getByRole("button", { name: "Accept Invitation" })).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Go to Dashboard" })).toBeInTheDocument();
   },
 };
 
