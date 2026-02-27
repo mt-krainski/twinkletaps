@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -13,7 +12,6 @@ import {
 export interface AcceptInviteViewProps {
   workspaceName: string;
   deviceName: string | null;
-  role: string;
   type: "workspace" | "device";
   inviterName: string;
   loading: boolean;
@@ -24,7 +22,6 @@ export interface AcceptInviteViewProps {
 export function AcceptInviteView({
   workspaceName,
   deviceName,
-  role,
   type,
   inviterName,
   loading,
@@ -36,35 +33,18 @@ export function AcceptInviteView({
       <CardHeader>
         <CardTitle>You&apos;re invited!</CardTitle>
         <CardDescription>
-          {inviterName} has invited you to join{" "}
-          {type === "device" ? `a device in ` : ""}
-          <span className="font-semibold text-foreground">{workspaceName}</span>
-          .
+          {type === "device"
+            ? `${inviterName} has invited you to control ${deviceName} in ${workspaceName}`
+            : `${inviterName} has invited you to join ${workspaceName}`}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Workspace:</span>
-          <span className="font-medium">{workspaceName}</span>
-        </div>
-        {deviceName && (
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Device:</span>
-            <span className="font-medium">{deviceName}</span>
-          </div>
-        )}
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Role:</span>
-          <span className="font-medium capitalize">{role}</span>
-        </div>
-      </CardContent>
       <CardFooter className="flex flex-col gap-3">
         {error && (
           <p className="text-sm text-destructive w-full">{error}</p>
         )}
         <Button
           onClick={onAccept}
-          disabled={loading}
+          disabled={loading || !!error}
           className="w-full"
         >
           {loading ? (

@@ -9,7 +9,6 @@ interface AcceptInviteProps {
   token: string;
   workspaceName: string;
   deviceName: string | null;
-  role: string;
   type: "workspace" | "device";
   inviterName: string;
 }
@@ -18,7 +17,6 @@ export function AcceptInvite({
   token,
   workspaceName,
   deviceName,
-  role,
   type,
   inviterName,
 }: AcceptInviteProps) {
@@ -43,7 +41,6 @@ export function AcceptInvite({
     <AcceptInviteView
       workspaceName={workspaceName}
       deviceName={deviceName}
-      role={role}
       type={type}
       inviterName={inviterName}
       loading={loading}

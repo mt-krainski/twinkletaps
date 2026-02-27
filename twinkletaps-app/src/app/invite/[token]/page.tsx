@@ -54,7 +54,6 @@ export default async function InvitePage({ params }: PageProps) {
           token={token}
           workspaceName={invitation.workspace.name}
           deviceName={invitation.device?.name ?? null}
-          role={invitation.role}
           type={invitation.type as "workspace" | "device"}
           inviterName={
             invitation.inviter.fullName ??
