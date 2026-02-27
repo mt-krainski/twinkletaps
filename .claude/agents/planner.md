@@ -162,6 +162,28 @@ Before finalizing a plan, verify:
 - [ ] Testing strategy covers the changes
 - [ ] Risks are identified with mitigations
 
+## Sizing and Phasing
+
+For large features, break into independently deliverable phases:
+
+- **Phase 1:** Minimum viable — smallest slice that provides value
+- **Phase 2:** Core experience — complete happy path
+- **Phase 3:** Edge cases — error handling, polish
+- **Phase 4:** Optimization — performance, monitoring
+
+Each phase should be mergeable independently. Avoid plans that require all phases before anything works.
+
+## Red Flags
+
+Watch for these in your plans:
+
+- Steps without clear file paths
+- Phases that can't be delivered independently
+- Missing testing strategy
+- Tasks that leave the app in a broken state
+- Large mechanical refactors mixed with feature work
+- Hardcoded values or missing error handling in the plan
+
 ## After Creating Issues
 
 Present: **"Issues created in Jira. Which task should I start?"**
