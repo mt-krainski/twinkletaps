@@ -17,7 +17,6 @@ type Story = StoryObj<typeof AcceptInviteView>;
 const baseArgs = {
   workspaceName: "My Workspace",
   deviceName: null,
-  role: "member",
   type: "workspace" as const,
   inviterName: "Alice",
   loading: false,
@@ -30,8 +29,7 @@ export const WorkspaceInvite: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByText("You're invited!")).toBeInTheDocument();
-    await expect(canvas.getByText(/Alice has invited you to join/)).toBeInTheDocument();
-    await expect(canvas.getAllByText("My Workspace").length).toBeGreaterThan(0);
+    await expect(canvas.getByText("Alice has invited you to join My Workspace")).toBeInTheDocument();
     await expect(canvas.getByRole("button", { name: "Accept Invitation" })).toBeInTheDocument();
   },
 };
@@ -45,8 +43,9 @@ export const DeviceInvite: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText(/a device in/)).toBeInTheDocument();
-    await expect(canvas.getByText("Living Room")).toBeInTheDocument();
+    await expect(
+      canvas.getByText("Alice has invited you to control Living Room in My Workspace"),
+    ).toBeInTheDocument();
   },
 };
 
@@ -69,15 +68,12 @@ export const WithError: Story = {
     error: "You are already a member of this workspace.",
     onAccept: fn(),
   },
-  play: async ({ canvasElement, args }) => {
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(
       canvas.getByText("You are already a member of this workspace."),
     ).toBeInTheDocument();
-    // Button is still enabled — user can retry
-    const button = canvas.getByRole("button", { name: "Accept Invitation" });
-    await expect(button).not.toBeDisabled();
-    await button.click();
-    expect(args.onAccept).toHaveBeenCalledTimes(1);
+    // Button is disabled when there is an error
+    await expect(canvas.getByRole("button", { name: "Accept Invitation" })).toBeDisabled();
   },
 };
