@@ -4,6 +4,8 @@ import {
   getInvitationByToken,
   acceptInvitation,
   listWorkspaceInvitations,
+  listPendingInvitations,
+  revokeInvitation,
 } from "./invitation";
 
 const mockGetUserWorkspaceRole = vi.fn();
@@ -146,6 +148,18 @@ describe("getInvitationByToken", () => {
   it("returns null when token not found", async () => {
     mockInvitationFindUnique.mockResolvedValue(null);
     const result = await getInvitationByToken("missing");
+    expect(result).toBeNull();
+  });
+
+  it("returns null when invitation is revoked", async () => {
+    mockInvitationFindUnique.mockResolvedValue({
+      id: "inv-1",
+      expiresAt: new Date(Date.now() + 3600000),
+      acceptedAt: null,
+      revokedAt: new Date(Date.now() - 1000),
+    });
+
+    const result = await getInvitationByToken("revoked-token");
     expect(result).toBeNull();
   });
 
@@ -327,5 +341,98 @@ describe("listWorkspaceInvitations", () => {
       "Only workspace admins can list invitations",
     );
     expect(mockInvitationFindMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("listPendingInvitations", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetUserWorkspaceRole.mockResolvedValue("admin");
+  });
+
+  it("returns pending invitations excluding revoked", async () => {
+    const invitations = [
+      {
+        id: "inv-1",
+        token: "t1",
+        type: "workspace",
+        role: "member",
+        expiresAt: new Date(Date.now() + 3600000),
+        acceptedAt: null,
+        revokedAt: null,
+        inviter: { id: "inv-id", fullName: "Alice", username: "alice" },
+      },
+    ];
+    mockInvitationFindMany.mockResolvedValue(invitations);
+
+    const result = await listPendingInvitations("admin-1", "ws-1");
+    expect(result).toEqual(invitations);
+    expect(mockInvitationFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          workspaceId: "ws-1",
+          acceptedAt: null,
+          expiresAt: { gt: expect.any(Date) },
+          revokedAt: null,
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+    );
+  });
+
+  it("throws when user is not admin", async () => {
+    mockGetUserWorkspaceRole.mockResolvedValue("member");
+    await expect(listPendingInvitations("user-1", "ws-1")).rejects.toThrow(
+      "Only workspace admins can list invitations",
+    );
+    expect(mockInvitationFindMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("revokeInvitation", () => {
+  const adminId = "admin-1";
+  const invitationId = "inv-1";
+  const wsId = "ws-1";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("sets revokedAt when caller is admin", async () => {
+    mockInvitationFindUnique.mockResolvedValue({
+      id: invitationId,
+      workspaceId: wsId,
+    });
+    mockGetUserWorkspaceRole.mockResolvedValue("admin");
+    mockInvitationUpdateMany.mockResolvedValue({ count: 1 });
+
+    await revokeInvitation(adminId, invitationId);
+
+    expect(mockInvitationUpdateMany).toHaveBeenCalledWith({
+      where: { id: invitationId },
+      data: { revokedAt: expect.any(Date) },
+    });
+  });
+
+  it("throws when caller is not admin of the workspace", async () => {
+    mockInvitationFindUnique.mockResolvedValue({
+      id: invitationId,
+      workspaceId: wsId,
+    });
+    mockGetUserWorkspaceRole.mockResolvedValue("member");
+
+    await expect(revokeInvitation(adminId, invitationId)).rejects.toThrow(
+      "Only workspace admins can revoke invitations",
+    );
+    expect(mockInvitationUpdateMany).not.toHaveBeenCalled();
+  });
+
+  it("throws when invitation not found", async () => {
+    mockInvitationFindUnique.mockResolvedValue(null);
+
+    await expect(revokeInvitation(adminId, invitationId)).rejects.toThrow(
+      "Invitation not found",
+    );
+    expect(mockInvitationUpdateMany).not.toHaveBeenCalled();
   });
 });
