@@ -3,9 +3,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+function isSafeRedirect(url: string | null): url is string {
+  return typeof url === "string" && url.startsWith("/") && !url.startsWith("//");
+}
+
 export async function sendOtp(formData: FormData) {
   const supabase = await createClient();
   const email = formData.get("email") as string;
+  const redirectParam = formData.get("redirect") as string | null;
 
   try {
     const { error } = await supabase.auth.signInWithOtp({
@@ -25,13 +30,16 @@ export async function sendOtp(formData: FormData) {
     redirect("/error");
   }
 
-  redirect(`/auth/verify-otp?email=${encodeURIComponent(email)}`);
+  const params = new URLSearchParams({ email });
+  if (isSafeRedirect(redirectParam)) params.set("redirect", redirectParam);
+  redirect(`/auth/verify-otp?${params}`);
 }
 
 export async function verifyOtp(formData: FormData) {
   const supabase = await createClient();
   const email = formData.get("email") as string;
   const token = formData.get("token") as string;
+  const redirectParam = formData.get("redirect") as string | null;
 
   try {
     const { error } = await supabase.auth.verifyOtp({
@@ -50,12 +58,13 @@ export async function verifyOtp(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/account");
+  redirect(isSafeRedirect(redirectParam) ? redirectParam : "/account");
 }
 
 export async function resendOtp(formData: FormData) {
   const supabase = await createClient();
   const email = formData.get("email") as string;
+  const redirectParam = formData.get("redirect") as string | null;
 
   try {
     const { error } = await supabase.auth.signInWithOtp({
@@ -75,5 +84,7 @@ export async function resendOtp(formData: FormData) {
     redirect("/error");
   }
 
-  redirect(`/auth/verify-otp?email=${encodeURIComponent(email)}&resent=true`);
+  const params = new URLSearchParams({ email, resent: "true" });
+  if (isSafeRedirect(redirectParam)) params.set("redirect", redirectParam);
+  redirect(`/auth/verify-otp?${params}`);
 }

@@ -52,7 +52,7 @@ export async function createInvitation(
 export async function getInvitationByToken(token: string) {
   const invitation = await prisma.invitation.findUnique({
     where: { token },
-    include: { workspace: true, device: true },
+    include: { workspace: true, device: true, inviter: true },
   });
 
   if (!invitation) return null;
@@ -105,6 +105,23 @@ export async function acceptInvitation(
     }
 
     if (invitation.type === "device" && invitation.deviceId) {
+      // Device access requires workspace membership — add as guest if not already a member
+      const existingWorkspace = await tx.userWorkspace.findUnique({
+        where: {
+          userId_workspaceId: { userId, workspaceId: invitation.workspaceId },
+          deletedAt: null,
+        },
+      });
+      if (!existingWorkspace) {
+        await tx.userWorkspace.create({
+          data: {
+            userId,
+            workspaceId: invitation.workspaceId,
+            role: "guest" as WorkspaceRole,
+          },
+        });
+      }
+
       const existing = await tx.userDevice.findUnique({
         where: {
           userId_deviceId: { userId, deviceId: invitation.deviceId },
