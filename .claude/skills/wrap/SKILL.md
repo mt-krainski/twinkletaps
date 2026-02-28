@@ -25,7 +25,7 @@ Infer Jira issue key from branch name (e.g. `task/GFD-42/slug` -> `GFD-42`). If 
 
 ### Step 2: Code Review
 
-Use the Task tool to spawn a code review sub-agent. Provide the review template from `.claude/docs/code-reviewer-template.md` with:
+Use the Task tool to spawn the `code-reviewer` agent (`subagent_type: "code-reviewer"`). Provide the review template from `.claude/docs/code-reviewer-template.md` with:
 
 - `{WHAT_WAS_IMPLEMENTED}` — from issue title/description
 - `{PLAN_OR_REQUIREMENTS}` — from issue acceptance criteria
