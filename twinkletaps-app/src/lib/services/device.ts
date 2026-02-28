@@ -150,3 +150,52 @@ export async function getUserDeviceRole(
 
   return membership?.role as DeviceRole | null;
 }
+
+export async function updateGuestDeviceAccess(
+  adminUserId: string,
+  workspaceId: string,
+  targetUserId: string,
+  deviceIds: string[],
+) {
+  const role = await getUserWorkspaceRole(adminUserId, workspaceId);
+  if (role !== "admin") {
+    throw new Error("Only workspace admins can manage device access");
+  }
+
+  // Check target is a guest
+  const targetRole = await getUserWorkspaceRole(targetUserId, workspaceId);
+  if (targetRole !== "guest") {
+    throw new Error("Can only update device access for guests");
+  }
+
+  // Replace device access
+  return prisma.$transaction(async (tx) => {
+    // Delete existing device access for this guest in this workspace
+    const devicesInWorkspace = await tx.device.findMany({
+      where: { workspaceId, deletedAt: null },
+      select: { id: true },
+    });
+
+    const deviceIdsInWorkspace = devicesInWorkspace.map((d) => d.id);
+
+    await tx.userDevice.updateMany({
+      where: {
+        userId: targetUserId,
+        deviceId: { in: deviceIdsInWorkspace },
+        deletedAt: null,
+      },
+      data: { deletedAt: new Date() },
+    });
+
+    // Create new device access entries
+    if (deviceIds.length > 0) {
+      await tx.userDevice.createMany({
+        data: deviceIds.map((deviceId) => ({
+          userId: targetUserId,
+          deviceId,
+          role: "user" as DeviceRole,
+        })),
+      });
+    }
+  });
+}

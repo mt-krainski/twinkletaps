@@ -58,6 +58,7 @@ export async function getInvitationByToken(token: string) {
   if (!invitation) return null;
   if (invitation.acceptedAt) return null;
   if (new Date() >= invitation.expiresAt) return null;
+  if (invitation.revokedAt) return null;
 
   return invitation;
 }
@@ -154,5 +155,57 @@ export async function listWorkspaceInvitations(userId: string, workspaceId: stri
       expiresAt: { gt: new Date() },
     },
     orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function listPendingInvitations(
+  adminUserId: string,
+  workspaceId: string,
+) {
+  const role = await getUserWorkspaceRole(adminUserId, workspaceId);
+  if (role !== "admin") {
+    throw new Error("Only workspace admins can list invitations");
+  }
+
+  return prisma.invitation.findMany({
+    where: {
+      workspaceId,
+      acceptedAt: null,
+      expiresAt: { gt: new Date() },
+      revokedAt: null,
+    },
+    include: {
+      inviter: {
+        select: {
+          id: true,
+          fullName: true,
+          username: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function revokeInvitation(
+  adminUserId: string,
+  invitationId: string,
+) {
+  const invitation = await prisma.invitation.findUnique({
+    where: { id: invitationId },
+  });
+
+  if (!invitation) {
+    throw new Error("Invitation not found");
+  }
+
+  const role = await getUserWorkspaceRole(adminUserId, invitation.workspaceId);
+  if (role !== "admin") {
+    throw new Error("Only workspace admins can revoke invitations");
+  }
+
+  return prisma.invitation.updateMany({
+    where: { id: invitationId },
+    data: { revokedAt: new Date() },
   });
 }
