@@ -124,6 +124,7 @@ model Invitation {
   expiresAt   DateTime  @map("expires_at") @db.Timestamptz
   acceptedAt  DateTime? @map("accepted_at") @db.Timestamptz
   acceptedBy  String?   @map("accepted_by") @db.Uuid
+  revokedAt   DateTime? @map("revoked_at") @db.Timestamptz
 
   inviter    Profile   @relation("InvitationInviter", fields: [inviterId], references: [id], onDelete: Cascade)
   workspace  Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
