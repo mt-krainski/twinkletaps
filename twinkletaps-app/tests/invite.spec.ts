@@ -68,5 +68,15 @@ test("workspace invite: user A creates link, user B accepts", async ({
   // After acceptance, redirected to "/"
   await expect(memberPage).toHaveURL("/", { timeout: 10000 });
 
+  // ── User B: verify membership in two workspaces ────────────────────
+  // The layout is a Server Component — navigating to "/" re-fetches workspace
+  // membership, so the workspace switcher (first dropdown in the navbar)
+  // should now list two entries: own workspace + the accepted one.
+  await memberPage.locator("[aria-haspopup='menu']").first().click();
+  await expect(memberPage.getByRole("menuitem")).toHaveCount(2, {
+    timeout: 10000,
+  });
+  await memberPage.keyboard.press("Escape");
+
   await memberContext.close();
 });
