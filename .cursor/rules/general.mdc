@@ -28,3 +28,4 @@ This is a simple Arduino project. The project follows modern development practic
 - prefer using package scripts over generic commands
 - tests failing is a jarring issue you must flag in red especially if you think it's an environmental issue or not related to your changes. If it's related to your changes - you should fix the changes to have the tests pass. If it's an environment issue, e.g. playwright browsers not installed, try fixing it too. Otherwise make sure it's clearly visible in your output that tests are failing.
 - **No guessing.** Never guess at API signatures, library behavior, migration tooling, or root causes. Always verify by reading source code, checking docs, or running commands first. If you're unsure, say so and investigate — don't propose a fix based on assumptions.
+- Do not modify the pyproject.toml directly when adding dependencies. Use the `uv add` CLI for that

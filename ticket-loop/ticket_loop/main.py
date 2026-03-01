@@ -5,7 +5,9 @@ import os
 import subprocess
 import uuid
 from pathlib import Path
+from typing import Annotated, Any
 
+import typer
 from dotenv import load_dotenv
 
 PACKAGE_ROOT = Path(__file__).resolve().parent.parent
@@ -41,6 +43,41 @@ def _claude_base_cmd(*, session_id: str) -> list[str]:
     ]
 
 
+SESSION_CONFLICT_MSG = "is already in use"
+
+
+def _swap_session_to_resume(cmd: list[str]) -> list[str]:
+    """Replace --session-id with --resume in a claude command."""
+    return ["--resume" if arg == "--session-id" else arg for arg in cmd]
+
+
+def _run_with_session_retry(
+    cmd: list[str], **kwargs: Any
+) -> subprocess.CompletedProcess[str]:
+    """Run a subprocess, retrying with --resume on session-id conflict.
+
+    On the first attempt stderr is always captured so we can detect the
+    "already in use" error.  On retry the original kwargs are restored
+    (preserving streaming / interactive behaviour).
+    """
+    first_kwargs = dict(kwargs)
+    if not kwargs.get("capture_output"):
+        first_kwargs["stderr"] = subprocess.PIPE
+        first_kwargs.setdefault("text", True)
+
+    try:
+        return subprocess.run(cmd, **first_kwargs, check=True)  # noqa: S603
+    except subprocess.CalledProcessError as exc:
+        stderr_text = exc.stderr or ""
+        if isinstance(stderr_text, bytes):
+            stderr_text = stderr_text.decode(errors="replace")
+        if SESSION_CONFLICT_MSG in stderr_text:
+            return subprocess.run(  # noqa: S603
+                _swap_session_to_resume(cmd), **kwargs, check=True
+            )
+        raise
+
+
 def run_claude(prompt: str, *, session_id: str, schema_path: Path) -> dict:
     """Run claude CLI with structured output and return parsed result."""
     cmd = [
@@ -51,12 +88,11 @@ def run_claude(prompt: str, *, session_id: str, schema_path: Path) -> dict:
         schema_path.read_text(),
         prompt,
     ]
-    result = subprocess.run(  # noqa: S603
+    result = _run_with_session_retry(
         cmd,
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
-        check=True,
     )
     output = json.loads(result.stdout)
     if isinstance(output, list):
@@ -69,7 +105,7 @@ def run_claude(prompt: str, *, session_id: str, schema_path: Path) -> dict:
 def run_claude_task(prompt: str, *, session_id: str) -> None:
     """Run claude CLI for task execution, streaming output to the terminal."""
     cmd = [*_claude_base_cmd(session_id=session_id), prompt]
-    subprocess.run(cmd, cwd=REPO_ROOT, check=True)  # noqa: S603
+    _run_with_session_retry(cmd, cwd=REPO_ROOT)
 
 
 def fetch_board_state(session_id: str) -> dict:
@@ -226,9 +262,16 @@ COLUMN_HANDLERS = {
 }
 
 
-def main() -> None:
-    """Run the ticket processing loop."""
-    load_dotenv()
+def resume_session(issue_key: str) -> None:
+    """Drop into an interactive Claude session for a previously started issue."""
+    session_id = get_session(issue_key)
+    print(f"  Resuming session {session_id} for {issue_key}")
+    cmd = ["claude", "--session-id", session_id, "--verbose"]
+    _run_with_session_retry(cmd, cwd=REPO_ROOT)
+
+
+def _run_loop() -> None:
+    """Fetch the board and process the next agent task."""
     agent_name = os.environ["JIRA_AGENT_USERNAME"]
 
     board_session_id = str(uuid.uuid4())
@@ -246,5 +289,23 @@ def main() -> None:
     handler(task)
 
 
+app = typer.Typer()
+
+
+@app.callback(invoke_without_command=True)
+def main(
+    resume: Annotated[
+        str | None,
+        typer.Option(help="Resume the Claude session for a Jira issue (e.g. GFD-42)."),
+    ] = None,
+) -> None:
+    """Run the ticket processing loop, or resume a specific issue session."""
+    load_dotenv()
+    if resume is not None:
+        resume_session(resume)
+    else:
+        _run_loop()
+
+
 if __name__ == "__main__":
-    main()
+    app()

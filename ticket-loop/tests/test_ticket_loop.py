@@ -1,13 +1,18 @@
 """Lightweight tests for ticket_loop — pure logic and basic I/O only."""
 
 import json
+import subprocess
+from unittest.mock import patch
 
 import pytest
 
 from ticket_loop.main import (
     _is_wip_blocked,
+    _run_with_session_retry,
+    _swap_session_to_resume,
     find_agent_task,
     get_session,
+    resume_session,
     save_session,
 )
 
@@ -128,6 +133,80 @@ def test_session_missing_raises(tmp_path, monkeypatch):
 
     with pytest.raises(KeyError):
         get_session("GFD-999")
+
+
+def test_resume_session_calls_claude(tmp_path, monkeypatch):
+    """resume_session looks up the session and launches an interactive claude."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+
+    save_session("GFD-42", "resume-sid")
+
+    with patch("ticket_loop.main.subprocess.run") as mock_run:
+        resume_session("GFD-42")
+
+    cmd = mock_run.call_args.args[0]
+    assert "claude" in cmd
+    assert "--session-id" in cmd
+    assert "resume-sid" in cmd
+    assert "-p" not in cmd
+
+
+def test_resume_session_raises_for_unknown_key(tmp_path, monkeypatch):
+    """resume_session raises KeyError when no session exists for the given key."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+
+    with pytest.raises(KeyError):
+        resume_session("GFD-999")
+
+
+# -- session retry --
+
+
+def test_swap_session_to_resume():
+    """--session-id is replaced with --resume, other args unchanged."""
+    cmd = ["claude", "-p", "--session-id", "abc", "--verbose"]
+    assert _swap_session_to_resume(cmd) == [
+        "claude",
+        "-p",
+        "--resume",
+        "abc",
+        "--verbose",
+    ]
+
+
+def test_run_with_session_retry_succeeds_first_try():
+    """No retry when the first subprocess call succeeds."""
+    with patch("ticket_loop.main.subprocess.run") as mock_run:
+        _run_with_session_retry(["claude", "--session-id", "new-sid"])
+
+    assert mock_run.call_count == 1
+
+
+def test_run_with_session_retry_retries_on_conflict():
+    """Retries with --resume when --session-id fails with 'already in use'."""
+    conflict = subprocess.CalledProcessError(
+        1, "claude", stderr="Session ID abc is already in use."
+    )
+    with patch("ticket_loop.main.subprocess.run") as mock_run:
+        mock_run.side_effect = [conflict, None]
+        _run_with_session_retry(["claude", "--session-id", "abc"])
+
+    assert mock_run.call_count == 2
+    retry_cmd = mock_run.call_args_list[1].args[0]
+    assert "--resume" in retry_cmd
+    assert "--session-id" not in retry_cmd
+
+
+def test_run_with_session_retry_propagates_other_errors():
+    """Non-conflict errors are re-raised immediately."""
+    other_error = subprocess.CalledProcessError(
+        1, "claude", stderr="Something else went wrong"
+    )
+    with patch("ticket_loop.main.subprocess.run", side_effect=other_error):
+        with pytest.raises(subprocess.CalledProcessError):
+            _run_with_session_retry(["claude", "--session-id", "abc"])
 
 
 def test_session_file_format(tmp_path, monkeypatch):
