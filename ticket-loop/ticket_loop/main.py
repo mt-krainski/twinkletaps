@@ -27,18 +27,26 @@ PROMPT_FETCH_BOARD = (
 )
 
 
-def run_claude(prompt: str, *, session_id: str, schema_path: Path) -> dict:
-    """Run claude CLI with structured output and return parsed result."""
-    cmd = [
+def _claude_base_cmd(*, session_id: str) -> list[str]:
+    """Build the common prefix for all claude CLI invocations."""
+    return [
         "claude",
         "-p",
         "--model",
         "sonnet",
         "--verbose",
-        "--output-format",
-        "json",
+        "--dangerously-skip-permissions",
         "--session-id",
         session_id,
+    ]
+
+
+def run_claude(prompt: str, *, session_id: str, schema_path: Path) -> dict:
+    """Run claude CLI with structured output and return parsed result."""
+    cmd = [
+        *_claude_base_cmd(session_id=session_id),
+        "--output-format",
+        "json",
         "--json-schema",
         schema_path.read_text(),
         prompt,
@@ -56,6 +64,12 @@ def run_claude(prompt: str, *, session_id: str, schema_path: Path) -> dict:
     else:
         envelope = output
     return envelope["structured_output"]
+
+
+def run_claude_task(prompt: str, *, session_id: str) -> None:
+    """Run claude CLI for task execution, streaming output to the terminal."""
+    cmd = [*_claude_base_cmd(session_id=session_id), prompt]
+    subprocess.run(cmd, cwd=REPO_ROOT, check=True)  # noqa: S603
 
 
 def fetch_board_state(session_id: str) -> dict:
@@ -120,33 +134,58 @@ def get_session(task_key: str) -> str:
 
 
 def handle_review(task: dict) -> None:
-    """Handle a task in the Review column."""
+    """Handle a task in the Review column — address feedback and reassign."""
     session_id = get_session(task["key"])
+    human_id = os.environ["HUMAN_ATLASSIAN_ID"]
     print(f"  Resuming session {session_id}")
-    raise NotImplementedError(f"Review handler not yet implemented for {task['key']}")
+    run_claude_task(
+        f"Task {task['key']} ({task['summary']}) is in Review. "
+        "Check the comments on the Jira task AND on the associated pull request. "
+        "Make sure you are on the correct branch for this task. "
+        "Address any review feedback using the /address-pr skill. "
+        "When done, commit and push the changes. "
+        "Add relevant comments to the Jira task and/or pull request. "
+        f"Then reassign the Jira task to '{human_id}'.",
+        session_id=session_id,
+    )
 
 
 def handle_in_progress(task: dict) -> None:
-    """Handle a task in the In Progress column."""
+    """Handle a task in the In Progress column (skipped)."""
     raise NotImplementedError(
         f"In Progress handler not yet implemented for {task['key']}"
     )
 
 
 def handle_to_do(task: dict) -> None:
-    """Handle a task in the To Do column."""
+    """Handle a task in the To Do column — implement it."""
+    base_branch = os.environ["BASE_BRANCH"]
     session_id = str(uuid.uuid4())
     save_session(task["key"], session_id)
     print(f"  New session {session_id}")
-    raise NotImplementedError(f"To Do handler not yet implemented for {task['key']}")
+    run_claude_task(
+        f"Implement Jira task {task['key']}: {task['summary']}. "
+        f"Use '{base_branch}' as the base branch for development and as the "
+        "PR target. Create a feature branch from it. "
+        "Implement the task following the repo's conventions and skills "
+        "(use the /execute skill). "
+        "When done, wrap up: lint, test, commit, and create a PR "
+        "(use the /wrap skill).",
+        session_id=session_id,
+    )
 
 
 def handle_planning(task: dict) -> None:
-    """Handle a task in the Planning column."""
+    """Handle a task in the Planning column — plan the implementation."""
     session_id = str(uuid.uuid4())
     save_session(task["key"], session_id)
     print(f"  New session {session_id}")
-    raise NotImplementedError(f"Planning handler not yet implemented for {task['key']}")
+    run_claude_task(
+        f"Plan the implementation of Jira task {task['key']}: {task['summary']}. "
+        "Use the /plan skill to analyze the codebase and break down the work "
+        "into smaller, reviewable tasks in Jira.",
+        session_id=session_id,
+    )
 
 
 COLUMN_HANDLERS = {
