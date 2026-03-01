@@ -5,8 +5,8 @@
 
 uv sync
 
-pre-commit install
-
 cat > .env <<EOL
-
+JIRA_AGENT_USERNAME=
+HUMAN_ATLASSIAN_ID=
+BASE_BRANCH=
 EOL

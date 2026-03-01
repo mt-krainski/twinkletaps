@@ -1,14 +1,45 @@
-Implement a ticket processing loop. This should be a python script that:
+# ticket-loop
 
-- runs claude code like
+Autonomous Jira task processor. Fetches the board state via Claude CLI, picks the highest-priority task assigned to the agent, and dispatches it to the appropriate handler.
 
+## How it works
+
+1. Fetches all active Jira issues (structured output via `claude` CLI)
+2. Scans columns in priority order: **Review > Planning > To Do** (In Progress is skipped)
+3. Picks the top-ranked task assigned to `JIRA_AGENT_USERNAME`
+4. Dispatches based on column:
+   - **Review** — addresses PR/Jira feedback, commits, reassigns to human
+   - **Planning** — breaks down work into smaller Jira tasks
+   - **To Do** — implements the task, creates a PR
+5. WIP limits prevent overloading downstream columns (to_do: 15, review: 3)
+
+Session IDs are persisted in `sessions.jsonl` so review handlers resume in the same Claude session that implemented the task.
+
+## Setup
+
+```sh
+poe configure   # installs deps, creates .env template
 ```
-claude \
-  "Fetch tasks from jira and output in a structured format." \
-  --model sonnet
-  --verbose
-  --session-id "<create session id>"
-  --json-schema "<exact schema to output>"
+
+Fill in `.env`:
+
+| Variable              | Description                                     |
+| --------------------- | ----------------------------------------------- |
+| `JIRA_AGENT_USERNAME` | Jira display name the agent matches on          |
+| `HUMAN_ATLASSIAN_ID`  | Jira username to reassign tasks to after review |
+| `BASE_BRANCH`         | Branch to develop from and target PRs against   |
+
+## Usage
+
+From the monorepo root:
+
+```sh
+uv run --project ticket-loop ticket-loop
 ```
 
-propose a structured format - keys should be columns, each key should include a list of task objects, ordered in the same order as they are in the column. The task objects should include at least a summary, the task, key, assignee, what tasks are blocking this tasks, anything else that is relevant.
+## Development
+
+```sh
+poe test    # run tests with coverage
+poe lint    # ruff check + format
+```
