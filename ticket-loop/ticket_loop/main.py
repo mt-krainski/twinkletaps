@@ -8,8 +8,10 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-SCHEMA_DIR = Path(__file__).resolve().parent.parent / "schemas"
+PACKAGE_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = PACKAGE_ROOT.parent
+SCHEMA_DIR = PACKAGE_ROOT / "schemas"
+SESSIONS_FILE = PACKAGE_ROOT / "sessions.jsonl"
 
 PROMPT_FETCH_BOARD = (
     "Fetch all issues from Jira project GFD where status not in (Done, Invalid), "
@@ -66,6 +68,7 @@ def fetch_board_state(session_id: str) -> dict:
 
 
 COLUMNS_RIGHT_TO_LEFT = ["review", "in_progress", "to_do", "planning"]
+SKIP_COLUMNS = {"in_progress"}
 
 
 def find_agent_task(board_state: dict, agent_name: str) -> tuple[str, dict] | None:
@@ -78,31 +81,71 @@ def find_agent_task(board_state: dict, agent_name: str) -> tuple[str, dict] | No
         (column, task) tuple, or None if no task is assigned to the agent.
     """
     for column in COLUMNS_RIGHT_TO_LEFT:
+        if column in SKIP_COLUMNS:
+            continue
         for task in board_state.get(column, []):
             if task.get("assignee") == agent_name:
                 return column, task
     return None
 
 
-def handle_review(task: dict, session_id: str) -> None:
+def save_session(task_key: str, session_id: str) -> None:
+    """Append a task_key → session_id mapping to the sessions file."""
+    record = {"task_key": task_key, "session_id": session_id}
+    with open(SESSIONS_FILE, "a") as f:
+        f.write(json.dumps(record) + "\n")
+
+
+def get_session(task_key: str) -> str:
+    """Look up the session_id for a task_key.
+
+    Returns the most recent session_id recorded for the given key.
+
+    Raises:
+        KeyError: If no session exists for the task_key.
+    """
+    if not SESSIONS_FILE.exists():
+        raise KeyError(f"No session found for {task_key} (sessions file missing)")
+
+    session_id = None
+    with open(SESSIONS_FILE) as f:
+        for line in f:
+            record = json.loads(line)
+            if record["task_key"] == task_key:
+                session_id = record["session_id"]
+
+    if session_id is None:
+        raise KeyError(f"No session found for {task_key}")
+    return session_id
+
+
+def handle_review(task: dict) -> None:
     """Handle a task in the Review column."""
+    session_id = get_session(task["key"])
+    print(f"  Resuming session {session_id}")
     raise NotImplementedError(f"Review handler not yet implemented for {task['key']}")
 
 
-def handle_in_progress(task: dict, session_id: str) -> None:
+def handle_in_progress(task: dict) -> None:
     """Handle a task in the In Progress column."""
     raise NotImplementedError(
         f"In Progress handler not yet implemented for {task['key']}"
     )
 
 
-def handle_to_do(task: dict, session_id: str) -> None:
+def handle_to_do(task: dict) -> None:
     """Handle a task in the To Do column."""
+    session_id = str(uuid.uuid4())
+    save_session(task["key"], session_id)
+    print(f"  New session {session_id}")
     raise NotImplementedError(f"To Do handler not yet implemented for {task['key']}")
 
 
-def handle_planning(task: dict, session_id: str) -> None:
+def handle_planning(task: dict) -> None:
     """Handle a task in the Planning column."""
+    session_id = str(uuid.uuid4())
+    save_session(task["key"], session_id)
+    print(f"  New session {session_id}")
     raise NotImplementedError(f"Planning handler not yet implemented for {task['key']}")
 
 
@@ -118,9 +161,9 @@ def main() -> None:
     """Run the ticket processing loop."""
     load_dotenv()
     agent_name = os.environ["JIRA_AGENT_USERNAME"]
-    session_id = str(uuid.uuid4())
 
-    board_state = fetch_board_state(session_id)
+    board_session_id = str(uuid.uuid4())
+    board_state = fetch_board_state(board_session_id)
 
     result = find_agent_task(board_state, agent_name)
     if result is None:
@@ -131,7 +174,7 @@ def main() -> None:
     print(f"Processing {task['key']} ({task['summary']}) from {column}")
 
     handler = COLUMN_HANDLERS[column]
-    handler(task, session_id)
+    handler(task)
 
 
 if __name__ == "__main__":
