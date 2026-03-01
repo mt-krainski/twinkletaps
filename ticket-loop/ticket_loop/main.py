@@ -81,21 +81,51 @@ def fetch_board_state(session_id: str) -> dict:
     )
 
 
-COLUMNS_RIGHT_TO_LEFT = ["review", "in_progress", "to_do", "planning"]
+COLUMNS_PRIORITY_ORDER = ["review", "planning", "in_progress", "to_do"]
 SKIP_COLUMNS = {"in_progress"}
+
+WIP_LIMITS: dict[str, int] = {
+    "to_do": 15,
+    "review": 3,
+}
+
+# Don't pick from a column if its downstream column is at/above WIP limit.
+DOWNSTREAM_WIP_CHECK: dict[str, str] = {
+    "planning": "to_do",
+    "to_do": "review",
+}
+
+
+def _is_wip_blocked(column: str, board_state: dict) -> bool:
+    """Check if a column is blocked by its downstream WIP limit."""
+    downstream = DOWNSTREAM_WIP_CHECK.get(column)
+    if downstream is None:
+        return False
+    limit = WIP_LIMITS[downstream]
+    count = len(board_state.get(downstream, []))
+    if count >= limit:
+        print(
+            f"  Skipping {column}: downstream {downstream} is at WIP limit "
+            f"({count}/{limit})"
+        )
+        return True
+    return False
 
 
 def find_agent_task(board_state: dict, agent_name: str) -> tuple[str, dict] | None:
     """Find the right-most top-most task assigned to the agent.
 
     Scans columns from right to left (review → planning), returning the
-    first task whose assignee matches agent_name.
+    first task whose assignee matches agent_name. Skips columns whose
+    downstream column is at or above its WIP limit.
 
     Returns:
         (column, task) tuple, or None if no task is assigned to the agent.
     """
-    for column in COLUMNS_RIGHT_TO_LEFT:
+    for column in COLUMNS_PRIORITY_ORDER:
         if column in SKIP_COLUMNS:
+            continue
+        if _is_wip_blocked(column, board_state):
             continue
         for task in board_state.get(column, []):
             if task.get("assignee") == agent_name:
