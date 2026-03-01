@@ -17,10 +17,12 @@ Issue statuses and transition IDs:
 
 | Status      | Transition ID | Meaning                               |
 |-------------|---------------|---------------------------------------|
+| Planning    | —             | Needs implementation planning         |
 | To Do       | `11`          | Approved and ready to implement       |
 | In Progress | `21`          | Currently being implemented           |
 | Review      | `2`           | PR open, awaiting review              |
 | Done        | `31`          | Merged to mainline                    |
+| Invalid     | —             | Cancelled or not applicable           |
 
 Use `jira_transition_issue` to move between statuses. Use `jira_get_issue` / `jira_search` to read issues. Use `jira_create_issue` to create. Use `jira_update_issue` to update. Use `jira_add_comment` for branch/PR/status updates.
 
