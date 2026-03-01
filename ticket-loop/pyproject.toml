@@ -5,7 +5,9 @@ description = "Ticket Loop"
 authors = [{name = "Matt Krainski", email = "mt.krainski@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "python-dotenv>=1.2.2,<2.0.0",
+]
 
 [dependency-groups]
 dev = [
