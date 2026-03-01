@@ -1,0 +1,114 @@
+{
+  "type": "object",
+  "properties": {
+    "planning": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/task"
+      }
+    },
+    "to_do": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/task"
+      }
+    },
+    "in_progress": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/task"
+      }
+    },
+    "review": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/task"
+      }
+    }
+  },
+  "required": [
+    "planning",
+    "to_do",
+    "in_progress",
+    "review"
+  ],
+  "$defs": {
+    "task": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "issue_type": {
+          "type": "string",
+          "enum": [
+            "Epic",
+            "Task"
+          ]
+        },
+        "priority": {
+          "type": "string",
+          "enum": [
+            "Highest",
+            "High",
+            "Medium",
+            "Low",
+            "Lowest"
+          ]
+        },
+        "assignee": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "parent_key": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "blocked_by": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "key",
+              "summary",
+              "status"
+            ]
+          }
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "key",
+        "summary",
+        "issue_type",
+        "priority",
+        "assignee",
+        "blocked_by",
+        "labels"
+      ]
+    }
+  }
+}
