@@ -34,12 +34,12 @@ Use `jira_transition_issue` to move between statuses. Use `jira_get_issue` / `ji
 
 For the `"Blocks"` link type, the parameter names are counter-intuitive:
 
-- `inward_issue_key` = the issue that **is blocked** (the downstream task)
-- `outward_issue_key` = the issue that **does the blocking** (the upstream blocker)
+- `inward_issue_key` = the issue that **does the blocking** (the upstream blocker)
+- `outward_issue_key` = the issue that **is blocked** (the downstream task)
 
-> "Task A blocks Task B" → `jira_create_issue_link(link_type="Blocks", inward_issue_key=<Task B key>, outward_issue_key=<Task A key>)`
+> "Task A blocks Task B" → `jira_create_issue_link(link_type="Blocks", inward_issue_key=<Task A key>, outward_issue_key=<Task B key>)`
 
-In plain terms: if Task A must finish before Task B can start, Task A is the blocker (`outward`) and Task B is the blocked issue (`inward`).
+In plain terms: if Task A must finish before Task B can start, Task A is the blocker (`inward`) and Task B is the blocked issue (`outward`).
 
 ## Naming Conventions
 

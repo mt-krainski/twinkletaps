@@ -23,9 +23,9 @@ Never use literal angle brackets (`<...>`) in Jira descriptions — the MCP serv
 ### Issue link direction
 When one task must complete before another can start, link them with the `"Blocks"` type:
 
-- `inward_issue_key` = the **blocked** issue (downstream)
-- `outward_issue_key` = the **blocker** (upstream)
+- `inward_issue_key` = the **blocker** (upstream)
+- `outward_issue_key` = the **blocked** issue (downstream)
 
-> "Task A blocks Task B" → `jira_create_issue_link(link_type="Blocks", inward_issue_key=<Task B key>, outward_issue_key=<Task A key>)`
+> "Task A blocks Task B" → `jira_create_issue_link(link_type="Blocks", inward_issue_key=<Task A key>, outward_issue_key=<Task B key>)`
 
-Never reverse this — creating "Task B is blocked by Task A" using Task A as the inward key is incorrect.
+Never reverse this — creating "Task A blocks Task B" using Task B as the inward key is incorrect.
