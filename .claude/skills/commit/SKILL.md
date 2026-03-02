@@ -11,23 +11,27 @@ Stage only files that belong to the change. Exclude unrelated files.
 
 ## 2. Create One Informative Commit
 
-Use `poe git-commit` from `agent-utils` — it sets git author/committer from repo config automatically:
+Use `poe git-commit` from `agent-utils` — it sets git author/committer from repo config automatically.
+
+**Always use single quotes** for the `-m` value. Double quotes let the shell interpret backticks, `$`, `<>`, etc. Escape apostrophes as `'\''`.
 
 ```bash
-poe -C agent-utils git-commit -m "..."
+poe -C agent-utils git-commit -m '<ISSUE_KEY>: <short title>
+
+- bullet points describing what changed'
 ```
 
-**Message format:** `<ISSUE_KEY>: <short title>`, then a short body with what changed (bullets or short paragraphs). Infer issue key from branch name `task/GFD-###/slug` if needed. If no issue context, use a descriptive title without a key.
+Infer issue key from branch name `task/GFD-###/slug` if needed. If no issue context, use a descriptive title without a key.
 
 **Example:**
 
-```
-GFD-42: Update app code — Team → Device
+```bash
+poe -C agent-utils git-commit -m 'GFD-42: Update app code — Team → Device
 
 - Prisma: Team/UserTeam → Device/UserDevice; add deviceUuid, mqttTopic, mqttUsername; remove isPrivate
 - Services: team.ts → device.ts (getWorkspaceDevices, getDevice, getUserDeviceRole)
 - WorkspaceProvider: DeviceInfo, devices, navigateToDevice, workspaceRole
-- Sidebar: Devices section, Lightbulb; stories updated
+- Sidebar: Devices section, Lightbulb; stories updated'
 ```
 
 ## 3. Push the Branch
@@ -40,8 +44,10 @@ poe -C agent-utils git-push
 
 ## 4. Open PR with gh
 
+**Always use single quotes** for `--title` and `--body`. Escape apostrophes as `'\''`.
+
 ```bash
-poe -C agent-utils gh-pr-create --base <target-branch> --title "[GFD-###] <Title>" --body "<body>"
+poe -C agent-utils gh-pr-create --base <target-branch> --title '[GFD-###] <Title>' --body '<body>'
 ```
 
 - **PR title format:** `[GFD-###] <Title>`. If no issue context, descriptive title without brackets.

@@ -74,7 +74,12 @@ def run_gh_pr_reply(
 @app.command()
 def main(
     pr_number: int = typer.Argument(..., help="PR number"),
-    body: str = typer.Option(..., "--body", help="Comment body"),
+    body: str = typer.Option(
+        ...,
+        "--body",
+        help="Comment body. Use single quotes to avoid shell interpretation of "
+        "backticks, $, <>, etc. Escape apostrophes as '\\''.",
+    ),
     comment_id: int | None = typer.Option(
         None, "--comment-id", help="Reply to this inline comment ID"
     ),

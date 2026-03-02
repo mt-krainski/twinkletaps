@@ -59,6 +59,8 @@ Epics group related tasks. Tasks reference their parent Epic via the `parent` fi
 
 ## Jira Issue Description Template
 
+**Jira description workaround:** Never use literal angle brackets (`<...>`) in Jira descriptions — the MCP server's preprocessor misinterprets them as HTML tags and silently truncates everything after them. Use square brackets instead: `[placeholder]`, `[script]`, `[your-value]`.
+
 When creating a Task, use this structure in the Jira description (Markdown):
 
 ```markdown

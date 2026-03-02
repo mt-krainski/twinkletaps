@@ -1,4 +1,17 @@
 {
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/allow-poe-agent-utils.sh"
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Bash(git status)",
@@ -16,7 +29,6 @@
       "Bash(git log *)",
       "Bash(mkdir *)",
       "Bash(npm run *)",
-      "Bash(poe -C agent-utils *)",
       "Bash(cd *)",
       "Bash(ls *)",
       "Bash(agent-utils/scripts/run-with-tail.sh *)",

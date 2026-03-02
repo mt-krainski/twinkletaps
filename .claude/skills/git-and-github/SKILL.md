@@ -7,6 +7,14 @@ description: "Reference for all git and GitHub operations via agent-utils poe ta
 
 All git commit/push and GitHub PR operations must use the poe tasks in `agent-utils/` instead of raw `git`/`gh` commands. Run them from the repo root with `poe -C agent-utils <task>`.
 
+## Shell Quoting Rule
+
+**Always use single quotes** for `-m` and `--body` arguments in poe commands. Double quotes let the shell interpret backticks, `$`, `<>`, and other metacharacters, breaking commands with rich text.
+
+If the text contains an apostrophe, escape it as `'\''` (end single-quoted string, insert escaped literal quote, resume single-quoted string).
+
+Example: `'Don'\''t break this'` produces the string `Don't break this`.
+
 ## Available Poe Tasks
 
 ### `git-commit` — Create a commit
@@ -14,16 +22,16 @@ All git commit/push and GitHub PR operations must use the poe tasks in `agent-ut
 Sets `GIT_AUTHOR_*` and `GIT_COMMITTER_*` from repo `git config` automatically. Fails if nothing is staged.
 
 ```bash
-poe -C agent-utils git-commit -m "<message>"
+poe -C agent-utils git-commit -m '<message>'
 ```
 
 **Message format:** `<ISSUE_KEY>: <short title>` with optional body (bullets). Example:
 
-```
-poe -C agent-utils git-commit -m "GFD-42: Add device service
+```bash
+poe -C agent-utils git-commit -m 'GFD-42: Add device service
 
 - Replace team.ts with device.ts
-- Update WorkspaceProvider to expose devices"
+- Update WorkspaceProvider to expose devices'
 ```
 
 ---
@@ -45,8 +53,8 @@ Reads `GITHUB_OWNER` and `GITHUB_REPO` from `agent-utils/.env`.
 ```bash
 poe -C agent-utils gh-pr-create \
   --base <base-branch> \
-  --title "[GFD-###] <Title>" \
-  --body "<body>"
+  --title '[GFD-###] <Title>' \
+  --body '<body>'
 ```
 
 ---
@@ -68,10 +76,10 @@ With `--comment-id`: replies to an inline review thread.
 
 ```bash
 # General PR conversation
-poe -C agent-utils gh-pr-reply <pr-number> --body "Your reply"
+poe -C agent-utils gh-pr-reply <pr-number> --body 'Your reply'
 
 # Reply to inline review comment
-poe -C agent-utils gh-pr-reply <pr-number> --body "Fixed." --comment-id <comment_id>
+poe -C agent-utils gh-pr-reply <pr-number> --body 'Fixed.' --comment-id <comment_id>
 ```
 
 ---

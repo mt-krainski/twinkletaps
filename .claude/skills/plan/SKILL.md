@@ -9,6 +9,10 @@ Use the Task tool to spawn the `planner` agent with `subagent_type: "planner"`.
 
 Pass all user arguments and relevant conversation context in the prompt so the planner has full context to analyze requirements, explore the codebase, and produce a plan.
 
+## Jira Description Workaround
+
+Never use literal angle brackets (`<...>`) in Jira descriptions — the MCP server's preprocessor misinterprets them as HTML tags and silently truncates everything after them ([upstream bug](https://github.com/sooperset/mcp-atlassian/issues/XXX)). Use square brackets instead: `[placeholder]`, `[script]`, `[your-value]`.
+
 ## Naming Rules (enforce these in every plan)
 
 ### Task summaries and descriptions

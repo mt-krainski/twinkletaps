@@ -56,6 +56,8 @@ description: <full description following the template below>
 additional_fields: {"parent": "GFD-###"}  // Epic key from above
 ```
 
+**Jira description workaround:** Never use literal angle brackets (`<...>`) in Jira descriptions — the MCP server's preprocessor misinterprets them as HTML tags and silently truncates everything after them ([upstream bug](https://github.com/sooperset/mcp-atlassian/issues/XXX)). Use square brackets instead: `[placeholder]`, `[script]`, `[your-value]`.
+
 The description must follow this template:
 
 ````markdown

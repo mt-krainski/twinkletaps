@@ -33,7 +33,13 @@ app = typer.Typer(invoke_without_command=True)
 
 @app.callback()
 def main(
-    message: str = typer.Option(..., "-m", "--message", help="Commit message"),
+    message: str = typer.Option(
+        ...,
+        "-m",
+        "--message",
+        help="Commit message. Use single quotes to avoid shell interpretation of "
+        "backticks, $, <>, etc. Escape apostrophes as '\\''.",
+    ),
 ) -> None:
     """Run git commit with author/committer from repo git config."""
     repo = Path.cwd()

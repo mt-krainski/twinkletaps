@@ -50,8 +50,17 @@ def run_gh_pr_create(
 @app.callback()
 def main(
     base: str = typer.Option(..., "--base", help="Base branch for the PR"),
-    title: str = typer.Option(..., "--title", help="PR title"),
-    body: str = typer.Option(..., "--body", help="PR body"),
+    title: str = typer.Option(
+        ...,
+        "--title",
+        help="PR title. Use single quotes to avoid shell interpretation.",
+    ),
+    body: str = typer.Option(
+        ...,
+        "--body",
+        help="PR body. Use single quotes to avoid shell interpretation of "
+        "backticks, $, <>, etc. Escape apostrophes as '\\''.",
+    ),
 ) -> None:
     """Run gh pr create with repo from GITHUB_OWNER and GITHUB_REPO."""
     try:
