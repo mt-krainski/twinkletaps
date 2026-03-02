@@ -127,9 +127,9 @@ Issue IDs are auto-assigned by Jira. Stories are created in `To Do` status by de
 
 After all issues are created, wire up blocking relationships with `jira_create_issue_link` for every dependency. Convention: to express "A must be done before B":
 ```
-jira_create_issue_link(link_type="Blocks", inward_issue_key="B", outward_issue_key="A")
+jira_create_issue_link(link_type="Blocks", inward_issue_key="A", outward_issue_key="B")
 ```
-`inward_issue_key` = the blocked issue ("is blocked by"); `outward_issue_key` = the blocker ("blocks"). Create one call per dependency pair.
+`inward_issue_key` = the blocker ("blocks"); `outward_issue_key` = the blocked issue ("is blocked by"). Create one call per dependency pair.
 
 ### Naming Rules
 
