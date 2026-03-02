@@ -25,37 +25,51 @@ Root `.github/workflows/ci.yml` is deprecated. New packages add dedicated workfl
 - Analyze codebase patterns before bigger changes and follow them.
 - If functions moved in a change chain, don't move them back without good reason.
 - Prefer package scripts over generic commands.
+- **Shell commands:** In run/shell commands, avoid: &&, ||, ;, |, >, $(), and backticks. These break wildcard matching and trigger explicit approval. Prefer single commands or separate invocations.
+- **File reading:** Always use the `Read` tool to read files rather than `cat` via Bash. To check if a file exists before reading, use `Read` and handle the error gracefully.
 - **Test failures are urgent.** Flag prominently. Fix if related to your changes. If environmental, try fixing. Otherwise make it clearly visible.
 - **No guessing.** Never guess API signatures, library behavior, migration tooling, or root causes. Verify by reading source, checking docs, or running commands. If unsure, say so and investigate.
 - **Always use the `/commit` skill when committing.** Never run `git commit` / `git push` ad-hoc — invoke the skill so its rules (staging, message format, explicit branch push, PR creation) are followed consistently.
+
+### Custom scripts
+
+Use these wrapper scripts instead of raw shell commands:
+
+- `agent-utils/scripts/run-with-tail.sh <lines> <cmd> [args...]` — run any allowed command and tail output (equivalent to `<cmd> 2>&1 | tail -n <lines>`)
+- `agent-utils/scripts/find-grep.sh <pattern> [directory] [lines]` — search source files for a pattern, return matching files (default directory: `src`, default lines: 20)
 
 ## Core Development Principles
 
 These always apply. Detailed procedures available as skills (`/tdd`, `/debug`, `/verify`).
 
 ### Test-Driven Development
+
 - **Write test first. Watch it fail. Implement minimal code to pass.** No production code without a failing test.
 - If you wrote code before the test: delete it. Start over with TDD. No exceptions.
 - Red-Green-Refactor cycle: failing test -> minimal implementation -> clean up.
 
 ### Systematic Debugging
+
 - **Find root cause before attempting fixes.** No random fix attempts.
 - Read errors carefully. Reproduce consistently. Check recent changes. Trace data flow.
 - One hypothesis at a time. Smallest possible change to test it.
 - If 3+ fixes fail: stop and question the architecture. Discuss before continuing.
 
 ### Verification Before Completion
+
 - **No completion claims without fresh verification evidence.** Run the command. Read the output. Then claim the result.
 - If you haven't run the verification command in this message, you cannot claim it passes.
 - Red flags: "should work", "probably", "seems to", expressing satisfaction before verification.
 
 ### Receiving Code Review
+
 - Verify feedback before implementing. No performative agreement ("You're absolutely right!", "Great point!").
 - Push back with technical reasoning when suggestions are wrong or violate YAGNI.
 - If any feedback is unclear: stop, ask for clarification on all unclear items before implementing any.
 - Implementation order: blocking issues -> simple fixes -> complex fixes. Test each individually.
 
 ### Testing Anti-Patterns
+
 - Never test mock behavior — test real component behavior.
 - Never add test-only methods to production classes — use test utilities.
 - Mock minimally and understand dependencies before mocking.

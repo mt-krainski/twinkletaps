@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git diff)",
+      "Bash(git diff *)",
+      "Bash(git add *)",
+      "Bash(git checkout *)",
+      "Bash(git fetch origin *)",
+      "Bash(git pull)",
+      "Bash(git branch)",
+      "Bash(git branch *)",
+      "Bash(git merge-base *)",
+      "Bash(git rev-parse HEAD)",
+      "Bash(git log)",
+      "Bash(git log *)",
+      "Bash(mkdir *)",
+      "Bash(npm run *)",
+      "Bash(poe -C agent-utils *)",
+      "Bash(cd *)",
+      "Bash(ls *)",
+      "Bash(agent-utils/scripts/run-with-tail.sh *)",
+      "Bash(agent-utils/scripts/find-grep.sh *)",
+      "Read",
+      "Edit",
+      "Write(./**)",
+      "mcp__*"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Bash(npm run supr:*)",
+      "Write(.claude/**)",
+      "Read(.env*)",
+      "Bash(cat .env*)",
+      "Bash(grep * .env*)"
+    ]
+  }
+}
