@@ -7,21 +7,15 @@ description: "Fetch and address GitHub PR review comments one-by-one, replying d
 
 ## Prerequisites
 
-Determine the PR number and repo. Derive `{owner}/{repo}` from git remote:
-
-```bash
-git remote get-url origin | sed 's/.*github.com[:/]\(.*\)\.git/\1/'
-```
+Determine the PR number. It can be found from the branch name or Jira issue.
 
 ## Step 1: Fetch Comments and Reviews
 
-Run in parallel:
-
 ```bash
-gh api repos/{owner}/{repo}/pulls/{pr}/comments
-gh api repos/{owner}/{repo}/pulls/{pr}/reviews
-gh api repos/{owner}/{repo}/issues/{pr}/comments
+(cd agent-utils && poe gh-pr-fetch <pr-number>)
 ```
+
+Returns combined JSON with keys: `inline_comments`, `reviews`, `conversation`.
 
 Key fields:
 - **Review comments** (inline): `id`, `body`, `path`, `line`, `diff_hunk`, `in_reply_to_id`, `user.login`
@@ -59,17 +53,12 @@ Technically wrong, violates conventions, unnecessary complexity, or violates YAG
 
 ### Inline review comments (threaded)
 ```bash
-gh api repos/{owner}/{repo}/pulls/{pr}/comments \
-  -X POST \
-  -f body="Your reply" \
-  -F in_reply_to={comment_id}
+(cd agent-utils && poe gh-pr-reply <pr-number> --body "Your reply" --comment-id <comment_id>)
 ```
 
 ### General PR conversation
 ```bash
-gh api repos/{owner}/{repo}/issues/{pr}/comments \
-  -X POST \
-  -f body="Your reply"
+(cd agent-utils && poe gh-pr-reply <pr-number> --body "Your reply")
 ```
 
 ### Reply style
@@ -91,8 +80,8 @@ gh api repos/{owner}/{repo}/issues/{pr}/comments \
 If code changes were made:
 
 1. Stage relevant files
-2. Commit: `<ISSUE_KEY>: Address PR #N review comments` with brief bullets
-3. Push to current branch (use full branch name, not HEAD)
+2. `(cd agent-utils && poe git-commit -m "<ISSUE_KEY>: Address PR #N review comments")`
+3. `(cd agent-utils && poe git-push)`
 
 If no code changes: replies-only is a valid outcome.
 
