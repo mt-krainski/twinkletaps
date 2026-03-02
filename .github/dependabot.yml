@@ -17,6 +17,10 @@ updates:
     directory: "/agent-utils"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "uv"
+    directory: "/ticket-loop"
+    schedule:
+      interval: "weekly"
   - package-ecosystem: "npm"
     directory: "/twinkletaps-ui"
     schedule:

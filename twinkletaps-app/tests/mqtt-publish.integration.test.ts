@@ -27,7 +27,7 @@ describe("MQTT publish (integration)", () => {
       subscriber = mqtt.connect(brokerUrl, {
         username,
         password,
-        connectTimeout: 30_000,
+        connectTimeout: 60_000,
       });
       subscriber.on("connect", () => resolve());
       subscriber.on("error", reject);
@@ -48,28 +48,36 @@ describe("MQTT publish (integration)", () => {
     }
   }, 5000);
 
-  it("sends message via publishToDevice and subscriber receives it", { timeout: 35_000 }, async () => {
-    const payload = { sequence: "010" };
-    received.length = 0;
+  it(
+    "sends message via publishToDevice and subscriber receives it",
+    { timeout: 35_000 },
+    async () => {
+      const payload = { sequence: "010" };
+      received.length = 0;
 
-    const receivedPromise = new Promise<{ topic: string; payload: Buffer }>((resolve, reject) => {
-      const timeout = setTimeout(
-        () => reject(new Error("No message received within 30s")),
-        30_000,
+      const receivedPromise = new Promise<{ topic: string; payload: Buffer }>(
+        (resolve, reject) => {
+          const timeout = setTimeout(
+            () => reject(new Error("No message received within 30s")),
+            30_000,
+          );
+          const onMessage = (topic: string, payload: Buffer) => {
+            clearTimeout(timeout);
+            subscriber.off("message", onMessage);
+            resolve({ topic, payload });
+          };
+          subscriber.on("message", onMessage);
+        },
       );
-      const onMessage = (topic: string, payload: Buffer) => {
-        clearTimeout(timeout);
-        subscriber.off("message", onMessage);
-        resolve({ topic, payload });
+
+      await publishToDevice(topic, payload);
+
+      const msg = await receivedPromise;
+      expect(msg.topic).toBe(topic);
+      const parsed = JSON.parse(msg.payload.toString()) as {
+        sequence?: string;
       };
-      subscriber.on("message", onMessage);
-    });
-
-    await publishToDevice(topic, payload);
-
-    const msg = await receivedPromise;
-    expect(msg.topic).toBe(topic);
-    const parsed = JSON.parse(msg.payload.toString()) as { sequence?: string };
-    expect(parsed.sequence).toBe("010");
-  });
+      expect(parsed.sequence).toBe("010");
+    },
+  );
 });

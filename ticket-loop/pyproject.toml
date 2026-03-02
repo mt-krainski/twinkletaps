@@ -1,0 +1,85 @@
+[project]
+name = "ticket-loop"
+version = "0.0.1"
+description = "Ticket Loop"
+authors = [{name = "Matt Krainski", email = "mt.krainski@gmail.com"}]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "python-dotenv>=1.2.2,<2.0.0",
+    "typer>=0.24.1,<0.25.0",
+]
+
+[dependency-groups]
+dev = [
+    "coverage>=7.13.4,<8.0.0",
+    "pytest>=9.0.2,<10.0.0",
+    "ruff>=0.15.1,<0.16.0",
+]
+
+[project.scripts]
+ticket-loop = "ticket_loop.main:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "B",    # flake8-bugbear
+    "A",    # flake8-builtins
+    "C4",   # flake8-comprehensions
+    "D",    # pydocstyle (flake8-docstrings)
+    "ERA",  # eradicate
+    "S",    # flake8-bandit
+]
+ignore = ["D104", "D100", "D101", "D106"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+[tool.ruff.lint.flake8-builtins]
+builtins-ignorelist = ["id"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.uv]
+add-bounds = "major"
+preview = true
+
+[tool.poe]
+envfile = ".env"
+
+[tool.poe.executor]
+type = "uv"
+
+[tool.poe.tasks]
+configure = "./scripts/configure.sh"
+update = "./scripts/update.sh"
+hooks-run = "pre-commit run --all-files"
+hooks-update = "pre-commit autoupdate"
+[tool.poe.tasks.test]
+sequence = [
+    { cmd = "coverage run -m pytest --showlocals" },
+    { cmd = "coverage report" },
+]
+
+[tool.poe.tasks.lint]
+sequence = [
+    { cmd = "ruff check ." },
+    { cmd = "ruff format --check ." },
+]
+
+[tool.poe.tasks.test-full]
+sequence = [
+    { ref = "test" },
+]
