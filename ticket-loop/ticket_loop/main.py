@@ -15,6 +15,20 @@ REPO_ROOT = PACKAGE_ROOT.parent
 SCHEMA_DIR = PACKAGE_ROOT / "schemas"
 SESSIONS_FILE = PACKAGE_ROOT / "sessions.jsonl"
 
+COLUMNS_PRIORITY_ORDER = ["review", "planning", "in_progress", "to_do"]
+SKIP_COLUMNS = {"in_progress"}
+
+WIP_LIMITS: dict[str, int] = {
+    "to_do": 15,
+    "review": 3,
+}
+
+# Don't pick from a column if its downstream column is at/above WIP limit.
+DOWNSTREAM_WIP_CHECK: dict[str, str] = {
+    "planning": "to_do",
+    "to_do": "review",
+}
+
 PROMPT_FETCH_BOARD = (
     "Fetch all issues from Jira project GFD where status not in (Done, Invalid), "
     "using jira_search with limit 50. Paginate with start_at if there are more. "
@@ -117,21 +131,6 @@ def fetch_board_state(session_id: str) -> dict:
     )
 
 
-COLUMNS_PRIORITY_ORDER = ["review", "planning", "in_progress", "to_do"]
-SKIP_COLUMNS = {"in_progress"}
-
-WIP_LIMITS: dict[str, int] = {
-    "to_do": 15,
-    "review": 3,
-}
-
-# Don't pick from a column if its downstream column is at/above WIP limit.
-DOWNSTREAM_WIP_CHECK: dict[str, str] = {
-    "planning": "to_do",
-    "to_do": "review",
-}
-
-
 def _is_wip_blocked(column: str, board_state: dict) -> bool:
     """Check if a column is blocked by its downstream WIP limit."""
     downstream = DOWNSTREAM_WIP_CHECK.get(column)
@@ -151,9 +150,10 @@ def _is_wip_blocked(column: str, board_state: dict) -> bool:
 def find_agent_task(board_state: dict, agent_name: str) -> tuple[str, dict] | None:
     """Find the right-most top-most task assigned to the agent.
 
-    Scans columns from right to left (review → planning), returning the
-    first task whose assignee matches agent_name. Skips columns whose
-    downstream column is at or above its WIP limit.
+    Scans columns in priority order (review, then planning, then to_do;
+    in_progress is skipped), returning the first task whose assignee matches
+    agent_name. Skips columns whose downstream column is at or above its
+    WIP limit.
 
     Returns:
         (column, task) tuple, or None if no task is assigned to the agent.

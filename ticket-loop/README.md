@@ -37,6 +37,13 @@ From the monorepo root:
 uv run --project ticket-loop ticket-loop
 ```
 
+To drop into the Claude session for a specific Jira issue (e.g. after the loop
+started it or for manual follow-up):
+
+```sh
+uv run --project ticket-loop ticket-loop --resume GFD-42
+```
+
 ## Development
 
 ```sh
