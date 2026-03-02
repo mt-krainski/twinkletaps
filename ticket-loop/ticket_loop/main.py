@@ -29,6 +29,12 @@ DOWNSTREAM_WIP_CHECK: dict[str, str] = {
     "to_do": "review",
 }
 
+PERMISSIONS_INSTRUCTION = (
+    " If any tool use or command is denied due to permission settings, "
+    "stop and clearly explain which operation was blocked and what "
+    "permission is needed. Do not attempt workarounds."
+)
+
 PROMPT_FETCH_BOARD = (
     "Fetch all issues from Jira project GFD where status not in (Done, Invalid), "
     "using jira_search with limit 50. Paginate with start_at if there are more. "
@@ -43,18 +49,19 @@ PROMPT_FETCH_BOARD = (
 )
 
 
-def _claude_base_cmd(*, session_id: str) -> list[str]:
+def _claude_base_cmd(*, session_id: str, skip_permissions: bool = False) -> list[str]:
     """Build the common prefix for all claude CLI invocations."""
-    return [
+    cmd = [
         "claude",
         "-p",
         "--model",
         "sonnet",
         "--verbose",
-        "--dangerously-skip-permissions",
-        "--session-id",
-        session_id,
     ]
+    if skip_permissions:
+        cmd.append("--dangerously-skip-permissions")
+    cmd.extend(["--session-id", session_id])
+    return cmd
 
 
 SESSION_CONFLICT_MSG = "is already in use"
@@ -92,10 +99,16 @@ def _run_with_session_retry(
         raise
 
 
-def run_claude(prompt: str, *, session_id: str, schema_path: Path) -> dict:
+def run_claude(
+    prompt: str,
+    *,
+    session_id: str,
+    schema_path: Path,
+    skip_permissions: bool = False,
+) -> dict:
     """Run claude CLI with structured output and return parsed result."""
     cmd = [
-        *_claude_base_cmd(session_id=session_id),
+        *_claude_base_cmd(session_id=session_id, skip_permissions=skip_permissions),
         "--output-format",
         "json",
         "--json-schema",
@@ -116,18 +129,26 @@ def run_claude(prompt: str, *, session_id: str, schema_path: Path) -> dict:
     return envelope["structured_output"]
 
 
-def run_claude_task(prompt: str, *, session_id: str) -> None:
+def run_claude_task(
+    prompt: str, *, session_id: str, skip_permissions: bool = False
+) -> None:
     """Run claude CLI for task execution, streaming output to the terminal."""
-    cmd = [*_claude_base_cmd(session_id=session_id), prompt]
+    if not skip_permissions:
+        prompt += PERMISSIONS_INSTRUCTION
+    cmd = [
+        *_claude_base_cmd(session_id=session_id, skip_permissions=skip_permissions),
+        prompt,
+    ]
     _run_with_session_retry(cmd, cwd=REPO_ROOT)
 
 
-def fetch_board_state(session_id: str) -> dict:
+def fetch_board_state(session_id: str, *, skip_permissions: bool = False) -> dict:
     """Fetch current Jira board state grouped by column."""
     return run_claude(
         PROMPT_FETCH_BOARD,
         session_id=session_id,
         schema_path=SCHEMA_DIR / "board_state.json",
+        skip_permissions=skip_permissions,
     )
 
 
@@ -199,7 +220,7 @@ def get_session(task_key: str) -> str:
     return session_id
 
 
-def handle_review(task: dict) -> None:
+def handle_review(task: dict, *, skip_permissions: bool = False) -> None:
     """Handle a task in the Review column — address feedback and reassign."""
     session_id = get_session(task["key"])
     human_id = os.environ["HUMAN_ATLASSIAN_ID"]
@@ -213,17 +234,18 @@ def handle_review(task: dict) -> None:
         "Add relevant comments to the Jira task and/or pull request. "
         f"Then reassign the Jira task to '{human_id}'.",
         session_id=session_id,
+        skip_permissions=skip_permissions,
     )
 
 
-def handle_in_progress(task: dict) -> None:
+def handle_in_progress(task: dict, *, skip_permissions: bool = False) -> None:
     """Handle a task in the In Progress column (skipped)."""
     raise NotImplementedError(
         f"In Progress handler not yet implemented for {task['key']}"
     )
 
 
-def handle_to_do(task: dict) -> None:
+def handle_to_do(task: dict, *, skip_permissions: bool = False) -> None:
     """Handle a task in the To Do column — implement it."""
     base_branch = os.environ["BASE_BRANCH"]
     session_id = str(uuid.uuid4())
@@ -238,10 +260,11 @@ def handle_to_do(task: dict) -> None:
         "When done, wrap up: lint, test, commit, and create a PR "
         "(use the /wrap skill).",
         session_id=session_id,
+        skip_permissions=skip_permissions,
     )
 
 
-def handle_planning(task: dict) -> None:
+def handle_planning(task: dict, *, skip_permissions: bool = False) -> None:
     """Handle a task in the Planning column — plan the implementation."""
     session_id = str(uuid.uuid4())
     save_session(task["key"], session_id)
@@ -251,6 +274,7 @@ def handle_planning(task: dict) -> None:
         "Use the /plan skill to analyze the codebase and break down the work "
         "into smaller, reviewable tasks in Jira.",
         session_id=session_id,
+        skip_permissions=skip_permissions,
     )
 
 
@@ -262,20 +286,22 @@ COLUMN_HANDLERS = {
 }
 
 
-def resume_session(issue_key: str) -> None:
+def resume_session(issue_key: str, *, skip_permissions: bool = False) -> None:
     """Drop into an interactive Claude session for a previously started issue."""
     session_id = get_session(issue_key)
     print(f"  Resuming session {session_id} for {issue_key}")
     cmd = ["claude", "--session-id", session_id, "--verbose"]
+    if skip_permissions:
+        cmd.append("--dangerously-skip-permissions")
     _run_with_session_retry(cmd, cwd=REPO_ROOT)
 
 
-def _run_loop() -> None:
+def _run_loop(*, skip_permissions: bool = False) -> None:
     """Fetch the board and process the next agent task."""
     agent_name = os.environ["JIRA_AGENT_USERNAME"]
 
     board_session_id = str(uuid.uuid4())
-    board_state = fetch_board_state(board_session_id)
+    board_state = fetch_board_state(board_session_id, skip_permissions=skip_permissions)
 
     result = find_agent_task(board_state, agent_name)
     if result is None:
@@ -286,7 +312,7 @@ def _run_loop() -> None:
     print(f"Processing {task['key']} ({task['summary']}) from {column}")
 
     handler = COLUMN_HANDLERS[column]
-    handler(task)
+    handler(task, skip_permissions=skip_permissions)
 
 
 app = typer.Typer()
@@ -298,13 +324,21 @@ def main(
         str | None,
         typer.Option(help="Resume the Claude session for a Jira issue (e.g. GFD-42)."),
     ] = None,
+    dangerously_skip_permissions: Annotated[
+        bool,
+        typer.Option(
+            "--dangerously-skip-permissions",
+            help="Pass --dangerously-skip-permissions to the Claude CLI, "
+            "auto-approving all tool use without permission checks.",
+        ),
+    ] = False,
 ) -> None:
     """Run the ticket processing loop, or resume a specific issue session."""
     load_dotenv()
     if resume is not None:
-        resume_session(resume)
+        resume_session(resume, skip_permissions=dangerously_skip_permissions)
     else:
-        _run_loop()
+        _run_loop(skip_permissions=dangerously_skip_permissions)
 
 
 if __name__ == "__main__":
