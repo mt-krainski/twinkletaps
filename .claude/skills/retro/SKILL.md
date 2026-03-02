@@ -66,5 +66,5 @@ Stop here. Do not proceed until user responds.
 1. Write retro to `.claude/retrospectives/YYYY-MM-DD-retro.md`
 2. Include: date, summary, past action status, ideas, agreed actions
 3. Stage the retro file: `git add .claude/retrospectives/YYYY-MM-DD-retro.md`
-4. `(cd agent-utils && poe git-commit -m "retro: YYYY-MM-DD retrospective")`
-5. `(cd agent-utils && poe git-push)`
+4. `poe -C agent-utils git-commit -m "retro: YYYY-MM-DD retrospective"`
+5. `poe -C agent-utils git-push`

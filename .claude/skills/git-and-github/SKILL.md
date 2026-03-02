@@ -5,7 +5,7 @@ description: "Reference for all git and GitHub operations via agent-utils poe ta
 
 # Git and GitHub via agent-utils
 
-All git commit/push and GitHub PR operations must use the poe tasks in `agent-utils/` instead of raw `git`/`gh` commands. Run them from the repo root with `(cd agent-utils && poe <task>)`.
+All git commit/push and GitHub PR operations must use the poe tasks in `agent-utils/` instead of raw `git`/`gh` commands. Run them from the repo root with `poe -C agent-utils <task>`.
 
 ## Available Poe Tasks
 
@@ -14,16 +14,16 @@ All git commit/push and GitHub PR operations must use the poe tasks in `agent-ut
 Sets `GIT_AUTHOR_*` and `GIT_COMMITTER_*` from repo `git config` automatically. Fails if nothing is staged.
 
 ```bash
-(cd agent-utils && poe git-commit -m "<message>")
+poe -C agent-utils git-commit -m "<message>"
 ```
 
 **Message format:** `<ISSUE_KEY>: <short title>` with optional body (bullets). Example:
 
 ```
-(cd agent-utils && poe git-commit -m "GFD-42: Add device service
+poe -C agent-utils git-commit -m "GFD-42: Add device service
 
 - Replace team.ts with device.ts
-- Update WorkspaceProvider to expose devices")
+- Update WorkspaceProvider to expose devices"
 ```
 
 ---
@@ -33,7 +33,7 @@ Sets `GIT_AUTHOR_*` and `GIT_COMMITTER_*` from repo `git config` automatically. 
 Pushes with `-u origin <branch>`. Refuses `main`/`master` and branches that don't start with `task/`.
 
 ```bash
-(cd agent-utils && poe git-push)
+poe -C agent-utils git-push
 ```
 
 ---
@@ -43,10 +43,10 @@ Pushes with `-u origin <branch>`. Refuses `main`/`master` and branches that don'
 Reads `GITHUB_OWNER` and `GITHUB_REPO` from `agent-utils/.env`.
 
 ```bash
-(cd agent-utils && poe gh-pr-create \
+poe -C agent-utils gh-pr-create \
   --base <base-branch> \
   --title "[GFD-###] <Title>" \
-  --body "<body>")
+  --body "<body>"
 ```
 
 ---
@@ -56,7 +56,7 @@ Reads `GITHUB_OWNER` and `GITHUB_REPO` from `agent-utils/.env`.
 Returns combined JSON with `inline_comments`, `reviews`, and `conversation`.
 
 ```bash
-(cd agent-utils && poe gh-pr-fetch <pr-number>)
+poe -C agent-utils gh-pr-fetch <pr-number>
 ```
 
 ---
@@ -68,10 +68,10 @@ With `--comment-id`: replies to an inline review thread.
 
 ```bash
 # General PR conversation
-(cd agent-utils && poe gh-pr-reply <pr-number> --body "Your reply")
+poe -C agent-utils gh-pr-reply <pr-number> --body "Your reply"
 
 # Reply to inline review comment
-(cd agent-utils && poe gh-pr-reply <pr-number> --body "Fixed." --comment-id <comment_id>)
+poe -C agent-utils gh-pr-reply <pr-number> --body "Fixed." --comment-id <comment_id>
 ```
 
 ---
@@ -79,7 +79,7 @@ With `--comment-id`: replies to an inline review thread.
 ### `gh-pr-checks` — Check PR CI status
 
 ```bash
-(cd agent-utils && poe gh-pr-checks <pr-number>)
+poe -C agent-utils gh-pr-checks <pr-number>
 ```
 
 ---
@@ -94,8 +94,10 @@ GITHUB_REPO=<repo-name>
 TASK_BRANCH_PREFIX=task/
 ```
 
-Run `(cd agent-utils && poe configure)` to create `.env` from the template.
+Run `poe -C agent-utils configure` to create `.env` from the template.
 
 ## Rule
 
 **Never use raw `git commit`, `git push`, or `gh pr create/api` for these operations.** Use the poe tasks above. They enforce safe defaults (correct git identity, branch prefix checks, consistent repo targeting).
+
+**If poe or agent-utils is unavailable:** Do not attempt to work around it by invoking raw `git` or `gh` directly. Instead, stop and notify the user that the poe task cannot be run and ask them to verify that `agent-utils` is set up correctly.
