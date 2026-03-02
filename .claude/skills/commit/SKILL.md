@@ -11,10 +11,10 @@ Stage only files that belong to the change. Exclude unrelated files.
 
 ## 2. Create One Informative Commit
 
-Use the repo's git identity so the commit is attributed to the user and CI runs correctly:
+Use `poe git-commit` from `agent-utils` — it sets git author/committer from repo config automatically:
 
 ```bash
-GIT_AUTHOR_NAME="$(git config user.name)" GIT_AUTHOR_EMAIL="$(git config user.email)" GIT_COMMITTER_NAME="$(git config user.name)" GIT_COMMITTER_EMAIL="$(git config user.email)" git commit -m "..."
+poe -C agent-utils git-commit -m "..."
 ```
 
 **Message format:** `<ISSUE_KEY>: <short title>`, then a short body with what changed (bullets or short paragraphs). Infer issue key from branch name `task/GFD-###/slug` if needed. If no issue context, use a descriptive title without a key.
@@ -32,16 +32,16 @@ GFD-42: Update app code — Team → Device
 
 ## 3. Push the Branch
 
-**Always specify the branch explicitly** — never use a bare `git push`.
-
 ```bash
-git push -u origin <current-branch>
+poe -C agent-utils git-push
 ```
+
+`poe git-push` pushes the current branch with `-u origin` and refuses to push `main`/`master` or non-`task/` branches.
 
 ## 4. Open PR with gh
 
 ```bash
-gh pr create --base <target-branch> --title "[GFD-###] <Title>" --body "<body>"
+poe -C agent-utils gh-pr-create --base <target-branch> --title "[GFD-###] <Title>" --body "<body>"
 ```
 
 - **PR title format:** `[GFD-###] <Title>`. If no issue context, descriptive title without brackets.
