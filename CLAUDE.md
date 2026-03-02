@@ -8,7 +8,7 @@ This is a simple Arduino project with a Next.js web app. Modern development prac
 
 - **Component layout:** `src/components/ui/` — shadcn primitives (unchanged). `src/components/app/` — app components (shell and domain content); each in its own dir with `ComponentName.tsx`, stories, and `index.ts`. `src/components/providers/` — context providers.
 - **Container/view:** Shell components (e.g. Navbar, Sidebar) that read from context use a thin container (`Navbar.tsx`, `Sidebar.tsx`) that passes props to a presentational view (`NavbarView.tsx`, `SidebarView.tsx`). Stories target the View.
-- Use `npm` as the package and script runner. Prefer `npm run` over `npx`.
+- Use `npm` as the package and script runner (see Behavioral Rules for the full policy on package scripts).
 - **Database migrations** use Supabase (`supabase/migrations/`), NOT Prisma. Prisma is ORM/client only.
 - **Tests:** `npm run test` (unit/integration), `npm run test:e2e` (e2e), `npm run lint` (lint). Run `test` for quick check, `test:e2e` for final check.
 
@@ -24,7 +24,7 @@ Root `.github/workflows/ci.yml` is deprecated. New packages add dedicated workfl
 - Clean code: comments explain "why" not "what". Exception: test/story files allow brief "what" comments.
 - Analyze codebase patterns before bigger changes and follow them.
 - If functions moved in a change chain, don't move them back without good reason.
-- Prefer package scripts over generic commands.
+- **Prefer package scripts over arbitrary commands.** Before running any tool or CLI command, check `package.json` `scripts` for an equivalent. Use `npm run <script>` instead of `npx <tool>`, `yarn dlx`, or direct binary invocations. If a script exists, always use it — never call the underlying binary directly.
 - **Shell commands:** In run/shell commands, avoid: &&, ||, ;, |, >, $(), and backticks. These break wildcard matching and trigger explicit approval. Prefer single commands or separate invocations.
 - **File reading:** Always use the `Read` tool to read files rather than `cat` via Bash. To check if a file exists before reading, use `Read` and handle the error gracefully.
 - **Test failures are urgent.** Flag prominently. Fix if related to your changes. If environmental, try fixing. Otherwise make it clearly visible.

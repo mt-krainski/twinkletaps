@@ -186,3 +186,17 @@ Branch name and PR URL are posted as **Jira comments**, not in the description.
 - Commit messages: `GFD-###: <short message>`
 - PR title: `[GFD-###] <Title>`
 - Test commands: use repo defaults; if missing, infer and document.
+
+## Prefer Package Scripts
+
+Before running **any** command during development, check `package.json` `scripts` for an equivalent. Use `npm run <script>` — never invoke the underlying binary directly.
+
+| Forbidden | Allowed |
+|-----------|---------|
+| `npx prisma migrate dev` | `npm run migrate` |
+| `yarn dlx pkg` | `npm run tool` |
+| `./node_modules/.bin/tsc` | `npm run build` |
+| `npx jest` | `npm run test` |
+| `npx playwright test` | `npm run test:e2e` |
+
+Only fall back to a direct command if no equivalent script exists — and document why.
