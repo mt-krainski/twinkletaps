@@ -112,6 +112,8 @@ def run_claude(
         "--output-format",
         "json",
         "--json-schema",
+        "--model",
+        "sonnet",
         schema_path.read_text(),
         prompt,
     ]
