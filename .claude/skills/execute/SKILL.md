@@ -34,6 +34,7 @@ Follow the issue's Implementation Plan:
 2. Use TDD: write failing test -> verify fail -> implement -> verify pass (see `/tdd`)
 3. Keep changes within ~200-300 LOC; if scope expands, stop and create follow-up issue
 4. Commit frequently: `<ISSUE_KEY>: <short message>`
+5. **Before running any command:** check `package.json` scripts first. Use `npm run <script>` — never `npx <tool>`, `yarn dlx`, or direct binary calls. See "Prefer Package Scripts" in `workflow.md`.
 
 ### Step 4: Verify
 

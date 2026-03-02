@@ -52,8 +52,10 @@ Requirements: one behavior, clear name, real code (no mocks unless unavoidable).
 
 ### Verify RED — Watch It Fail (MANDATORY)
 
+> **Command rule:** always use `npm run test`, `npm run lint`, `npm run test:e2e` — never `npx jest`, `npx vitest`, `npx playwright test`, etc. Check `package.json` scripts first.
+
 ```bash
-npm test path/to/test.test.ts
+npm run test path/to/test.test.ts
 ```
 
 Confirm: test fails (not errors), failure message is expected, fails because feature missing (not typos).
