@@ -30,6 +30,17 @@ Use `jira_transition_issue` to move between statuses. Use `jira_get_issue` / `ji
 
 **Issue types:** `Epic` (feature grouping), `Task` (implementation task linked to Epic via `parent` field).
 
+### Issue Link Direction
+
+For the `"Blocks"` link type, the parameter names are counter-intuitive:
+
+- `inward_issue_key` = the issue that **is blocked** (the downstream task)
+- `outward_issue_key` = the issue that **does the blocking** (the upstream blocker)
+
+> "Task A blocks Task B" → `jira_create_issue_link(link_type="Blocks", inward_issue_key=<Task B key>, outward_issue_key=<Task A key>)`
+
+In plain terms: if Task A must finish before Task B can start, Task A is the blocker (`outward`) and Task B is the blocked issue (`inward`).
+
 ## Naming Conventions
 
 - **Branch:** `task/GFD-###/<slug>`
