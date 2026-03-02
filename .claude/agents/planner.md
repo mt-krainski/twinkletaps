@@ -131,6 +131,12 @@ jira_create_issue_link(link_type="Blocks", inward_issue_key="B", outward_issue_k
 ```
 `inward_issue_key` = the blocked issue ("is blocked by"); `outward_issue_key` = the blocker ("blocks"). Create one call per dependency pair.
 
+### Naming Rules
+
+- **Never prefix task summaries or description headings with "Task 1:", "Task 2:", etc.**
+- Use a descriptive title that stands alone: e.g. `"Add auth middleware + unit tests"`, not `"Task 1: Add auth middleware + unit tests"`.
+- The same prohibition applies to headings inside task descriptions.
+
 ## Task Description Template
 
 Each Task description must include: Problem/Goal, Non-Goals, Acceptance Criteria, Repo Context, Implementation Plan, Test Plan, Verification Notes, Risk/Rollback.
