@@ -5,7 +5,7 @@
 
 COMMAND=$(jq -r '.tool_input.command' < /dev/stdin)
 
-if [[ "$COMMAND" == "poe -C agent-utils "* ]]; then
+if [[ "$COMMAND" =~ ^poe\ -C\ (agent-utils|.*/agent-utils)([[:space:]]|$) ]]; then
   jq -n '{
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
