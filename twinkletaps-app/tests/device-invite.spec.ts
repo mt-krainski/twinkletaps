@@ -48,7 +48,7 @@ test("device invite: admin shares device, member accepts", async ({
   ).toBeVisible({ timeout: 10000 });
   await page.getByRole("button", { name: deviceName }).click();
 
-  await expect(page).toHaveURL(/\/devices\/[^/]+$/, { timeout: 10000 });
+  await expect(page).toHaveURL(/\/w\/[^/]+\/d\/[^/]+$/, { timeout: 10000 });
   await expect(page.getByRole("heading", { name: deviceName })).toBeVisible({
     timeout: 10000,
   });
@@ -90,8 +90,8 @@ test("device invite: admin shares device, member accepts", async ({
   });
   await memberPage.getByRole("button", { name: "Accept Invitation" }).click();
 
-  // After acceptance, redirected to /devices/{deviceId}
-  await expect(memberPage).toHaveURL(/\/devices\/[^/]+$/, { timeout: 10000 });
+  // After acceptance, redirected to /w/{workspaceId}/d/{deviceId}
+  await expect(memberPage).toHaveURL(/\/w\/[^/]+\/d\/[^/]+$/, { timeout: 10000 });
 
   // ── Member: verify device access and absence of admin-only settings ─
   await expect(

@@ -39,7 +39,7 @@ export async function acceptInvitationAction(
 
   const redirectTo =
     invitationType === "device" && invitation.deviceId
-      ? `/devices/${invitation.deviceId}`
+      ? `/w/${invitation.workspaceId}/d/${invitation.deviceId}`
       : "/";
 
   return { redirectTo };
