@@ -65,8 +65,8 @@ test("workspace invite: user A creates link, user B accepts", async ({
   });
   await memberPage.getByRole("button", { name: "Accept Invitation" }).click();
 
-  // After acceptance, redirected to "/"
-  await expect(memberPage).toHaveURL("/", { timeout: 10000 });
+  // After acceptance, redirected to "/" which then bounces to /w/{workspaceId}
+  await expect(memberPage).toHaveURL(/\/w\/[^/]+/, { timeout: 15000 });
 
   // ── User B: verify membership in two workspaces ────────────────────
   // The layout is a Server Component — navigating to "/" re-fetches workspace
