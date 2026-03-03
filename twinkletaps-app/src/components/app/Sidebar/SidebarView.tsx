@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { Search, Home, Lightbulb, Plus, UserPlus } from "lucide-react";
+import { Search, Home, Lightbulb, Plus, UserPlus, Building2, ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -22,6 +28,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from "@/components/ui/sidebar";
+import type { WorkspaceInfo } from "@/components/providers/workspace-provider";
 
 export interface SearchResult {
   id: string;
@@ -47,6 +54,9 @@ export interface SidebarViewProps {
   onSearchQueryChange: (query: string) => void;
   isSearchModalOpen: boolean;
   onSearchModalOpenChange: (open: boolean) => void;
+  workspaces?: WorkspaceInfo[];
+  selectedWorkspaceId?: string;
+  onWorkspaceChange?: (id: string) => void;
 }
 
 export function SidebarView({
@@ -65,11 +75,48 @@ export function SidebarView({
   onSearchQueryChange,
   isSearchModalOpen,
   onSearchModalOpenChange,
+  workspaces = [],
+  selectedWorkspaceId,
+  onWorkspaceChange,
 }: SidebarViewProps) {
+  const selectedWorkspace = workspaces.find((w) => w.id === selectedWorkspaceId);
+
   return (
     <SidebarProvider>
       <div className="flex min-h-svh w-full">
         <Sidebar className={cn("w-64", className)}>
+          {workspaces.length > 0 && (
+            <div className="border-b px-3 py-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 px-2"
+                  >
+                    <Building2 className="h-4 w-4 shrink-0" />
+                    <span className="truncate">
+                      {selectedWorkspace?.name ?? "Select workspace"}
+                    </span>
+                    <ChevronDown className="ml-auto h-4 w-4 shrink-0" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="min-w-[200px]">
+                  {workspaces.map((workspace) => (
+                    <DropdownMenuItem
+                      key={workspace.id}
+                      onClick={() => onWorkspaceChange?.(workspace.id)}
+                    >
+                      <Building2 className="h-4 w-4" />
+                      <span className="flex-1 truncate">{workspace.name}</span>
+                      {workspace.id === selectedWorkspaceId && (
+                        <Check className="h-4 w-4" />
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
           <SidebarContent>
             <SidebarGroup>
               <SidebarGroupContent>

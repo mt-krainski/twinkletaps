@@ -29,6 +29,7 @@ export function AppSidebar({
     navigateHome,
     workspaceRole,
     selectedWorkspaceId,
+    switchWorkspace,
     registerDevice,
   } = useWorkspace();
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,6 +58,9 @@ export function AppSidebar({
         onSearchQueryChange={setSearchQuery}
         isSearchModalOpen={isSearchModalOpen}
         onSearchModalOpenChange={setIsSearchModalOpen}
+        workspaces={workspaces}
+        selectedWorkspaceId={selectedWorkspaceId}
+        onWorkspaceChange={switchWorkspace}
       >
         {children}
       </SidebarView>

@@ -7,7 +7,7 @@ import {
   type SearchResult,
 } from "./SidebarView";
 import { expect, fn, within } from "storybook/test";
-import { mockDevices } from "@/test-utils/storybook";
+import { mockDevices, mockWorkspaces, withDropdown } from "@/test-utils/storybook";
 
 type SidebarViewStoryArgs = SidebarViewProps & {
   onHomeClick: () => void;
@@ -67,6 +67,9 @@ const defaultArgs: SidebarViewProps = {
   onSearchQueryChange: fn(),
   isSearchModalOpen: false,
   onSearchModalOpenChange: fn(),
+  workspaces: mockWorkspaces,
+  selectedWorkspaceId: mockWorkspaces[0]?.id,
+  onWorkspaceChange: fn(),
 };
 
 function SidebarViewWithModalState(
@@ -110,6 +113,9 @@ export const Default: Story = {
         onRegisterClick={args.onRegisterClick ?? fn()}
         canInviteToWorkspace={true}
         onInviteClick={args.onInviteClick ?? fn()}
+        workspaces={args.workspaces}
+        selectedWorkspaceId={args.selectedWorkspaceId}
+        onWorkspaceChange={args.onWorkspaceChange}
       />
     </div>
   ),
@@ -169,6 +175,9 @@ export const InviteToWorkspace: Story = {
         onRegisterClick={fn()}
         canInviteToWorkspace={true}
         onInviteClick={args.onInviteClick ?? fn()}
+        workspaces={args.workspaces}
+        selectedWorkspaceId={args.selectedWorkspaceId}
+        onWorkspaceChange={args.onWorkspaceChange}
       />
     </div>
   ),
@@ -204,6 +213,9 @@ export const WithoutDevices: Story = {
         onRegisterClick={fn()}
         canInviteToWorkspace={false}
         onInviteClick={fn()}
+        workspaces={args.workspaces}
+        selectedWorkspaceId={args.selectedWorkspaceId}
+        onWorkspaceChange={args.onWorkspaceChange}
       />
     </div>
   ),
@@ -229,5 +241,48 @@ export const WithoutDevices: Story = {
     );
     await userEvent.type(searchInput, "test query");
     await expect(args.onSearch).toHaveBeenCalledWith("test query");
+  },
+};
+
+export const WorkspaceSelector: Story = {
+  args: {
+    ...defaultArgs,
+    onWorkspaceChange: fn(),
+  },
+  render: (args) => (
+    <div className="h-screen w-64">
+      <SidebarViewWithModalState
+        devices={args.devices}
+        onDeviceClick={args.onDeviceClick}
+        onHomeClick={args.onHomeClick}
+        canRegisterDevice={false}
+        onRegisterClick={fn()}
+        canInviteToWorkspace={false}
+        onInviteClick={fn()}
+        workspaces={args.workspaces}
+        selectedWorkspaceId={args.selectedWorkspaceId}
+        onWorkspaceChange={args.onWorkspaceChange}
+      />
+    </div>
+  ),
+  play: async ({ canvasElement, args, userEvent }) => {
+    const canvas = within(canvasElement);
+
+    // Selected workspace name is visible in the trigger button
+    await expect(canvas.getByText(mockWorkspaces[0].name)).toBeInTheDocument();
+
+    // Click the trigger to open dropdown; verify all workspaces listed
+    await withDropdown(
+      canvas.getByText(mockWorkspaces[0].name),
+      userEvent,
+      async (menu) => {
+        for (const workspace of mockWorkspaces) {
+          await expect(within(menu).getByText(workspace.name)).toBeInTheDocument();
+        }
+        // Click a different workspace and verify callback
+        await userEvent.click(within(menu).getByText(mockWorkspaces[1].name));
+        await expect(args.onWorkspaceChange).toHaveBeenCalledWith(mockWorkspaces[1].id);
+      },
+    );
   },
 };
