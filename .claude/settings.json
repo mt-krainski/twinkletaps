@@ -6,7 +6,16 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/allow-poe-agent-utils.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/allow-poe-agent-utils.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/restrict-write-to-project.sh"
           }
         ]
       }
@@ -34,9 +43,10 @@
       "Bash(ls *)",
       "Bash(agent-utils/scripts/run-with-tail.sh *)",
       "Bash(agent-utils/scripts/find-grep.sh *)",
+      "Bash(agent-utils *)",
       "Read",
       "Edit",
-      "Write(./**)",
+      "Write",
       "mcp__*"
     ],
     "deny": [

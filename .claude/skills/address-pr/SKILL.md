@@ -12,7 +12,7 @@ Determine the PR number. It can be found from the branch name or Jira issue.
 ## Step 1: Fetch Comments and Reviews
 
 ```bash
-poe -C agent-utils gh-pr-fetch <pr-number>
+agent-utils gh-pr-fetch <pr-number>
 ```
 
 Returns combined JSON with keys: `inline_comments`, `reviews`, `conversation`.
@@ -53,12 +53,12 @@ Technically wrong, violates conventions, unnecessary complexity, or violates YAG
 
 ### Inline review comments (threaded)
 ```bash
-poe -C agent-utils gh-pr-reply <pr-number> --body 'Your reply' --comment-id <comment_id>
+agent-utils gh-pr-reply <pr-number> --body 'Your reply' --comment-id <comment_id>
 ```
 
 ### General PR conversation
 ```bash
-poe -C agent-utils gh-pr-reply <pr-number> --body 'Your reply'
+agent-utils gh-pr-reply <pr-number> --body 'Your reply'
 ```
 
 ### Reply style
@@ -80,8 +80,8 @@ poe -C agent-utils gh-pr-reply <pr-number> --body 'Your reply'
 If code changes were made:
 
 1. Stage relevant files
-2. `poe -C agent-utils git-commit -m '<ISSUE_KEY>: Address PR #N review comments'`
-3. `poe -C agent-utils git-push`
+2. `agent-utils git-commit -m '<ISSUE_KEY>: Address PR #N review comments'`
+3. `agent-utils git-push`
 
 If no code changes: replies-only is a valid outcome.
 

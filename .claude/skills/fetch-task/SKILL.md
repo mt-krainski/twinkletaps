@@ -36,21 +36,26 @@ jira_search(
 2. **`limit: 1`** to get the top-most issue. Increase only if the user asks for more.
 3. **Use the exact status name** as shown in the table (e.g. `"Planning"`, not `"To Do"` when asked for the planning column).
 
-## Checking Blockers
+When selecting a non-blocked task, use the algorithm below instead of this bare query.
 
-After fetching, always check blockers before claiming a task is available:
+## Algorithm for Non-Blocked Task Selection
 
-1. Fetch the issue with `jira_get_issue(issue_key, fields: "*all")` to get `issuelinks`.
-2. Look for links with `type.inward = "is blocked by"`.
-3. For each such link, check if the linked `inwardIssue` status is `Done`.
-4. If any blocker is **not** Done, the task is blocked — skip it and fetch the next one.
+Use this offset-based loop to find the first non-blocked issue in rank order. Do not deviate from these steps.
 
-## When the User Says "Top-Most"
+1. Set `offset = 0`.
+2. Query the column: `jira_search(jql: 'project = GFD AND status = "<column>" ORDER BY rank ASC', fields: "summary,status,priority,issuetype,parent", limit: 1, start_at: offset)`.
+3. If no results: stop — no available tasks in this column (all remaining issues may be blocked, or the column is empty).
+4. Fetch the full issue: `jira_get_issue(issue_key, fields: "*all")` to get `issuelinks`.
+5. Check for active blockers: find links where `type.inward = "is blocked by"`. For each such link, check `inwardIssue.fields.status.name`. If it is not `"Done"`, the blocker is active.
+6. If any blocker is **not** Done: increment `offset` by 1 and go to Step 2.
+7. Return this issue — it is the top-most non-blocked task.
 
-"Top-most" means the first result from `ORDER BY rank ASC`. This is the issue physically at the top of the board column. Never pick a random issue or reorder by your own criteria.
+**"Top-most"** means the first result from `ORDER BY rank ASC` — the issue physically at the top of the board column. Never pick a random issue or reorder by your own criteria.
 
 ## Common Mistakes to Avoid
 
 - Searching for `status = "To Do"` when the user said "planning column" — use the exact column name.
 - Using `ORDER BY created ASC` instead of `ORDER BY rank ASC` — created date ≠ board position.
-- Returning multiple issues and picking one yourself — always return in rank order, take the first non-blocked one.
+- **Picking a random issue** instead of iterating from offset 0 in rank order — always follow the algorithm above.
+- Returning multiple issues and picking one yourself — always iterate in rank order, take the first non-blocked one.
+- Skipping the blocker check step — a task is not available just because it appears at the top of the column.
