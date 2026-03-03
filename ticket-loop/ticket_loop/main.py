@@ -112,8 +112,6 @@ def run_claude(
         "--output-format",
         "json",
         "--json-schema",
-        "--model",
-        "sonnet",
         schema_path.read_text(),
         prompt,
     ]
@@ -301,9 +299,14 @@ def resume_session(issue_key: str, *, skip_permissions: bool = False) -> None:
 def _run_loop(*, skip_permissions: bool = False) -> None:
     """Fetch the board and process the next agent task."""
     agent_name = os.environ["JIRA_AGENT_USERNAME"]
+    print(f"Agent: {agent_name}")
 
     board_session_id = str(uuid.uuid4())
+    print("Fetching board state from Jira...")
     board_state = fetch_board_state(board_session_id, skip_permissions=skip_permissions)
+    for col, issues in board_state.items():
+        print(f"  {col}: {len(issues)} issue(s)")
+    print("Looking for tasks assigned to agent...")
 
     result = find_agent_task(board_state, agent_name)
     if result is None:
@@ -311,7 +314,8 @@ def _run_loop(*, skip_permissions: bool = False) -> None:
         return
 
     column, task = result
-    print(f"Processing {task['key']} ({task['summary']}) from {column}")
+    print(f"Selected: {task['key']} ({task['summary']}) from column '{column}'")
+    print(f"Invoking {column} handler...")
 
     handler = COLUMN_HANDLERS[column]
     handler(task, skip_permissions=skip_permissions)
@@ -338,8 +342,10 @@ def main(
     """Run the ticket processing loop, or resume a specific issue session."""
     load_dotenv()
     if resume is not None:
+        print(f"Resume mode: {resume}")
         resume_session(resume, skip_permissions=dangerously_skip_permissions)
     else:
+        print("Running ticket loop...")
         _run_loop(skip_permissions=dangerously_skip_permissions)
 
 
