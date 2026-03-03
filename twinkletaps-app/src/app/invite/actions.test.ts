@@ -72,7 +72,7 @@ describe("acceptInvitationAction", () => {
 
     const result = await acceptInvitationAction(token);
 
-    expect(result).toEqual({ redirectTo: "/devices/dev-1" });
+    expect(result).toEqual({ redirectTo: "/w/ws-1/d/dev-1" });
   });
 
   it("throws when not authenticated", async () => {
