@@ -11,12 +11,12 @@ Stage only files that belong to the change. Exclude unrelated files.
 
 ## 2. Create One Informative Commit
 
-Use `poe git-commit` from `agent-utils` — it sets git author/committer from repo config automatically.
+Use `agent-utils git-commit` — it sets git author/committer from repo config automatically.
 
 **Always use single quotes** for the `-m` value. Double quotes let the shell interpret backticks, `$`, `<>`, etc. Escape apostrophes as `'\''`.
 
 ```bash
-poe -C agent-utils git-commit -m '<ISSUE_KEY>: <short title>
+agent-utils git-commit -m '<ISSUE_KEY>: <short title>
 
 - bullet points describing what changed'
 ```
@@ -26,7 +26,7 @@ Infer issue key from branch name `task/GFD-###/slug` if needed. If no issue cont
 **Example:**
 
 ```bash
-poe -C agent-utils git-commit -m 'GFD-42: Update app code — Team → Device
+agent-utils git-commit -m 'GFD-42: Update app code — Team → Device
 
 - Prisma: Team/UserTeam → Device/UserDevice; add deviceUuid, mqttTopic, mqttUsername; remove isPrivate
 - Services: team.ts → device.ts (getWorkspaceDevices, getDevice, getUserDeviceRole)
@@ -37,17 +37,17 @@ poe -C agent-utils git-commit -m 'GFD-42: Update app code — Team → Device
 ## 3. Push the Branch
 
 ```bash
-poe -C agent-utils git-push
+agent-utils git-push
 ```
 
-`poe git-push` pushes the current branch with `-u origin` and refuses to push `main`/`master` or non-`task/` branches.
+`agent-utils git-push` pushes the current branch with `-u origin` and refuses to push `main`/`master` or non-`task/` branches.
 
 ## 4. Open PR with gh
 
 **Always use single quotes** for `--title` and `--body`. Escape apostrophes as `'\''`.
 
 ```bash
-poe -C agent-utils gh-pr-create --base <target-branch> --title '[GFD-###] <Title>' --body '<body>'
+agent-utils gh-pr-create --base <target-branch> --title '[GFD-###] <Title>' --body '<body>'
 ```
 
 - **PR title format:** `[GFD-###] <Title>`. If no issue context, descriptive title without brackets.

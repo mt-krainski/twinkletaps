@@ -73,9 +73,9 @@ Every claim in Step 6's PR description must be backed by command output.
 Follow the `/commit` skill:
 
 1. Stage relevant files (squash fixup commits if any)
-2. `poe -C agent-utils git-commit -m '<ISSUE_KEY>: <message>'` (single quotes — see `/commit` skill)
-3. `poe -C agent-utils git-push`
-4. `poe -C agent-utils gh-pr-create --base <base-branch> --title '[GFD-###] <Title>' --body '<body>'` (single quotes)
+2. `agent-utils git-commit -m '<ISSUE_KEY>: <message>'` (single quotes — see `/commit` skill)
+3. `agent-utils git-push`
+4. `agent-utils gh-pr-create --base <base-branch> --title '[GFD-###] <Title>' --body '<body>'` (single quotes)
 5. Return the PR URL
 
 ### Step 7: Update Jira
