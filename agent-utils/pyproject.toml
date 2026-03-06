@@ -54,6 +54,8 @@ ignore = ["D104", "D100", "D101", "D106"]
 "agent_utils/gh_pr_fetch.py" = ["S603", "S607"]
 "agent_utils/gh_pr_reply.py" = ["S603", "S607"]
 "agent_utils/gh_pr_checks.py" = ["S603", "S607"]
+"agent_utils/gh_pr_list.py" = ["S603", "S607"]
+"agent_utils/gh_pr_view.py" = ["S603", "S607"]
 
 [tool.ruff.lint.flake8-builtins]
 builtins-ignorelist = ["id"]

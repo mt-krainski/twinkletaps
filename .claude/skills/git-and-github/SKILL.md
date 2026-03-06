@@ -1,6 +1,6 @@
 ---
 name: git-and-github
-description: "Reference for all git and GitHub operations via agent-utils CLI. Use this to look up the correct command for committing, pushing, creating PRs, fetching PR feedback, or replying to PR comments."
+description: "MANDATORY for ALL git and GitHub operations. Do NOT use raw git or gh commands — load this skill FIRST to get the correct agent-utils command. Covers: committing, pushing, creating PRs, fetching PR feedback, checking CI status, and replying to PR comments."
 ---
 
 # Git and GitHub via agent-utils
