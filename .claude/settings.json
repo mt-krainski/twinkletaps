@@ -22,7 +22,7 @@
     ]
   },
   "permissions": {
-    "defaultMode": "acceptEdits",
+    "defaultMode": "dontAsk",
     "allow": [
       "Bash(git status)",
       "Bash(git diff)",
