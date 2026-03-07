@@ -25,6 +25,7 @@
     "defaultMode": "dontAsk",
     "allow": [
       "Bash(git status)",
+      "Bash(git status -u)",
       "Bash(git diff)",
       "Bash(git diff *)",
       "Bash(git add *)",
