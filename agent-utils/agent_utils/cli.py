@@ -4,6 +4,7 @@ import typer
 from dotenv import load_dotenv
 
 from agent_utils.gh_pr_checks import app as gh_pr_checks_app
+from agent_utils.gh_pr_close import app as gh_pr_close_app
 from agent_utils.gh_pr_create import app as gh_pr_create_app
 from agent_utils.gh_pr_fetch import app as gh_pr_fetch_app
 from agent_utils.gh_pr_list import app as gh_pr_list_app
@@ -30,6 +31,7 @@ app.add_typer(gh_pr_list_app, name="gh-pr-list")
 app.add_typer(gh_pr_reply_app, name="gh-pr-reply")
 app.add_typer(gh_pr_view_app, name="gh-pr-view")
 app.add_typer(gh_pr_checks_app, name="gh-pr-checks")
+app.add_typer(gh_pr_close_app, name="gh-pr-close")
 app.add_typer(gh_run_view_app, name="gh-run-view")
 
 if __name__ == "__main__":

@@ -56,6 +56,7 @@ ignore = ["D104", "D100", "D101", "D106"]
 "agent_utils/gh_pr_checks.py" = ["S603", "S607"]
 "agent_utils/gh_pr_list.py" = ["S603", "S607"]
 "agent_utils/gh_pr_view.py" = ["S603", "S607"]
+"agent_utils/gh_pr_close.py" = ["S603", "S607"]
 
 [tool.ruff.lint.flake8-builtins]
 builtins-ignorelist = ["id"]
@@ -83,6 +84,7 @@ gh-pr-create = "python -m agent_utils.gh_pr_create"
 gh-pr-fetch = "python -m agent_utils.gh_pr_fetch"
 gh-pr-reply = "python -m agent_utils.gh_pr_reply"
 gh-pr-checks = "python -m agent_utils.gh_pr_checks"
+gh-pr-close = "python -m agent_utils.gh_pr_close"
 
 [tool.poe.tasks.test]
 sequence = [
