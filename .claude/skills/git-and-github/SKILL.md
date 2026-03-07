@@ -117,8 +117,34 @@ agent-utils gh-pr-reply <pr-number> --body 'Fixed.' --comment-id <comment_id>
 
 ### `gh-pr-checks` — Check PR CI status
 
+Shows check statuses and automatically fetches failed run logs when checks fail.
+
 ```bash
 agent-utils gh-pr-checks <pr-number>
+```
+
+---
+
+### `gh-pr-close` — Close a PR
+
+```bash
+agent-utils gh-pr-close <pr-number>
+agent-utils gh-pr-close <pr-number> --comment 'Closing as invalid'
+agent-utils gh-pr-close <pr-number> --delete-branch
+```
+
+---
+
+### `gh-run-view` — View a GitHub Actions run
+
+View run details or fetch failed step logs. Use this to investigate CI failures.
+
+```bash
+# View run summary
+agent-utils gh-run-view <run-id>
+
+# Fetch only failed step logs (use after gh-pr-checks identifies a failing run)
+agent-utils gh-run-view --log-failed <run-id>
 ```
 
 ---
