@@ -21,7 +21,7 @@ BASE_SHA=$(git merge-base HEAD origin/$BASE_BRANCH)
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-Infer Jira issue key from branch name (e.g. `task/GFD-42/slug` -> `GFD-42`). If found, read the issue with `jira_get_issue` for context.
+Infer Jira issue key from branch name (e.g. `task/GFD-42/slug` -> `GFD-42`). If found, read the issue with `jira-utils get-issue` for context.
 
 ### Step 2: Code Review
 
@@ -82,9 +82,9 @@ Follow the `/commit` skill:
 
 If a Jira issue was found in Step 1:
 
-1. Transition to `Review`: `jira_transition_issue` with `transition_id: "2"`
-2. Read `humanAtlassianId` from `.cursor.workflow`, assign to human via `jira_update_issue` with `fields: {"assignee": "<humanAtlassianId>"}`
-3. Add comment via `jira_add_comment`: summary of implementation + PR link + "Please review and merge, or leave feedback."
+1. Transition to `Review`: `jira-utils transition-issue --issue-key <KEY> --transition-id 2`
+2. Read `humanAtlassianId` from `.cursor.workflow`, assign to human via `jira-utils update-issue --issue-key <KEY> --fields '{"assignee": {"name": "<humanAtlassianId>"}}'`
+3. Add comment via `jira-utils add-comment`: summary of implementation + PR link + "Please review and merge, or leave feedback."
 
 **Do NOT transition to `Done`.** Done only after PR is merged to mainline.
 

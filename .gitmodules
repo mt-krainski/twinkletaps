@@ -1,0 +1,3 @@
+[submodule "hivemq-community-edition"]
+	path = hivemq-community-edition
+	url = git@github.com:mt-krainski/hivemq-community-edition.git

@@ -51,8 +51,8 @@ Every project goes through this process. A todo list, a single-function utility,
 ## After the Design
 
 **Documentation:**
-- Create or update a Jira Epic in project `GFD` via `jira_create_issue` with `issue_type: "Epic"`
-- If an Epic already exists, update via `jira_update_issue`
+- Create or update a Jira Epic in project `GFD` via `jira-utils create-issue --project GFD --type Epic`
+- If an Epic already exists, update via `jira-utils update-issue`
 
 **Implementation:**
 - Use the `/plan` skill to break the design into Jira Tasks

@@ -11,7 +11,7 @@ Pass all user arguments and relevant conversation context in the prompt so the p
 
 ## Jira Description Workaround
 
-Never use literal angle brackets (`<...>`) in Jira descriptions — the MCP server's preprocessor misinterprets them as HTML tags and silently truncates everything after them ([upstream bug](https://github.com/sooperset/mcp-atlassian/issues/XXX)). Use square brackets instead: `[placeholder]`, `[script]`, `[your-value]`.
+Never use literal angle brackets (`<...>`) in Jira descriptions — they may be misinterpreted as HTML tags and silently truncated. Use square brackets instead: `[placeholder]`, `[script]`, `[your-value]`.
 
 ## Naming Rules (enforce these in every plan)
 
@@ -26,6 +26,6 @@ When one task must complete before another can start, link them with the `"Block
 - `inward_issue_key` = the **blocker** (upstream)
 - `outward_issue_key` = the **blocked** issue (downstream)
 
-> "Task A blocks Task B" → `jira_create_issue_link(link_type="Blocks", inward_issue_key=<Task A key>, outward_issue_key=<Task B key>)`
+> "Task A blocks Task B" → `jira-utils create-issue-link --type Blocks --inward <Task A key> --outward <Task B key>`
 
 Never reverse this — creating "Task A blocks Task B" using Task B as the inward key is incorrect.

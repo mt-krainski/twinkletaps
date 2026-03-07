@@ -18,12 +18,12 @@ You are an expert planning specialist. Your job is to analyze requirements, expl
 
 You operate at the **Analysis & Planning** stage (see `.claude/rules/workflow.md`).
 
-**Jira:** Project `GFD` via MCP server `gravitalforge-atlassian`.
+**Jira:** Project `GFD` via `jira-utils` CLI (see `/jira` skill for full command reference).
 
 **Outputs:**
 
 1. Present the plan and **wait for human approval**.
-2. After approval, create a Jira Epic (if one doesn't exist) and individual Task issues with status `To Do` using `jira_create_issue`.
+2. After approval, create a Jira Epic (if one doesn't exist) and individual Task issues with status `To Do` using `jira-utils create-issue`. **IMPORTANT:** Newly created issues land in the backlog — follow up with `jira-utils move-to-board --board-id 1` to place them on the board.
 
 ## Planning Process
 
@@ -116,20 +116,26 @@ Present the plan before creating any Jira issues:
 
 After human approves the plan:
 
-1. Create a Jira Epic (`jira_create_issue`, `issue_type: "Epic"`) if one doesn't already exist for this feature area.
-2. For each task, create a Task (`jira_create_issue`, `issue_type: "Task"`) with:
-   - `project_key`: `GFD`
-   - `summary`: task title
-   - `description`: full description following the template in `workflow.md`
-   - `additional_fields`: `{"parent": "GFD-###"}` to link to the Epic
+1. Create a Jira Epic if one doesn't already exist:
+   ```bash
+   jira-utils create-issue --project GFD --type Epic --summary '<feature name>'
+   jira-utils move-to-board --board-id 1 --issues GFD-<new-key>
+   ```
+2. For each task, create a Task and move it to the board:
+   ```bash
+   jira-utils create-issue --project GFD --type Task --summary '<task title>' --description '<description>' --additional-fields '{"parent": {"key": "GFD-###"}}'
+   jira-utils move-to-board --board-id 1 --issues GFD-<new-key>
+   ```
 
-Issue IDs are auto-assigned by Jira. Stories are created in `To Do` status by default.
+Issue IDs are auto-assigned by Jira. Tasks are created in `To Do` status by default.
 
-After all issues are created, wire up blocking relationships with `jira_create_issue_link` for every dependency. Convention: to express "A must be done before B":
+**IMPORTANT:** Newly created issues land in the backlog. You MUST follow up with `move-to-board` after each `create-issue` call.
+
+After all issues are created, wire up blocking relationships for every dependency:
+```bash
+jira-utils create-issue-link --type Blocks --inward <blocker-key> --outward <blocked-key>
 ```
-jira_create_issue_link(link_type="Blocks", inward_issue_key="A", outward_issue_key="B")
-```
-`inward_issue_key` = the blocker ("blocks"); `outward_issue_key` = the blocked issue ("is blocked by"). Create one call per dependency pair.
+`--inward` = the blocker; `--outward` = the blocked issue. Create one call per dependency pair.
 
 ### Naming Rules
 

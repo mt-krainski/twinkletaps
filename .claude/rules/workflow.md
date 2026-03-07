@@ -11,7 +11,7 @@
 ## Jira Configuration
 
 **Project:** `GFD` — https://gravitalforge.atlassian.net
-**MCP server:** `gravitalforge-atlassian`
+**CLI:** `jira-utils` (see `/jira` skill for full command reference)
 
 Issue statuses and transition IDs:
 
@@ -24,9 +24,9 @@ Issue statuses and transition IDs:
 | Done        | `31`          | Merged to mainline                    |
 | Invalid     | —             | Cancelled or not applicable           |
 
-Use `jira_transition_issue` to move between statuses. Use `jira_get_issue` / `jira_search` to read issues. Use `jira_create_issue` to create. Use `jira_update_issue` to update. Use `jira_add_comment` for branch/PR/status updates.
+Use `jira-utils transition-issue` to move between statuses. Use `jira-utils get-issue` / `jira-utils search` to read issues. Use `jira-utils create-issue` to create. Use `jira-utils update-issue` to update. Use `jira-utils add-comment` for branch/PR/status updates. See `/jira` skill for full syntax.
 
-**Board placement:** Issues created via `jira_create_issue` are automatically placed on the board.
+**Board placement:** Newly created issues land in the backlog. You MUST follow up with `jira-utils move-to-board --board-id 1` to place them on the board.
 
 **Issue types:** `Epic` (feature grouping), `Task` (implementation task linked to Epic via `parent` field).
 
@@ -37,7 +37,7 @@ For the `"Blocks"` link type, the parameter names are counter-intuitive:
 - `inward_issue_key` = the issue that **does the blocking** (the upstream blocker)
 - `outward_issue_key` = the issue that **is blocked** (the downstream task)
 
-> "Task A blocks Task B" → `jira_create_issue_link(link_type="Blocks", inward_issue_key=<Task A key>, outward_issue_key=<Task B key>)`
+> "Task A blocks Task B" → `jira-utils create-issue-link --type Blocks --inward <Task A key> --outward <Task B key>`
 
 In plain terms: if Task A must finish before Task B can start, Task A is the blocker (`inward`) and Task B is the blocked issue (`outward`).
 
@@ -57,7 +57,7 @@ Workflow parameters are in `.cursor.workflow` at repo root (`key=value` format).
 
 **Assignee format:** Plain string username, not email. Example: `fields: {"assignee": "matt"}`.
 
-**Identity:** `humanAtlassianId` = the human developer. The MCP credentials belong to the AI agent (bot).
+**Identity:** `humanAtlassianId` = the human developer. The `jira-utils` CLI credentials (in `.env`) belong to the AI agent (bot).
 
 ## Stage Responsibilities
 
@@ -87,12 +87,12 @@ Workflow parameters are in `.cursor.workflow` at repo root (`key=value` format).
 ### Ready (Human Gate)
 
 - Human selects next task(s). Agent does not start multiple tasks unless instructed.
-- When starting: user provides issue key. Transition to `In Progress`. If no key, query with `jira_search`.
+- When starting: user provides issue key. Transition to `In Progress`. If no key, query with `jira-utils search`.
 - Focus on one work item at a time.
 
 ### Development
 
-0. Transition issue to `In Progress` via `jira_transition_issue`.
+0. Transition issue to `In Progress` via `jira-utils transition-issue`.
 1. Create branch: `task/<ISSUE_KEY>/<slug>`.
 2. Implement strictly according to task scope.
 3. If scope expands: stop and create follow-up task in Jira.
@@ -111,11 +111,11 @@ Then: run lint and tests. If green, invoke the `/wrap` skill. Do not transition 
 ### Review & Merge
 
 When assigned a task in `Review` status:
-1. Fetch Jira issue comments via `jira_get_issue`.
+1. Fetch Jira issue comments via `jira-utils get-issue`.
 2. Fetch PR comments via `gh api`.
 3. Determine intent:
    - Clear review comments -> address them using `/address-pr`, re-run lint/tests, push.
-   - No clear indication -> assign to human via `jira_update_issue`, add comment asking for clarification.
+   - No clear indication -> assign to human via `jira-utils update-issue`, add comment asking for clarification.
 
 **If changes required:** Leave in `Review`, add comment with required changes.
 **If accepted:** Verify CI green, merge PR, transition to `Done`.

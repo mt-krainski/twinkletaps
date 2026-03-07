@@ -22,12 +22,8 @@ The GFD board has these columns, in order:
 
 Use the **exact status name** from the table above. Do not guess or substitute column names.
 
-```
-jira_search(
-  jql: 'project = GFD AND status = "<exact status name>" ORDER BY rank ASC',
-  fields: "summary,status,priority,issuetype,parent",
-  limit: 1
-)
+```bash
+jira-utils search --jql 'project = GFD AND status = "<exact status name>" ORDER BY rank ASC' --fields summary,status,priority,issuetype,parent --limit 1
 ```
 
 **Key rules:**
@@ -43,9 +39,9 @@ When selecting a non-blocked task, use the algorithm below instead of this bare 
 Use this offset-based loop to find the first non-blocked issue in rank order. Do not deviate from these steps.
 
 1. Set `offset = 0`.
-2. Query the column: `jira_search(jql: 'project = GFD AND status = "<column>" ORDER BY rank ASC', fields: "summary,status,priority,issuetype,parent", limit: 1, start_at: offset)`.
+2. Query the column: `jira-utils search --jql 'project = GFD AND status = "<column>" ORDER BY rank ASC' --fields summary,status,priority,issuetype,parent --limit 1` (use `--next-page-token` for offset pagination).
 3. If no results: stop — no available tasks in this column (all remaining issues may be blocked, or the column is empty).
-4. Fetch the full issue: `jira_get_issue(issue_key, fields: "*all")` to get `issuelinks`.
+4. Fetch the full issue: `jira-utils get-issue --issue-key <KEY>` to get `issuelinks`.
 5. Check for active blockers: find links where `type.inward = "is blocked by"`. For each such link, check `inwardIssue.fields.status.name`. If it is not `"Done"`, the blocker is active.
 6. If any blocker is **not** Done: increment `offset` by 1 and go to Step 2.
 7. Return this issue — it is the top-most non-blocked task.

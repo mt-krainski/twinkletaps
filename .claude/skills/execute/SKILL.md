@@ -7,7 +7,7 @@ description: "Use when you have a Jira issue to implement. Handles the full cycl
 
 Execute Jira tasks one at a time. Each issue moves through: `To Do` -> `In Progress` -> `Review`.
 
-**Jira:** Project `GFD` via MCP server `gravitalforge-atlassian`.
+**Jira:** Project `GFD` via `jira-utils` CLI (see `/jira` skill for full command reference).
 
 **Core principle:** One task at a time. Transition the issue. Create the branch. Implement. Verify. Hand off to `/wrap`.
 
@@ -15,16 +15,16 @@ Execute Jira tasks one at a time. Each issue moves through: `To Do` -> `In Progr
 
 ### Step 1: Load and Review Task
 
-1. Read the Jira issue (`jira_get_issue`) for the task. Use $ARGUMENTS as the issue key if provided.
-2. **Check blockers:** Inspect `issuelinks` for "is blocked by" links. For each blocker, check status via `jira_get_issue`.
-   - If any blocker is not `Done`: **stop**. Read `humanAtlassianId` from `.cursor.workflow`, assign to human via `jira_update_issue`, add comment naming blockers. Do not proceed unless user explicitly overrides.
+1. Read the Jira issue (`jira-utils get-issue`) for the task. Use $ARGUMENTS as the issue key if provided.
+2. **Check blockers:** Inspect `issuelinks` for "is blocked by" links. For each blocker, check status via `jira-utils get-issue`.
+   - If any blocker is not `Done`: **stop**. Read `humanAtlassianId` from `.cursor.workflow`, assign to human via `jira-utils update-issue`, add comment naming blockers. Do not proceed unless user explicitly overrides.
    - If all blockers are `Done` (or none): continue.
 3. Review critically — identify questions or concerns
 4. If concerns: raise with user before starting
 
 ### Step 2: Start the Task
 
-1. Transition to `In Progress`: `jira_transition_issue` with `transition_id: "21"`
+1. Transition to `In Progress`: `jira-utils transition-issue --issue-key <KEY> --transition-id 21`
 2. Create branch: `task/<ISSUE_KEY>/<slug>`
 
 ### Step 3: Implement
@@ -45,7 +45,7 @@ Follow the issue's Implementation Plan:
 3. Run `npm run test:e2e`
 4. Verify the app builds and runs
 5. Check acceptance criteria against actual results
-6. Post branch name as Jira comment via `jira_add_comment`
+6. Post branch name as Jira comment via `jira-utils add-comment`
 
 Every claim must be backed by command output from this step.
 
