@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDevice } from "@/lib/services/device";
-import { DeviceView } from "./device-view";
+import { devicePath } from "@/lib/workspace-paths";
 
 type PageProps = {
   params: Promise<{ deviceId: string }>;
@@ -24,15 +24,5 @@ export default async function DevicePage({ params }: PageProps) {
     redirect("/");
   }
 
-  return (
-    <DeviceView
-      deviceId={device.id}
-      workspaceId={device.workspaceId}
-      deviceName={device.name}
-      deviceUuid={device.deviceUuid}
-      mqttTopic={device.mqttTopic}
-      mqttUsername={device.mqttUsername ?? undefined}
-      workspaceRole={device.workspaceRole ?? undefined}
-    />
-  );
+  redirect(devicePath(device.workspaceId, device.id));
 }
