@@ -92,6 +92,16 @@ agent-utils gh-pr-checks <pr-number>
 
 ---
 
+### `gh-pr-close` — Close a PR
+
+```bash
+agent-utils gh-pr-close <pr-number>
+agent-utils gh-pr-close <pr-number> --comment 'Closing as invalid'
+agent-utils gh-pr-close <pr-number> --delete-branch
+```
+
+---
+
 ## Configuration
 
 The CLI loads `.env` from the current directory (searching upward). The repo root `.env` must define:
@@ -102,8 +112,10 @@ GITHUB_REPO=<repo-name>
 TASK_BRANCH_PREFIX=task/
 ```
 
-## Rule
+## Rules
 
-**Never use raw `git commit`, `git push`, or `gh pr create/api` for these operations.** Use the `agent-utils` commands above. They enforce safe defaults (correct git identity, branch prefix checks, consistent repo targeting).
+**Never use raw `git commit`, `git push`, or `gh pr create/close/api` for these operations.** Use the `agent-utils` commands above. They enforce safe defaults (correct git identity, branch prefix checks, consistent repo targeting).
+
+**Never chain with `cd`.** Run `agent-utils` directly — it is installed globally via `uv tool install` and loads `.env` by searching upward from CWD. Do not use `cd /path && agent-utils ...`.
 
 **If `agent-utils` is unavailable:** Do not attempt to work around it by invoking raw `git` or `gh` directly. Instead, stop and notify the user that `agent-utils` is not installed and ask them to run `uv tool install --editable ./agent-utils`.

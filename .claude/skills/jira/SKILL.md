@@ -176,8 +176,10 @@ JIRA_USERNAME=<email>
 JIRA_API_TOKEN=<token>
 ```
 
-## Rule
+## Rules
 
-**Always use `jira-utils` CLI for Jira operations.** Do not attempt raw `curl`/`httpx` calls to the Jira API.
+**Always use `jira-utils` CLI for Jira operations.** Do not use MCP `gravitalforge-atlassian` tools (`jira_get_issue`, `jira_transition_issue`, `jira_create_issue`, etc.) as a fallback. Do not attempt raw `curl`/`httpx` calls to the Jira API.
+
+**Never chain with `cd`.** Run `jira-utils` directly — it is installed globally via `uv tool install` and loads `.env` by searching upward from CWD. Do not use `cd /path && jira-utils ...`.
 
 **If `jira-utils` is unavailable:** Stop and ask the user to install it with `uv tool install --editable ./jira-utils`.
