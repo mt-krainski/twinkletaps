@@ -65,7 +65,19 @@ export const Default: Story = {
       canvas.getByText(mockWorkspaces[0].name),
       userEvent,
       async (menu) => {
-        await userEvent.click(within(menu).getByText(mockWorkspaces[1].name));
+        // Selected workspace should have a checkmark
+        const selectedItem = within(menu).getByRole("menuitemcheckbox", {
+          name: mockWorkspaces[0].name,
+        });
+        await expect(selectedItem).toHaveAttribute("data-state", "checked");
+
+        // Non-selected workspace should not be checked
+        const otherItem = within(menu).getByRole("menuitemcheckbox", {
+          name: mockWorkspaces[1].name,
+        });
+        await expect(otherItem).toHaveAttribute("data-state", "unchecked");
+
+        await userEvent.click(otherItem);
         await expect(args.switchWorkspace).toHaveBeenCalledWith(
           mockWorkspaces[1].id,
         );
@@ -122,7 +134,19 @@ export const WithTeamWorkspace: Story = {
       canvas.getByText(mockWorkspaces[1].name),
       userEvent,
       async (menu) => {
-        await userEvent.click(within(menu).getByText(mockWorkspaces[0].name));
+        // Selected workspace (team) should be checked
+        const selectedItem = within(menu).getByRole("menuitemcheckbox", {
+          name: mockWorkspaces[1].name,
+        });
+        await expect(selectedItem).toHaveAttribute("data-state", "checked");
+
+        // Other workspace should not be checked
+        const otherItem = within(menu).getByRole("menuitemcheckbox", {
+          name: mockWorkspaces[0].name,
+        });
+        await expect(otherItem).toHaveAttribute("data-state", "unchecked");
+
+        await userEvent.click(otherItem);
         await expect(args.switchWorkspace).toHaveBeenCalledWith(
           mockWorkspaces[0].id,
         );

@@ -24,11 +24,13 @@
     "supr:push": "supabase db push --linked",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "vitest run --project unit --project storybook",
-    "test:coverage": "vitest run --project unit --project storybook --coverage",
+    "test:unit": "vitest run --project unit --project storybook",
+    "test:unit:coverage": "vitest run --project unit --project storybook --coverage",
     "test:integration": "vitest run --project integration",
     "test:integration:coverage": "vitest run --project integration --coverage",
     "test:e2e": "playwright test",
+    "test": "npm run test:unit && npm run test:integration && npm run test:e2e",
+    "test:coverage": "npm run test:unit:coverage && npm run test:integration:coverage && npm run test:e2e",
     "test:watch": "vitest"
   },
   "dependencies": {

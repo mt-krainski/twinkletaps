@@ -22,19 +22,45 @@ Object.defineProperty(globalThis, "localStorage", {
   writable: true,
 });
 
-import { saveLastWorkspace, getLastWorkspace } from "./workspace-preference";
+// Mock document.cookie
+let cookieStore = "";
+Object.defineProperty(globalThis, "document", {
+  value: {
+    get cookie() {
+      return cookieStore;
+    },
+    set cookie(value: string) {
+      cookieStore = value;
+    },
+  },
+  writable: true,
+});
+
+import {
+  saveLastWorkspace,
+  getLastWorkspace,
+  getLastWorkspaceCookieKey,
+} from "./workspace-preference";
 
 const STORAGE_KEY = "twinkletaps:lastActiveWorkspaceId";
+const COOKIE_KEY = "twinkletaps_lastActiveWorkspaceId";
 
 describe("saveLastWorkspace", () => {
   beforeEach(() => {
     localStorageMock.clear();
+    cookieStore = "";
     vi.clearAllMocks();
   });
 
   it("stores the workspace id with the correct key", () => {
     saveLastWorkspace("ws-1");
     expect(localStorageMock.setItem).toHaveBeenCalledWith(STORAGE_KEY, "ws-1");
+  });
+
+  it("sets a cookie with the workspace id", () => {
+    saveLastWorkspace("ws-1");
+    expect(cookieStore).toContain(`${COOKIE_KEY}=ws-1`);
+    expect(cookieStore).toContain("path=/");
   });
 
   it("overwrites a previously saved value", () => {
@@ -77,5 +103,11 @@ describe("getLastWorkspace", () => {
       throw new Error("localStorage unavailable");
     });
     expect(getLastWorkspace()).toBeNull();
+  });
+});
+
+describe("getLastWorkspaceCookieKey", () => {
+  it("returns the cookie key", () => {
+    expect(getLastWorkspaceCookieKey()).toBe(COOKIE_KEY);
   });
 });

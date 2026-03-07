@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { WorkspaceProvider } from "@/components/providers/workspace-provider";
 import DashboardShell from "@/app/(authenticated)/dashboard-shell";
@@ -9,6 +10,7 @@ import {
   getWorkspaceDevices,
   getUserWorkspaceRole,
 } from "@/lib/services";
+import { getLastWorkspaceCookieKey } from "@/lib/workspace-preference";
 
 interface AccountLayoutProps {
   children: ReactNode;
@@ -34,7 +36,11 @@ export default async function AccountLayout({
     name: membership.workspace.name,
   }));
 
-  const selectedWorkspaceId = workspaceList[0]?.id;
+  const cookieStore = await cookies();
+  const lastWorkspaceId = cookieStore.get(getLastWorkspaceCookieKey())?.value;
+  const selectedWorkspaceId =
+    workspaceList.find((w) => w.id === lastWorkspaceId)?.id ??
+    workspaceList[0]?.id;
   const [devices, workspaceRole] = selectedWorkspaceId
     ? await Promise.all([
         getWorkspaceDevices(user.id, selectedWorkspaceId),
