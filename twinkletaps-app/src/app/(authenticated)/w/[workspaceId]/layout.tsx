@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { WorkspaceProvider } from "@/components/providers/workspace-provider";
 import DashboardShell from "@/app/(authenticated)/dashboard-shell";
 import { registerDevice } from "@/app/(authenticated)/devices/actions";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
 import {
   getUserWorkspaces,
   getWorkspaceDevices,
@@ -19,16 +19,7 @@ export default async function WorkspaceLayout({
   children,
   params,
 }: WorkspaceLayoutProps) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (!user || userError) {
-    redirect("/auth");
-  }
-
+  const user = await getAuthUser();
   const { workspaceId } = await params;
 
   const userWorkspaces = await getUserWorkspaces(user.id);

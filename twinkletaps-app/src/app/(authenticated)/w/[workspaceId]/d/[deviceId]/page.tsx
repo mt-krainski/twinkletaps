@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
 import { getDevice } from "@/lib/services/device";
 import { workspacePath } from "@/lib/workspace-paths";
 import { DeviceView } from "@/app/(authenticated)/devices/[deviceId]/device-view";
@@ -9,15 +9,7 @@ type PageProps = {
 };
 
 export default async function WorkspaceDevicePage({ params }: PageProps) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth");
-  }
-
+  const user = await getAuthUser();
   const { deviceId, workspaceId } = await params;
   const device = await getDevice(user.id, deviceId);
 

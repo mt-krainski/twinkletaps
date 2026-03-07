@@ -19,8 +19,10 @@ test("visiting /w/{workspaceId} shows correct workspace", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
 
-  // The workspace page should render without error (DashboardHomeCard is visible)
-  await expect(page.getByRole("main")).toBeVisible({ timeout: 10000 });
+  // Verify workspace-specific content renders (DashboardHomeCard heading)
+  await expect(
+    page.getByRole("heading", { name: "Dashboard" }),
+  ).toBeVisible({ timeout: 10000 });
 });
 
 test("localStorage key is set after visiting workspace", async ({ page }) => {

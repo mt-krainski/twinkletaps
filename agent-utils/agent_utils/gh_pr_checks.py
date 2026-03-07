@@ -68,9 +68,10 @@ def run_gh_pr_checks(
         env=environ,
     )
 
-    # gh pr checks returns 1 when any check has failed — this is normal.
-    # Only bail on unexpected errors (e.g. 2 = usage error, network failure).
-    if result.returncode not in (0, 1):
+    # gh pr checks returns 1 when any check has failed — this is normal,
+    # but only when it produced stdout (the checks table). If stdout is empty
+    # and returncode != 0, the command itself errored (e.g. gh not found).
+    if result.returncode != 0 and not result.stdout:
         return result.returncode, result.stderr or result.stdout
 
     output = result.stdout
