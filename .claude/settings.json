@@ -44,6 +44,7 @@
       "Bash(agent-utils/scripts/run-with-tail.sh *)",
       "Bash(agent-utils/scripts/find-grep.sh *)",
       "Bash(agent-utils *)",
+      "Bash(jira-utils *)",
       "Bash(git merge origin/implement-nextjs-app)",
       "Read",
       "Edit",
