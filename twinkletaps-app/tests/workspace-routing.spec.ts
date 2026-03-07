@@ -19,9 +19,9 @@ test("visiting /w/{workspaceId} shows correct workspace", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
 
-  // Verify workspace-specific content renders (DashboardHomeCard heading)
+  // Verify workspace-specific content renders (DashboardHomeCard title)
   await expect(
-    page.getByRole("heading", { name: "Dashboard" }),
+    page.getByText("Dashboard", { exact: true }),
   ).toBeVisible({ timeout: 10000 });
 });
 
