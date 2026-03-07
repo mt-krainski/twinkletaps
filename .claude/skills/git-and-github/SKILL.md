@@ -1,6 +1,6 @@
 ---
 name: git-and-github
-description: "MANDATORY for ALL git and GitHub operations. Do NOT use raw git or gh commands — load this skill FIRST to get the correct agent-utils command. Covers: committing, pushing, creating PRs, fetching PR feedback, checking CI status, and replying to PR comments."
+description: "MANDATORY for ALL git and GitHub operations. Do NOT use raw git or gh commands — load this skill FIRST to get the correct agent-utils command. Covers: committing, pushing, creating PRs, listing/viewing PRs, fetching PR feedback, checking CI status, and replying to PR comments."
 ---
 
 # Git and GitHub via agent-utils
@@ -59,6 +59,37 @@ agent-utils gh-pr-create \
 
 ---
 
+### `gh-pr-list` — List pull requests
+
+Lists PRs for the repo. Optionally filter by head branch name.
+
+```bash
+# List all open PRs
+agent-utils gh-pr-list
+
+# Filter by head branch
+agent-utils gh-pr-list --head 'task/GFD-42/my-feature'
+```
+
+---
+
+### `gh-pr-view` — View a PR by number or branch name
+
+Returns PR details as JSON. The `ref` argument can be a PR number or branch name.
+
+```bash
+# View by PR number
+agent-utils gh-pr-view 123
+
+# View by branch name
+agent-utils gh-pr-view 'task/GFD-42/my-feature'
+
+# Select specific fields
+agent-utils gh-pr-view 123 --fields 'number,title,state,url'
+```
+
+---
+
 ### `gh-pr-fetch` — Fetch all PR feedback
 
 Returns combined JSON with `inline_comments`, `reviews`, and `conversation`.
@@ -86,6 +117,8 @@ agent-utils gh-pr-reply <pr-number> --body 'Fixed.' --comment-id <comment_id>
 
 ### `gh-pr-checks` — Check PR CI status
 
+Shows check statuses and automatically fetches failed run logs when checks fail.
+
 ```bash
 agent-utils gh-pr-checks <pr-number>
 ```
@@ -101,6 +134,21 @@ agent-utils gh-pr-close <pr-number> --delete-branch
 ```
 
 ---
+
+### `gh-run-view` — View a GitHub Actions run
+
+View run details or fetch failed step logs. Use this to investigate CI failures.
+
+```bash
+# View run summary
+agent-utils gh-run-view <run-id>
+
+# Fetch only failed step logs (use after gh-pr-checks identifies a failing run)
+agent-utils gh-run-view --log-failed <run-id>
+```
+
+---
+
 
 ## Configuration
 

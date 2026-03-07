@@ -11,6 +11,7 @@ This is a simple Arduino project with a Next.js web app. Modern development prac
 - Use `npm` as the package and script runner (see Behavioral Rules for the full policy on package scripts).
 - **Database migrations** use Supabase (`supabase/migrations/`), NOT Prisma. Prisma is ORM/client only.
 - **Tests:** `npm run test` (unit/integration), `npm run test:e2e` (e2e), `npm run lint` (lint). Run `test` for quick check, `test:e2e` for final check.
+- **Selectively blocked commands:** Not all Bash commands are available — some are blocked by permission policy (e.g. `gh`, `git commit`, `git push`). When a command is denied, use the corresponding `agent-utils` wrapper instead (e.g. `agent-utils gh-pr-list`, `agent-utils gh-pr-checks`, `agent-utils git-commit`). Load the `/git-and-github` skill for the full command reference. Do not assume Bash itself is disabled — try the command, and if it's blocked, reach for agent-utils.
 
 ## CI
 

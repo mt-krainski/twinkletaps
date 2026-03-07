@@ -4,6 +4,8 @@ import { createContext, useCallback, useContext } from "react";
 import { useRouter } from "next/navigation";
 import type { WorkspaceRole } from "@/lib/services/workspace";
 import type { RegisterDeviceResult } from "@/lib/services/device";
+import { saveLastWorkspace } from "@/lib/workspace-preference";
+import { workspacePath, devicePath } from "@/lib/workspace-paths";
 
 export interface WorkspaceInfo {
   id: string;
@@ -65,21 +67,24 @@ export function WorkspaceProvider({
 
   const switchWorkspace = useCallback(
     (workspaceId: string) => {
-      router.push(`/?workspace=${workspaceId}`);
+      saveLastWorkspace(workspaceId);
+      router.push(workspacePath(workspaceId));
     },
     [router]
   );
 
   const navigateToDevice = useCallback(
     (deviceId: string) => {
-      router.push(`/devices/${deviceId}`);
+      if (!selectedWorkspaceId) return;
+      router.push(devicePath(selectedWorkspaceId, deviceId));
     },
-    [router]
+    [router, selectedWorkspaceId]
   );
 
   const navigateHome = useCallback(() => {
-    router.push("/");
-  }, [router]);
+    if (!selectedWorkspaceId) return;
+    router.push(workspacePath(selectedWorkspaceId));
+  }, [router, selectedWorkspaceId]);
 
   return (
     <WorkspaceContext.Provider

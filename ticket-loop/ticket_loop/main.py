@@ -54,6 +54,7 @@ def _claude_base_cmd(*, session_id: str, skip_permissions: bool = False) -> list
     cmd = [
         "claude",
         "-p",
+        "--debug",
         "--model",
         "sonnet",
         "--verbose",

@@ -12,7 +12,9 @@ fi
 RESOLVED=$(cd "$CLAUDE_PROJECT_DIR" && realpath -m "$FILE_PATH" 2>/dev/null || echo "$FILE_PATH")
 PROJECT_DIR=$(realpath "$CLAUDE_PROJECT_DIR")
 
-if [[ "$RESOLVED" == "$PROJECT_DIR"/* ]]; then
+CLAUDE_DIR=$(realpath "$HOME/.claude" 2>/dev/null || echo "$HOME/.claude")
+
+if [[ "$RESOLVED" == "$PROJECT_DIR"/* || "$RESOLVED" == "$CLAUDE_DIR"/* ]]; then
   exit 0
 else
   jq -n '{

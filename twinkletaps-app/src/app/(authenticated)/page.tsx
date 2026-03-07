@@ -1,41 +1,31 @@
-"use client";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getUserWorkspaces } from "@/lib/services";
+import { HomeRedirect } from "./home-redirect";
+import { workspacePath } from "@/lib/workspace-paths";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { DashboardHomeCard } from "@/components/app/DashboardHomeCard";
-import { RegisterDeviceDialog } from "@/components/app/RegisterDevice";
-import { useWorkspace } from "@/components/providers/workspace-provider";
-
-export default function Home() {
-  const router = useRouter();
+export default async function Home() {
+  const supabase = await createClient();
   const {
-    devices,
-    workspaceRole,
-    navigateToDevice,
-    registerDevice,
-    selectedWorkspaceId,
-  } = useWorkspace();
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const isAdmin = workspaceRole === "admin";
+  if (!user) {
+    redirect("/auth");
+  }
 
-  return (
-    <>
-      <DashboardHomeCard
-        devices={devices}
-        onDeviceClick={navigateToDevice}
-        emptyState={isAdmin ? "register" : "no-access"}
-        onRegisterClick={() => setIsRegisterOpen(true)}
-      />
+  const userWorkspaces = await getUserWorkspaces(user.id);
+  const workspaceIds = userWorkspaces.map((m) => m.workspace.id);
 
-      {isAdmin && selectedWorkspaceId && (
-        <RegisterDeviceDialog
-          open={isRegisterOpen}
-          onOpenChange={setIsRegisterOpen}
-          onSubmit={(name) => registerDevice(selectedWorkspaceId, name)}
-          onSuccess={() => router.refresh()}
-        />
-      )}
-    </>
-  );
+  if (workspaceIds.length === 0) {
+    redirect("/account");
+  }
+
+  // Single workspace: skip client-side localStorage check
+  if (workspaceIds.length === 1) {
+    redirect(workspacePath(workspaceIds[0]));
+  }
+
+  // Multiple workspaces: use client component to check localStorage preference
+  return <HomeRedirect workspaceIds={workspaceIds} />;
 }

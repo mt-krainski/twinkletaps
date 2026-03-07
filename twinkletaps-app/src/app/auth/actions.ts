@@ -58,7 +58,7 @@ export async function verifyOtp(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect(isSafeRedirect(redirectParam) ? redirectParam : "/account");
+  redirect(isSafeRedirect(redirectParam) ? redirectParam : "/");
 }
 
 export async function resendOtp(formData: FormData) {

@@ -2,16 +2,8 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { UserProfileProvider } from "@/components/providers/user-profile-provider";
-import { WorkspaceProvider } from "@/components/providers/workspace-provider";
-import DashboardShell from "./dashboard-shell";
-import { registerDevice } from "@/app/(authenticated)/devices/actions";
 import { createClient } from "@/lib/supabase/server";
-import {
-  getProfileSummary,
-  getUserWorkspaces,
-  getWorkspaceDevices,
-  getUserWorkspaceRole,
-} from "@/lib/services";
+import { getProfileSummary } from "@/lib/services";
 
 interface AuthenticatedLayoutProps {
   children: ReactNode;
@@ -31,26 +23,6 @@ export default async function AuthenticatedLayout({
   }
 
   const profile = await getProfileSummary(user.id);
-  const userWorkspaces = await getUserWorkspaces(user.id);
-
-  const workspaceList = userWorkspaces.map((membership) => ({
-    id: membership.workspace.id,
-    name: membership.workspace.name,
-  }));
-
-  const selectedWorkspaceId = workspaceList[0]?.id;
-  const [devices, workspaceRole] = selectedWorkspaceId
-    ? await Promise.all([
-        getWorkspaceDevices(user.id, selectedWorkspaceId),
-        getUserWorkspaceRole(user.id, selectedWorkspaceId),
-      ])
-    : [[], undefined];
-
-  const deviceList = devices.map((device) => ({
-    id: device.id,
-    name: device.name,
-    deviceUuid: device.deviceUuid,
-  }));
 
   return (
     <AuthProvider>
@@ -62,15 +34,7 @@ export default async function AuthenticatedLayout({
           avatar: profile?.avatarUrl ?? undefined,
         }}
       >
-        <WorkspaceProvider
-          workspaces={workspaceList}
-          selectedWorkspaceId={selectedWorkspaceId}
-          devices={deviceList}
-          workspaceRole={workspaceRole ?? undefined}
-          registerDevice={registerDevice}
-        >
-          <DashboardShell>{children}</DashboardShell>
-        </WorkspaceProvider>
+        {children}
       </UserProfileProvider>
     </AuthProvider>
   );

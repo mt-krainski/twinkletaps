@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/allow-poe-agent-utils.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/bash-allowlist.sh"
           }
         ]
       },
@@ -25,6 +25,7 @@
     "defaultMode": "dontAsk",
     "allow": [
       "Bash(git status)",
+      "Bash(git status -u)",
       "Bash(git diff)",
       "Bash(git diff *)",
       "Bash(git add *)",

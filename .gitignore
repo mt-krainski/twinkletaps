@@ -2,6 +2,7 @@
 
 .kanban/
 .cursor-retro/
+.claude/plans
 
 .venv/
 .vscode/
