@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserWorkspaces } from "@/lib/services";
 import { HomeRedirect } from "./home-redirect";
+import { workspacePath } from "@/lib/workspace-paths";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -22,7 +23,7 @@ export default async function Home() {
 
   // Single workspace: skip client-side localStorage check
   if (workspaceIds.length === 1) {
-    redirect(`/w/${workspaceIds[0]}`);
+    redirect(workspacePath(workspaceIds[0]));
   }
 
   // Multiple workspaces: use client component to check localStorage preference

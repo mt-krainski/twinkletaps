@@ -6,6 +6,7 @@ import {
   acceptInvitation,
   type InvitationType,
 } from "@/lib/services/invitation";
+import { devicePath } from "@/lib/workspace-paths";
 
 export async function acceptInvitationAction(
   token: string,
@@ -39,7 +40,7 @@ export async function acceptInvitationAction(
 
   const redirectTo =
     invitationType === "device" && invitation.deviceId
-      ? `/w/${invitation.workspaceId}/d/${invitation.deviceId}`
+      ? devicePath(invitation.workspaceId, invitation.deviceId)
       : "/";
 
   return { redirectTo };

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDevice } from "@/lib/services/device";
+import { workspacePath } from "@/lib/workspace-paths";
 import { DeviceView } from "@/app/(authenticated)/devices/[deviceId]/device-view";
 
 type PageProps = {
@@ -21,7 +22,7 @@ export default async function WorkspaceDevicePage({ params }: PageProps) {
   const device = await getDevice(user.id, deviceId);
 
   if (!device || device.workspaceId !== workspaceId) {
-    redirect(`/w/${workspaceId}`);
+    redirect(workspacePath(workspaceId));
   }
 
   return (

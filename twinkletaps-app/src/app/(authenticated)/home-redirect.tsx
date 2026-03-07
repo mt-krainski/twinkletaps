@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getLastWorkspace } from "@/lib/workspace-preference";
+import { workspacePath } from "@/lib/workspace-paths";
 
 interface HomeRedirectProps {
   workspaceIds: string[];
@@ -18,7 +19,7 @@ export function HomeRedirect({ workspaceIds }: HomeRedirectProps) {
       workspaceIds[0];
 
     if (target) {
-      router.replace(`/w/${target}`);
+      router.replace(workspacePath(target));
     }
   }, [router, workspaceIds]);
 
