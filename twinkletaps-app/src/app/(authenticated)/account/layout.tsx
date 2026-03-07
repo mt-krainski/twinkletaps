@@ -10,15 +10,13 @@ import {
   getUserWorkspaceRole,
 } from "@/lib/services";
 
-interface WorkspaceLayoutProps {
+interface AccountLayoutProps {
   children: ReactNode;
-  params: Promise<{ workspaceId: string }>;
 }
 
-export default async function WorkspaceLayout({
+export default async function AccountLayout({
   children,
-  params,
-}: WorkspaceLayoutProps) {
+}: AccountLayoutProps) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -29,8 +27,6 @@ export default async function WorkspaceLayout({
     redirect("/auth");
   }
 
-  const { workspaceId } = await params;
-
   const userWorkspaces = await getUserWorkspaces(user.id);
 
   const workspaceList = userWorkspaces.map((membership) => ({
@@ -38,15 +34,13 @@ export default async function WorkspaceLayout({
     name: membership.workspace.name,
   }));
 
-  const matchingWorkspace = workspaceList.find((w) => w.id === workspaceId);
-  if (!matchingWorkspace) {
-    redirect("/");
-  }
-
-  const [devices, workspaceRole] = await Promise.all([
-    getWorkspaceDevices(user.id, workspaceId),
-    getUserWorkspaceRole(user.id, workspaceId),
-  ]);
+  const selectedWorkspaceId = workspaceList[0]?.id;
+  const [devices, workspaceRole] = selectedWorkspaceId
+    ? await Promise.all([
+        getWorkspaceDevices(user.id, selectedWorkspaceId),
+        getUserWorkspaceRole(user.id, selectedWorkspaceId),
+      ])
+    : [[], undefined];
 
   const deviceList = devices.map((device) => ({
     id: device.id,
@@ -57,7 +51,7 @@ export default async function WorkspaceLayout({
   return (
     <WorkspaceProvider
       workspaces={workspaceList}
-      selectedWorkspaceId={workspaceId}
+      selectedWorkspaceId={selectedWorkspaceId}
       devices={deviceList}
       workspaceRole={workspaceRole ?? undefined}
       registerDevice={registerDevice}

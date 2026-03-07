@@ -1,24 +1,30 @@
-"use client";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getUserWorkspaces } from "@/lib/services";
+import { HomeRedirect } from "./home-redirect";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useWorkspace } from "@/components/providers/workspace-provider";
-import { getLastWorkspace } from "@/lib/workspace-preference";
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export default function Home() {
-  const router = useRouter();
-  const { workspaces } = useWorkspace();
+  if (!user) {
+    redirect("/auth");
+  }
 
-  useEffect(() => {
-    const lastId = getLastWorkspace();
-    const target =
-      (lastId && workspaces.find((w) => w.id === lastId)?.id) ??
-      workspaces[0]?.id;
+  const userWorkspaces = await getUserWorkspaces(user.id);
+  const workspaceIds = userWorkspaces.map((m) => m.workspace.id);
 
-    if (target) {
-      router.replace(`/w/${target}`);
-    }
-  }, [router, workspaces]);
+  if (workspaceIds.length === 0) {
+    redirect("/account");
+  }
 
-  return null;
+  // Single workspace: skip client-side localStorage check
+  if (workspaceIds.length === 1) {
+    redirect(`/w/${workspaceIds[0]}`);
+  }
+
+  // Multiple workspaces: use client component to check localStorage preference
+  return <HomeRedirect workspaceIds={workspaceIds} />;
 }

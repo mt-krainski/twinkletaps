@@ -16,8 +16,11 @@ test("create account, logout, login", async ({ page }) => {
 
   await login(page, testUserEmail);
 
-  // The Update Profile button is inactive until
-  await page.waitForTimeout(500);
+  // After login, user is redirected to workspace
+  await expect(page).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
+
+  // Navigate to account page
+  await page.goto("/account", { waitUntil: "networkidle" });
 
   await expect(
     page.getByRole("button", { name: "Update Profile" }),
@@ -32,6 +35,12 @@ test("create account, logout, login", async ({ page }) => {
   await expect(page).toHaveURL("/auth");
 
   await login(page, testUserEmail);
+
+  // After login, user is redirected to workspace
+  await expect(page).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
+
+  // Navigate to account page to verify profile was saved
+  await page.goto("/account", { waitUntil: "networkidle" });
 
   await expect(page.getByRole("textbox", { name: "Full Name" })).toHaveValue(
     testUserName,

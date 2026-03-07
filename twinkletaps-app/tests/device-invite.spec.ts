@@ -1,7 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { login } from "../src/test-utils/playwright";
+import { login, seedMqttCredentials } from "../src/test-utils/playwright";
 
 test.describe.configure({ retries: 2 });
+
+test.beforeAll(async () => {
+  await seedMqttCredentials();
+});
 
 test("device invite: admin shares device, member accepts", async ({
   page,
@@ -20,10 +24,8 @@ test("device invite: admin shares device, member accepts", async ({
   await page.goto("/", { waitUntil: "networkidle" });
   await login(page, adminEmail);
 
-  // After first login, verifyOtp redirects to /account
-  await expect(
-    page.getByRole("button", { name: "Update Profile" }),
-  ).toBeEnabled({ timeout: 15000 });
+  // After login, user is redirected to /w/<workspaceId>
+  await expect(page).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
 
   // ── Admin: register a device via sidebar ─────────────────────────
   await expect(
@@ -41,12 +43,12 @@ test("device invite: admin shares device, member accepts", async ({
   });
   await page.getByRole("button", { name: "Done" }).click();
 
-  // ── Admin: navigate to the device via sidebar ─────────────────────
-  // router.refresh() in onSuccess causes the sidebar to reload with the new device
-  await expect(
-    page.getByRole("button", { name: deviceName }),
-  ).toBeVisible({ timeout: 10000 });
-  await page.getByRole("button", { name: deviceName }).click();
+  // ── Admin: navigate to the device ────────────────────────────────
+  // router.refresh() in onSuccess causes the page to reload with the new device
+  // Click the device card in the main content area (has role="button")
+  const deviceCard = page.getByRole("main").getByRole("button", { name: deviceName });
+  await expect(deviceCard).toBeVisible({ timeout: 10000 });
+  await deviceCard.click();
 
   await expect(page).toHaveURL(/\/w\/[^/]+\/d\/[^/]+$/, { timeout: 10000 });
   await expect(page.getByRole("heading", { name: deviceName })).toBeVisible({
@@ -75,10 +77,8 @@ test("device invite: admin shares device, member accepts", async ({
   await memberPage.goto("/", { waitUntil: "networkidle" });
   await login(memberPage, memberEmail);
 
-  // Wait for the page to settle after first login
-  await expect(
-    memberPage.getByRole("button", { name: "Update Profile" }),
-  ).toBeEnabled({ timeout: 15000 });
+  // After login, member is redirected to /w/<workspaceId>
+  await expect(memberPage).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
 
   // ── Member: navigate to invite URL and accept ─────────────────────
   // Use "load" not "networkidle" — Next.js keeps connections open and

@@ -19,10 +19,8 @@ test("workspace invite: user A creates link, user B accepts", async ({
   await page.goto("/", { waitUntil: "networkidle" });
   await login(page, adminEmail);
 
-  // Wait for the page to settle after first login (same pattern as account.spec.ts)
-  await expect(
-    page.getByRole("button", { name: "Update Profile" }),
-  ).toBeEnabled({ timeout: 15000 });
+  // After login, user is redirected to /w/<workspaceId>
+  await expect(page).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
 
   // ── User A: open "Invite to workspace" from sidebar ───────────────
   await expect(
@@ -50,10 +48,8 @@ test("workspace invite: user A creates link, user B accepts", async ({
 
   await memberPage.goto("/", { waitUntil: "networkidle" });
   await login(memberPage, memberEmail);
-  // Wait for the page to settle after first login
-  await expect(
-    memberPage.getByRole("button", { name: "Update Profile" }),
-  ).toBeEnabled({ timeout: 15000 });
+  // After login, member is redirected to /w/<workspaceId>
+  await expect(memberPage).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
 
   // ── User B: navigate to invite URL and accept ─────────────────────
   // Use "load" not "networkidle" — Next.js keeps connections open and
