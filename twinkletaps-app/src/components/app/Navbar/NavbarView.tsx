@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -68,13 +69,13 @@ export function NavbarView({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[200px]">
                 {workspaces.map((workspace) => (
-                  <DropdownMenuItem
+                  <DropdownMenuCheckboxItem
                     key={workspace.id}
+                    checked={workspace.id === selectedWorkspace?.id}
                     onClick={() => switchWorkspace(workspace.id)}
                   >
-                    <Building2 className="h-4 w-4" />
                     <span className="truncate">{workspace.name}</span>
-                  </DropdownMenuItem>
+                  </DropdownMenuCheckboxItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
