@@ -69,7 +69,7 @@ test("workspace invite: user A creates link, user B accepts", async ({
   // membership, so the workspace switcher (first dropdown in the navbar)
   // should now list two entries: own workspace + the accepted one.
   await memberPage.locator("[aria-haspopup='menu']").first().click();
-  await expect(memberPage.getByRole("menuitem")).toHaveCount(2, {
+  await expect(memberPage.getByRole("menuitemcheckbox")).toHaveCount(2, {
     timeout: 10000,
   });
   await memberPage.keyboard.press("Escape");

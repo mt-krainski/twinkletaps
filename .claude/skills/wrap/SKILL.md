@@ -63,8 +63,13 @@ npm run test
 npm run test:e2e
 ```
 
-**If tests fail on our changes:** Fix and re-run. Do not proceed until green.
-**If tests fail on unrelated issues:** Flag clearly, note failures, but proceed.
+**ALL tests must pass. Your starting assumption is that all tests were passing before your changes.** Any test failure is caused by your changes until you have exhaustively proven otherwise (e.g. by checking out the base branch and reproducing the failure there).
+
+- Investigate every failure. Read error messages, screenshots, and test code.
+- Fix whatever your changes broke — including tests in other files that depend on behavior you changed (e.g. ARIA roles, API contracts, CSS classes).
+- Never dismiss a failure as "unrelated" without concrete proof.
+- Never remove or weaken a test to make it pass.
+- Do not proceed to Step 6 until every test is green.
 
 Every claim in Step 6's PR description must be backed by command output.
 
@@ -91,7 +96,7 @@ If a Jira issue was found in Step 1:
 ## Failure Modes
 
 **Review finds critical architectural issues:** Stop. Report to user.
-**Tests fail and can't be fixed quickly:** Stop. Report. Don't create PR with failing tests.
+**Tests fail and can't be fixed after thorough investigation:** Stop. Report. Don't create PR with failing tests.
 **No Jira issue found:** Skip Jira steps. Derive PR description from git log.
 
 ## Red Flags
