@@ -46,7 +46,7 @@
       "Bash(agent-utils/scripts/find-grep.sh *)",
       "Bash(agent-utils *)",
       "Bash(jira-utils *)",
-      "Bash(git merge origin/implement-nextjs-app)",
+      "Bash(git merge origin/main)",
       "Bash(grep:*)",
       "Bash(uv run:*)",
       "Bash(uv add:*)",

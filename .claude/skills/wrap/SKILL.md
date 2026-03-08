@@ -25,7 +25,7 @@ git merge-base HEAD origin/<base-branch>
 git rev-parse HEAD
 ```
 
-Determine the base branch from branch history (usually the branch you branched from — e.g. `main`, `implement-nextjs-app`).
+Determine the base branch from branch history (usually `main`).
 
 Infer Jira issue key from branch name (e.g. `task/GFD-42/slug` -> `GFD-42`). If found, read the issue with `jira-utils get-issue` for context.
 

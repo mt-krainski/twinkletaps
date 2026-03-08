@@ -42,7 +42,7 @@ agent-utils git-push
 agent-utils gh-pr-create --base <target-branch> --title '[GFD-###] <Title>' --body '<body>'
 ```
 
-- **Target branch:** Usually the branch this was branched from (e.g. `main`, `implement-nextjs-app`). Ask if unclear.
+- **Target branch:** Usually `main`. Ask if unclear.
 - **PR body:** Task ID, "What changed" (brief bullets), "How to test", "Depends on" if relevant.
 
 ## 5. Return the PR URL
