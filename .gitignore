@@ -3,6 +3,7 @@
 .kanban/
 .cursor-retro/
 .claude/plans
+.ruff_cache
 
 .venv/
 .vscode/
