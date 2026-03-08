@@ -9,6 +9,7 @@ ALLOWED_PREFIXES=(
   "git add "
   "jira-utils "
   "agent-utils "
+  "git rm "
 )
 
 for prefix in "${ALLOWED_PREFIXES[@]}"; do
