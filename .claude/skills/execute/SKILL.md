@@ -17,7 +17,7 @@ Execute Jira tasks one at a time. Each issue moves through: `To Do` -> `In Progr
 
 1. Read the Jira issue (`jira-utils get-issue`) for the task. Use $ARGUMENTS as the issue key if provided.
 2. **Check blockers:** Inspect `issuelinks` for "is blocked by" links. For each blocker, check status via `jira-utils get-issue`.
-   - If any blocker is not `Done`: **stop**. Read `humanAtlassianId` from `.cursor.workflow`, assign to human via `jira-utils update-issue`, add comment naming blockers. Do not proceed unless user explicitly overrides.
+   - If any blocker is not `Done`: **stop**. Read `humanAtlassianId` from `.workflow`, assign to human via `jira-utils update-issue`, add comment naming blockers. Do not proceed unless user explicitly overrides.
    - If all blockers are `Done` (or none): continue.
 3. Review critically — identify questions or concerns
 4. If concerns: raise with user before starting

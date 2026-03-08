@@ -25,7 +25,7 @@ When running non-interactively (the prompt mentions the task is from a script or
 
 1. **Add the `plan` label** to the Jira task using `jira-utils update-issue`.
 2. Write the plan to the Jira task description using `jira-utils update-issue`.
-3. Reassign the task to the human (`humanAtlassianId` from `.cursor.workflow`).
+3. Reassign the task to the human (`humanAtlassianId` from `.workflow`).
 4. Transition the task to Review (transition ID `2`) using `jira-utils transition-issue`.
 5. **Stop.** Do not create implementation tickets — that happens after the human approves the plan.
 

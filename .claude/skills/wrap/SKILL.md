@@ -88,7 +88,7 @@ Follow the `/commit` skill. Squash any fixup commits before the final commit.
 If a Jira issue was found in Step 1:
 
 1. Transition to `Review`: `jira-utils transition-issue --issue-key <KEY> --transition-id 2`
-2. Read `humanAtlassianId` from `.cursor.workflow`, assign to human via `jira-utils update-issue --issue-key <KEY> --fields '{"assignee": {"name": "<humanAtlassianId>"}}'`
+2. Read `humanAtlassianId` from `.workflow`, assign to human via `jira-utils update-issue --issue-key <KEY> --fields '{"assignee": {"name": "<humanAtlassianId>"}}'`
 3. Add comment via `jira-utils add-comment`: summary of implementation + PR link + "Please review and merge, or leave feedback."
 
 **Do NOT transition to `Done`.** Done only after PR is merged to mainline.

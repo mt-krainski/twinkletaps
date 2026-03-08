@@ -47,7 +47,7 @@ See the `/jira` skill for issue link direction (`--inward` = blocker, `--outward
 
 ## User-Specific Configuration
 
-Workflow parameters are in `.cursor.workflow` at repo root (`key=value` format). **Read this file before any step requiring user-specific values.**
+Workflow parameters are in `.workflow` at repo root (`key=value` format). **Read this file before any step requiring user-specific values.**
 
 | Key                | Usage                                                    |
 |--------------------|----------------------------------------------------------|
