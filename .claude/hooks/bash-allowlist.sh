@@ -7,6 +7,8 @@ COMMAND=$(jq -r '.tool_input.command' < /dev/stdin)
 # Patterns to allow (prefix matches via == "prefix"*)
 ALLOWED_PREFIXES=(
   "git add "
+  "jira-utils "
+  "agent-utils "
 )
 
 for prefix in "${ALLOWED_PREFIXES[@]}"; do

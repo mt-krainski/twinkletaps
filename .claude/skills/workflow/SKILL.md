@@ -1,12 +1,17 @@
-# Agentic Development Workflow: Jira + Small Reviewable Increments
+---
+name: workflow
+description: "Development workflow reference — Jira statuses, naming conventions, workflow types (planning vs implementation), review procedures, and task lifecycle. Use whenever you need to interact with Jira tasks, transition issue statuses, create branches or PRs, understand the development process, or determine what to do with a task in any column (Planning, To Do, In Progress, Review). This is the single source of truth for how work moves through the system."
+---
 
-## Goals
+# Development Workflow: Jira + Small Reviewable Increments
 
-- Mimic a normal SDLC: **Plan -> Build -> Review -> Merge**.
-- Use **Jira** (project `GFD`) as the source of truth for tasks and status.
+This skill defines how you (the agent) move work through the development lifecycle. All work is tracked in Jira project `GFD`. Every code change links back to a Jira issue key.
+
+## Principles
+
 - Optimize for **small, reviewable, testable increments**: ~200-300 LOC per task (guideline, not hard cap).
-- **Invariant: the app must build and run successfully after every task.** A task that leaves the app broken is not a valid increment.
-- Every change links back to a Jira issue key.
+- **The app must build and run successfully after every task.** A task that leaves the app broken is not a valid increment.
+- Follow the lifecycle: **Plan → Build → Review → Merge**.
 
 ## Jira Configuration
 
@@ -59,7 +64,60 @@ Workflow parameters are in `.cursor.workflow` at repo root (`key=value` format).
 
 **Identity:** `humanAtlassianId` = the human developer. The `jira-utils` CLI credentials (in `.env`) belong to the AI agent (bot).
 
-## Stage Responsibilities
+## Workflow Types
+
+There are two distinct workflow types, differentiated by the `plan` label on the Jira task.
+
+### Planning Workflow (label: `plan`)
+
+For tasks that require analysis and planning before implementation.
+
+```
+Planning → Review (human approves plan) → [create epic + tasks] → Done
+```
+
+1. Task starts in **Planning**, assigned to you.
+2. Use the `/plan` skill to analyze the codebase and produce a plan. **Add the `plan` label to the task**, write the plan to the task description, transition to **Review**, assign to human.
+3. Human reviews and leaves a comment (approval or change requests), then reassigns to you.
+4. You pick it up in **Review**, see the `plan` label → read comments:
+   - **Approval comment** → create implementation Epic + Tasks (via `/plan` skill's post-approval flow) → transition the planning task to **Done**.
+   - **Change requests** → update the plan, reassign back to human, keep in **Review**.
+   - **No comment from human** → reassign back to human asking for explicit feedback. Silence does NOT mean approval.
+
+### Implementation Workflow (default, no label)
+
+For tasks that are ready to implement. No label required.
+
+```
+To Do → In Progress → Review → Done
+```
+
+1. Pick up the task from **To Do**, transition to **In Progress**.
+2. Create a feature branch (`task/GFD-###/<slug>`), implement the task following repo conventions.
+3. Run lint and tests. If green, hand off to `/wrap` for commit, PR creation, and transition to **Review**.
+4. Human reviews the PR and either approves or requests changes.
+
+### Review & Merge
+
+When assigned a task in `Review` status, **check for the `plan` label first** to determine which workflow applies:
+
+**If task has `plan` label** → this is a plan review task:
+1. Fetch Jira issue comments via `jira-utils get-issue` to read human feedback.
+2. If comment approves the plan → create implementation Epic + Tasks using the plan from the task description (via `/plan` skill), then transition planning task to Done.
+3. If comment contains change requests → address the feedback, update the plan, reassign back to human.
+4. If no new comment from human → reassign back to human with a comment asking for explicit approval or feedback.
+
+**If task does NOT have `plan` label** → this is an implementation review task:
+1. Fetch Jira issue comments via `jira-utils get-issue`.
+2. Fetch PR comments via `gh api`.
+3. Determine intent:
+   - Clear review comments → address them using `/address-pr`, re-run lint/tests, push.
+   - No clear indication → assign to human via `jira-utils update-issue`, add comment asking for clarification.
+
+**If changes required:** Leave in `Review`, add comment with required changes.
+**If accepted:** Verify CI green, merge PR, transition to `Done`.
+
+## Stage Details
 
 ### Analysis & Planning
 
@@ -82,11 +140,11 @@ Workflow parameters are in `.cursor.workflow` at repo root (`key=value` format).
 - DB migration in one task, ORM update in another (app broken between them)
 - Task N changes a contract, task N+1 updates consumers
 
-**Output:** Present plan, wait for human approval. After approval, create Jira Epic + Tasks.
+**Output:** Present plan, wait for human approval. After approval, the `/plan` skill creates Jira Epic + Tasks (the planner agent itself does not interact with Jira).
 
 ### Ready (Human Gate)
 
-- Human selects next task(s). Agent does not start multiple tasks unless instructed.
+- Human selects next task(s). Do not start multiple tasks unless instructed.
 - When starting: user provides issue key. Transition to `In Progress`. If no key, query with `jira-utils search`.
 - Focus on one work item at a time.
 
@@ -107,18 +165,6 @@ Workflow parameters are in `.cursor.workflow` at repo root (`key=value` format).
 - Branch name posted as Jira comment.
 
 Then: run lint and tests. If green, invoke the `/wrap` skill. Do not transition to `Review` directly.
-
-### Review & Merge
-
-When assigned a task in `Review` status:
-1. Fetch Jira issue comments via `jira-utils get-issue`.
-2. Fetch PR comments via `gh api`.
-3. Determine intent:
-   - Clear review comments -> address them using `/address-pr`, re-run lint/tests, push.
-   - No clear indication -> assign to human via `jira-utils update-issue`, add comment asking for clarification.
-
-**If changes required:** Leave in `Review`, add comment with required changes.
-**If accepted:** Verify CI green, merge PR, transition to `Done`.
 
 ## Pull Request Format
 
@@ -176,9 +222,10 @@ Branch name and PR URL are posted as **Jira comments**, not in the description.
 
 ## Operating Mode
 
-1. Invoke `/plan` with a description of work -> Epic + Tasks created in Jira.
-2. Pick next issue, invoke `/execute` on that Jira issue -> code + issue to `Review`.
-3. Review the PR -> merge + transition to `Done`.
+1. Invoke `/plan` with a description of work → plan produced and presented.
+2. Human approves the plan → Epic + Tasks created in Jira.
+3. Pick next issue, invoke `/execute` on that Jira issue → code + issue to `Review`.
+4. Review the PR → merge + transition to `Done`.
 
 ## Default Assumptions
 

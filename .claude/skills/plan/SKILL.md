@@ -9,6 +9,66 @@ Use the Task tool to spawn the `planner` agent with `subagent_type: "planner"`.
 
 Pass all user arguments and relevant conversation context in the prompt so the planner has full context to analyze requirements, explore the codebase, and produce a plan.
 
+## After the Planner Returns
+
+The planner agent produces a structured plan. The plan skill is responsible for what happens next.
+
+### Interactive Mode (normal conversation)
+
+1. Present the plan to the user.
+2. **Wait for human approval before proceeding.** Do not create Jira issues until explicitly approved.
+3. After approval: create Jira Epic + Tasks (see "Creating Jira Issues" below).
+
+### Ticket-Loop Mode (non-interactive, invoked via ticket-loop)
+
+When running non-interactively (the prompt mentions the task is from a script or ticket-loop):
+
+1. **Add the `plan` label** to the Jira task using `jira-utils update-issue`.
+2. Write the plan to the Jira task description using `jira-utils update-issue`.
+3. Reassign the task to the human (`humanAtlassianId` from `.cursor.workflow`).
+4. Transition the task to Review (transition ID `2`) using `jira-utils transition-issue`.
+5. **Stop.** Do not create implementation tickets — that happens after the human approves the plan.
+
+## Creating Jira Issues (Post-Approval)
+
+After human approves the plan:
+
+1. Create a Jira Epic if one doesn't already exist:
+   ```bash
+   jira-utils create-issue --project GFD --type Epic --summary '[feature name]'
+   jira-utils move-to-board --board-id 1 --issues GFD-[new-key]
+   ```
+2. For each task, create a Task and move it to the board:
+   ```bash
+   jira-utils create-issue --project GFD --type Task --summary '[task title]' --description '[description]' --additional-fields '{"parent": {"key": "GFD-###"}}'
+   jira-utils move-to-board --board-id 1 --issues GFD-[new-key]
+   ```
+3. If only one task is needed: skip the Epic, create a single implementation Task directly.
+
+Issue IDs are auto-assigned by Jira. Tasks are created in `To Do` status by default.
+
+**IMPORTANT:** Newly created issues land in the backlog. You MUST follow up with `move-to-board` after each `create-issue` call.
+
+After all issues are created, wire up blocking relationships for every dependency:
+```bash
+jira-utils create-issue-link --type Blocks --inward [blocker-key] --outward [blocked-key]
+```
+`--inward` = the blocker; `--outward` = the blocked issue. Create one call per dependency pair.
+
+After creating all issues, transition the planning task to Done (transition ID `31`).
+
+Present: **"Issues created in Jira. Which task should I start?"**
+
+## Task Description Template
+
+Each Task description must include: Problem/Goal, Non-Goals, Acceptance Criteria, Repo Context, Implementation Plan, Test Plan, Verification Notes, Risk/Rollback.
+
+Each story's **Implementation Plan** should include:
+- Exact file paths for every file to create or modify
+- Code snippets showing the key implementation (not "add validation" — show the actual code)
+- Exact test commands with expected output
+- TDD steps: write failing test -> verify fail -> implement -> verify pass
+
 ## Jira Description Workaround
 
 Never use literal angle brackets (`<...>`) in Jira descriptions — they may be misinterpreted as HTML tags and silently truncated. Use square brackets instead: `[placeholder]`, `[script]`, `[your-value]`.
@@ -26,6 +86,6 @@ When one task must complete before another can start, link them with the `"Block
 - `inward_issue_key` = the **blocker** (upstream)
 - `outward_issue_key` = the **blocked** issue (downstream)
 
-> "Task A blocks Task B" → `jira-utils create-issue-link --type Blocks --inward <Task A key> --outward <Task B key>`
+> "Task A blocks Task B" → `jira-utils create-issue-link --type Blocks --inward [Task A key] --outward [Task B key]`
 
 Never reverse this — creating "Task A blocks Task B" using Task B as the inward key is incorrect.
