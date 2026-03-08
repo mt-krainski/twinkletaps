@@ -1,17 +1,13 @@
 ---
 name: debug
-description: "Systematic debugging procedure. Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes. Always find root cause before attempting fixes."
+description: "Systematic debugging procedure. Use when encountering any bug, test failure, unexpected behavior, stack trace, error message, or when something 'used to work'. Also use when a fix attempt fails and you need a structured approach. Find root cause before attempting fixes."
 ---
 
 # Systematic Debugging
 
-## The Iron Law
+## Why Root Cause First?
 
-```
-NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
-```
-
-If you haven't completed Phase 1, you cannot propose fixes.
+Fixing without understanding the cause leads to whack-a-mole — each fix reveals a new symptom elsewhere. The investigation step is what makes the fix stick. Complete Phase 1 before proposing fixes.
 
 ## The Four Phases
 
@@ -45,9 +41,9 @@ If you haven't completed Phase 1, you cannot propose fixes.
 3. **Verify Fix** — test passes? No regressions?
 4. **If Fix Doesn't Work** — if < 3 attempts: return to Phase 1. **If ≥ 3: STOP and question architecture.** Discuss with user before attempting more.
 
-## Red Flags — STOP and Follow Process
+## Red Flags — Return to Phase 1
 
-If you catch yourself thinking:
+These thoughts signal you've skipped investigation:
 - "Quick fix for now, investigate later"
 - "Just try changing X and see"
 - "It's probably X, let me fix that"
@@ -55,7 +51,7 @@ If you catch yourself thinking:
 - "One more fix attempt" (after 2+ tries)
 - Each fix reveals new problem in different place
 
-**ALL mean: STOP. Return to Phase 1.**
+If any of these apply, return to Phase 1. The investigation is the shortcut.
 
 ## Supporting Documentation
 

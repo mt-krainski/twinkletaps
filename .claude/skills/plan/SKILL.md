@@ -81,11 +81,5 @@ Never use literal angle brackets (`<...>`) in Jira descriptions — they may be 
 - The same rule applies to section headings inside a task description — no numbered task prefixes.
 
 ### Issue link direction
-When one task must complete before another can start, link them with the `"Blocks"` type:
 
-- `inward_issue_key` = the **blocker** (upstream)
-- `outward_issue_key` = the **blocked** issue (downstream)
-
-> "Task A blocks Task B" → `jira-utils create-issue-link --type Blocks --inward [Task A key] --outward [Task B key]`
-
-Never reverse this — creating "Task A blocks Task B" using Task B as the inward key is incorrect.
+See the `/jira` skill for link direction (`--inward` = blocker, `--outward` = blocked). Never reverse this.

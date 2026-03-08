@@ -33,8 +33,7 @@ Follow the issue's Implementation Plan:
 1. Implement strictly according to task scope
 2. Use TDD: write failing test -> verify fail -> implement -> verify pass (see `/tdd`)
 3. Keep changes within ~200-300 LOC; if scope expands, stop and create follow-up issue
-4. Commit frequently: `<ISSUE_KEY>: <short message>`
-5. **Before running any command:** check `package.json` scripts first. Use `npm run <script>` — never `npx <tool>`, `yarn dlx`, or direct binary calls. See "Prefer Package Scripts" in the `/workflow` skill.
+4. Commit frequently using naming conventions from `/workflow`.
 
 ### Step 4: Verify
 
@@ -72,5 +71,4 @@ If everything is green, invoke `/wrap` immediately.
 - Don't skip verifications
 - Stop when blocked, don't guess
 - Never start implementation on main/master without explicit consent
-- Commits: `<ISSUE_KEY>: <short message>`
-- Branch: `task/<ISSUE_KEY>/<slug>`
+- Follow naming conventions from the `/workflow` skill

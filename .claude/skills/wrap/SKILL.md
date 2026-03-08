@@ -14,12 +14,18 @@ Automated pipeline: review -> fix -> lint -> test -> commit & PR.
 ### Step 1: Determine Context
 
 ```bash
-CURRENT_BRANCH=$(git branch --show-current)
-BASE_BRANCH=$(git log --oneline --decorate --all | grep -oP 'origin/\K[^ ,)]+' | head -1)
-BASE_BRANCH=${BASE_BRANCH:-main}
-BASE_SHA=$(git merge-base HEAD origin/$BASE_BRANCH)
-HEAD_SHA=$(git rev-parse HEAD)
+git branch --show-current
 ```
+
+```bash
+git merge-base HEAD origin/<base-branch>
+```
+
+```bash
+git rev-parse HEAD
+```
+
+Determine the base branch from branch history (usually the branch you branched from — e.g. `main`, `implement-nextjs-app`).
 
 Infer Jira issue key from branch name (e.g. `task/GFD-42/slug` -> `GFD-42`). If found, read the issue with `jira-utils get-issue` for context.
 
@@ -75,13 +81,7 @@ Every claim in Step 6's PR description must be backed by command output.
 
 ### Step 6: Commit & PR
 
-Follow the `/commit` skill:
-
-1. Stage relevant files (squash fixup commits if any)
-2. `agent-utils git-commit -m '<ISSUE_KEY>: <message>'` (single quotes — see `/commit` skill)
-3. `agent-utils git-push`
-4. `agent-utils gh-pr-create --base <base-branch> --title '[GFD-###] <Title>' --body '<body>'` (single quotes)
-5. Return the PR URL
+Follow the `/commit` skill. Squash any fixup commits before the final commit.
 
 ### Step 7: Update Jira
 

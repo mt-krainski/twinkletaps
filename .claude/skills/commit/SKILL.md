@@ -5,21 +5,17 @@ description: "Stage relevant changes, create one commit, push branch, and open a
 
 # Commit and Open PR
 
+Naming conventions (branch, commit, PR title) are defined in the `/workflow` skill. Command syntax is in the `/git-and-github` skill.
+
 ## 1. Stage Only the Work
 
 Stage only files that belong to the change. Exclude unrelated files.
 
 ## 2. Create One Informative Commit
 
-Use `agent-utils git-commit` — it sets git author/committer from repo config automatically.
+Use `agent-utils git-commit` (see `/git-and-github` for syntax).
 
 **Always use single quotes** for the `-m` value. Double quotes let the shell interpret backticks, `$`, `<>`, etc. Escape apostrophes as `'\''`.
-
-```bash
-agent-utils git-commit -m '<ISSUE_KEY>: <short title>
-
-- bullet points describing what changed'
-```
 
 Infer issue key from branch name `task/GFD-###/slug` if needed. If no issue context, use a descriptive title without a key.
 
@@ -40,17 +36,12 @@ agent-utils git-commit -m 'GFD-42: Update app code — Team → Device
 agent-utils git-push
 ```
 
-`agent-utils git-push` pushes the current branch with `-u origin` and refuses to push `main`/`master` or non-`task/` branches.
-
-## 4. Open PR with gh
-
-**Always use single quotes** for `--title` and `--body`. Escape apostrophes as `'\''`.
+## 4. Open PR
 
 ```bash
 agent-utils gh-pr-create --base <target-branch> --title '[GFD-###] <Title>' --body '<body>'
 ```
 
-- **PR title format:** `[GFD-###] <Title>`. If no issue context, descriptive title without brackets.
 - **Target branch:** Usually the branch this was branched from (e.g. `main`, `implement-nextjs-app`). Ask if unclear.
 - **PR body:** Task ID, "What changed" (brief bullets), "How to test", "Depends on" if relevant.
 

@@ -5,22 +5,9 @@ description: "Fetch the next task to work on from a specific Jira board column. 
 
 # Fetching Tasks from Jira
 
-## Board Columns (Statuses)
-
-The GFD board has these columns, in order:
-
-| Column      | Status name  | Meaning                                    |
-|-------------|--------------|--------------------------------------------|
-| Planning    | `Planning`   | Needs implementation planning              |
-| To Do       | `To Do`      | Approved and ready to implement            |
-| In Progress | `In Progress`| Currently being implemented                |
-| Review      | `Review`     | PR open, awaiting review                   |
-| Done        | `Done`       | Merged to mainline                         |
-| Invalid     | `Invalid`    | Cancelled or not applicable                |
-
 ## How to Fetch from a Column
 
-Use the **exact status name** from the table above. Do not guess or substitute column names.
+Board columns and their exact status names are defined in the `/workflow` skill. Use the **exact status name** (e.g. `"Planning"`, `"To Do"`, `"In Progress"`, `"Review"`, `"Done"`). Do not guess or substitute column names.
 
 ```bash
 jira-utils search --jql 'project = GFD AND status = "<exact status name>" ORDER BY rank ASC' --fields summary,status,priority,issuetype,parent --limit 1

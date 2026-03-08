@@ -41,40 +41,13 @@ Use these wrapper scripts instead of raw shell commands:
 
 ## Core Development Principles
 
-These always apply. Detailed procedures available as skills (`/tdd`, `/debug`, `/verify`).
+These always apply. Each has a dedicated skill with the full procedure — load the skill when doing the activity.
 
-### Test-Driven Development
-
-- **Write test first. Watch it fail. Implement minimal code to pass.** No production code without a failing test.
-- If you wrote code before the test: delete it. Start over with TDD. No exceptions.
-- Red-Green-Refactor cycle: failing test -> minimal implementation -> clean up.
-
-### Systematic Debugging
-
-- **Find root cause before attempting fixes.** No random fix attempts.
-- Read errors carefully. Reproduce consistently. Check recent changes. Trace data flow.
-- One hypothesis at a time. Smallest possible change to test it.
-- If 3+ fixes fail: stop and question the architecture. Discuss before continuing.
-
-### Verification Before Completion
-
-- **No completion claims without fresh verification evidence.** Run the command. Read the output. Then claim the result.
-- If you haven't run the verification command in this message, you cannot claim it passes.
-- Red flags: "should work", "probably", "seems to", expressing satisfaction before verification.
-
-### Receiving Code Review
-
-- Verify feedback before implementing. No performative agreement ("You're absolutely right!", "Great point!").
-- Push back with technical reasoning when suggestions are wrong or violate YAGNI.
-- If any feedback is unclear: stop, ask for clarification on all unclear items before implementing any.
-- Implementation order: blocking issues -> simple fixes -> complex fixes. Test each individually.
-
-### Testing Anti-Patterns
-
-- Never test mock behavior — test real component behavior.
-- Never add test-only methods to production classes — use test utilities.
-- Mock minimally and understand dependencies before mocking.
-- Incomplete mocks hide structural assumptions — mirror real API structures completely.
+- **TDD:** Write test first, watch it fail, implement minimal code. No production code without a failing test. See `/tdd`.
+- **Debugging:** Find root cause before attempting fixes. No random fix attempts. If 3+ fixes fail, stop and question the architecture. See `/debug`.
+- **Verification:** No completion claims without fresh evidence. Run the command, read the output, then claim the result. See `/verify`.
+- **Code review:** Verify feedback before implementing. Push back when wrong. No performative agreement. See `/address-pr`.
+- **Testing anti-patterns:** Test real behavior, not mocks. Mock minimally. Never add test-only methods to production classes. See `/tdd`.
 
 ## Quality Bar (Non-Negotiables)
 

@@ -37,14 +37,7 @@ Use `jira-utils transition-issue` to move between statuses. Use `jira-utils get-
 
 ### Issue Link Direction
 
-For the `"Blocks"` link type, the parameter names are counter-intuitive:
-
-- `inward_issue_key` = the issue that **does the blocking** (the upstream blocker)
-- `outward_issue_key` = the issue that **is blocked** (the downstream task)
-
-> "Task A blocks Task B" → `jira-utils create-issue-link --type Blocks --inward <Task A key> --outward <Task B key>`
-
-In plain terms: if Task A must finish before Task B can start, Task A is the blocker (`inward`) and Task B is the blocked issue (`outward`).
+See the `/jira` skill for issue link direction (`--inward` = blocker, `--outward` = blocked).
 
 ## Naming Conventions
 
@@ -109,7 +102,7 @@ When assigned a task in `Review` status, **check for the `plan` label first** to
 
 **If task does NOT have `plan` label** → this is an implementation review task:
 1. Fetch Jira issue comments via `jira-utils get-issue`.
-2. Fetch PR comments via `gh api`.
+2. Fetch PR comments via `agent-utils gh-pr-fetch`.
 3. Determine intent:
    - Clear review comments → address them using `/address-pr`, re-run lint/tests, push.
    - No clear indication → assign to human via `jira-utils update-issue`, add comment asking for clarification.
@@ -234,16 +227,3 @@ Branch name and PR URL are posted as **Jira comments**, not in the description.
 - PR title: `[GFD-###] <Title>`
 - Test commands: use repo defaults; if missing, infer and document.
 
-## Prefer Package Scripts
-
-Before running **any** command during development, check `package.json` `scripts` for an equivalent. Use `npm run <script>` — never invoke the underlying binary directly.
-
-| Forbidden | Allowed |
-|-----------|---------|
-| `npx prisma migrate dev` | `npm run migrate` |
-| `yarn dlx pkg` | `npm run tool` |
-| `./node_modules/.bin/tsc` | `npm run build` |
-| `npx jest` | `npm run test` |
-| `npx playwright test` | `npm run test:e2e` |
-
-Only fall back to a direct command if no equivalent script exists — and document why.
