@@ -1,53 +1,58 @@
 ---
 name: retro
-description: "Weekly AI-assisted retrospective. Coordinates extraction, analysis, research, and discussion of conversation friction and improvements."
-disable-model-invocation: true
+description: "Weekly AI-assisted retrospective. Analyzes Claude Code session transcripts for friction, successes, and rule adherence, then presents a structured summary for discussion."
 ---
 
 # Weekly Retrospective
 
-Orchestrate a weekly retrospective: extract conversations, analyze them, load past retros, research external solutions, and present a structured summary for discussion. Do not automatically implement improvements; always discuss first.
+Analyze recent Claude Code sessions, load past retros, research external solutions, and present a structured summary for discussion. Do not automatically implement improvements; always discuss first.
 
 ## Prerequisites
 
 - Run from **workspace root**.
-- Ensure `cursor-retro` is available: `uv run --project cursor-retro cursor-retro --help`
 
-## Step 1 — Extract
+## Step 1 — Identify Recent Sessions
 
-```bash
-uv run --project cursor-retro cursor-retro extract --workspace . --since 7
-```
+Session transcripts are JSONL files at:
+`~/.claude/projects/-Users-mateusz-Projects-twinkletaps/*.jsonl`
 
-Default `--since 7` for last 7 days. Extraction is incremental.
+List all `.jsonl` files sorted by modification time. Filter to sessions modified in the last 7 days (or a user-specified period). Each file is one session identified by its UUID filename.
+
+To check a session's timeframe, read the first few lines — each line is a JSON object with a `timestamp` field (ISO 8601).
 
 ## Step 2 — Parallel Analysis
 
-For each `.md` file in `.cursor-retro/conversations/`, use the Task tool to spawn a general-purpose sub-agent.
+For each recent session JSONL file, use the Agent tool to spawn a sub-agent.
 
-**Sub-agent instruction:** Read the conversation file and return a structured summary with:
-1. **Friction points:** Repeated corrections, misunderstandings, wasted cycles, rule violations
-2. **What went well:** Smooth flows, good patterns, effective rule usage
-3. **Rule/skill adherence:** Observations about rules or skills being followed or ignored
+**Sub-agent instruction:** Read the session JSONL file. Each line is a JSON object. Focus on lines where `type` is `"user"` or `"assistant"` — the `message.content` field contains the conversation text (user prompts, assistant responses, tool calls and results). Return a structured summary with:
+1. **Friction points:** Repeated corrections, misunderstandings, wasted cycles, rule violations, permission denials, wrong approaches
+2. **What went well:** Smooth flows, good patterns, effective skill/rule usage
+3. **Rule/skill adherence:** Observations about CLAUDE.md rules or skills being followed or ignored
 
 One sub-agent per file. Collect all outputs.
 
-## Step 3 — Aggregate and Load History
+## Step 3 — Collect Recent Skill/Config Changes
 
-1. Create directory: `mkdir -p .claude/retrospectives`
+Run `git log --since="7 days ago" --name-only -- .claude/skills/ .claude/CLAUDE.md CLAUDE.md` to see what skills or config files changed during the retro period. For each changed file, read the diff (`git diff HEAD~N -- <file>`) to understand what was fixed or added.
+
+When aggregating friction points from Step 2, cross-reference against these changes. If a friction point appears in an early session but was already addressed by a skill/config change later in the week, mark it as **"Already fixed (commit <hash>)"** rather than proposing it as a new improvement.
+
+## Step 4 — Aggregate and Load Retro History
+
+1. Create directory if needed: `mkdir -p .claude/retrospectives`
 2. Load past retros from `.claude/retrospectives/*.md` (last 3 months)
 3. For each past action, classify:
    - **Helped** — friction no longer appears (only mark once)
    - **Didn't help** — friction still present
 
-## Step 4 — Targeted Research
+## Step 5 — Targeted Research
 
 For each friction point, search for solutions using web search with targeted queries. Search these repositories:
 - https://github.com/trailofbits/claude-code-config
 - https://github.com/trailofbits/skills
 - https://github.com/obra/superpowers
 
-## Step 5 — Present Summary
+## Step 6 — Present Summary
 
 Structured summary:
 1. **What's going well** — from positive findings
@@ -55,15 +60,14 @@ Structured summary:
 3. **Past improvement status** — action -> helped / didn't help
 4. **Ideas for improvement** — top 5, with evidence (source repo/page)
 
-## Step 6 — Discuss
+## Step 7 — Discuss
 
 "Which of these improvements do you want to implement? We can prioritize by impact."
 
 Stop here. Do not proceed until user responds.
 
-## Step 7 — Save
+## Step 8 — Save
 
 1. Write retro to `.claude/retrospectives/YYYY-MM-DD-retro.md`
 2. Include: date, summary, past action status, ideas, agreed actions
-3. Stage the retro file: `git add .claude/retrospectives/YYYY-MM-DD-retro.md`
-4. Use the `/commit` skill to commit and push (message: `retro: YYYY-MM-DD retrospective`).
+3. Use the `/commit` skill to commit and push.
