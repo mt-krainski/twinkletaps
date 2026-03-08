@@ -1,13 +1,21 @@
 ---
 name: address-pr
-description: "Fetch and address GitHub PR review comments one-by-one, replying directly in GitHub threads. Use when asked to address PR comments, respond to PR feedback, or work through review threads."
+description: "Fetch and address GitHub PR review comments one-by-one, replying directly in GitHub threads. Use when asked to address PR comments, respond to PR feedback, work through review threads, or when receiving any code review feedback. Covers both the evaluation mindset (verify before implementing, push back when wrong) and the GitHub mechanics."
 ---
 
-# Addressing PR Comments
+# Addressing PR Review Comments
+
+## Core Mindset
+
+Code review requires technical evaluation, not emotional performance. Verify feedback against the codebase before implementing. Push back with technical reasoning when suggestions are wrong. Skip performative agreement — actions over words.
+
+**Forbidden responses:** "You're absolutely right!", "Great point!", "Thanks for catching that!", or any gratitude expression. Instead: restate the technical requirement, fix the issue, or push back.
+
+**If any comment is unclear:** stop — do not implement anything yet. Ask for clarification on all unclear items first, because items may be related and partial understanding leads to wrong implementation.
 
 ## Prerequisites
 
-Determine the PR number. It can be found from the branch name or Jira issue.
+Determine the PR number from the branch name or Jira issue.
 
 ## Step 1: Fetch Comments and Reviews
 
@@ -32,22 +40,40 @@ Group inline comments into threads using `in_reply_to_id`. Only address human re
 
 ## Step 3: Evaluate and Respond
 
-**Core principle: The reviewer may be wrong.** Evaluate each on technical merit.
+**The reviewer may be wrong.** Evaluate each comment on technical merit before acting.
 
-### A. Agree and implement
-Comment is correct. Make code change, reply confirming.
+### Source-specific handling
 
-### B. Agree and reply only
-Valid but no code change needed (question, intentional design).
+**From the user:** Trusted — implement after understanding. Still ask if scope is unclear.
 
-### C. Push back
-Technically wrong, violates conventions, unnecessary complexity, or violates YAGNI. Reply with technical reasoning.
+**From external reviewers:** Before implementing, check:
+1. Technically correct for THIS codebase?
+2. Breaks existing functionality?
+3. Reason for current implementation?
+4. Conflicts with user's prior architectural decisions?
 
-**Push back when:** breaks functionality, violates YAGNI, conflicts with repo patterns, technically incorrect, makes code harder to maintain.
+### Response types
 
-**How:** Cite technical reasons, reference repo rules, show concrete downside. Keep it professional.
+**A. Agree and implement** — Comment is correct. Make code change, reply confirming.
 
-**If reviewer insists:** Yield and implement, but flag if it violates principles.
+**B. Agree and reply only** — Valid but no code change needed (question, intentional design).
+
+**C. Push back** — Technically wrong, violates conventions, unnecessary complexity, or violates YAGNI. Reply with technical reasoning.
+
+Push back when: breaks functionality, violates YAGNI, conflicts with repo patterns, technically incorrect, makes code harder to maintain, reviewer lacks full context.
+
+How: cite technical reasons, reference repo rules, show concrete downside. Keep it professional.
+
+If reviewer insists: yield and implement, but flag if it violates principles.
+
+### Implementation order
+
+For multi-item feedback:
+1. Clarify anything unclear FIRST
+2. Blocking issues (breaks, security)
+3. Simple fixes (typos, imports)
+4. Complex fixes (refactoring, logic)
+5. Test each fix individually, verify no regressions
 
 ## Step 4: Reply on GitHub
 
@@ -64,7 +90,7 @@ agent-utils gh-pr-reply <pr-number> --body 'Your reply'
 ### Reply style
 - Concise and technical
 - No performative gratitude
-- If code changed: "Fixed — [brief description]"
+- If code changed: "Fixed — [brief description]" or just "Fixed."
 - If pushing back: state technical reason directly
 - Short replies like "Fixed." or "Done." are fine
 

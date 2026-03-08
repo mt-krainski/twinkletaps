@@ -96,7 +96,13 @@ jira-utils add-comment --issue-key GFD-42 --body 'Branch: task/GFD-42/add-auth'
 jira-utils create-issue-link --type Blocks --inward GFD-10 --outward GFD-11
 ```
 
-**Direction:** `--inward` = the blocker, `--outward` = the blocked issue.
+**Direction (canonical reference — other skills point here):**
+- `--inward` = the issue that **does the blocking** (the upstream blocker)
+- `--outward` = the issue that **is blocked** (the downstream task)
+
+> "Task A blocks Task B" → `--inward A --outward B`
+
+If Task A must finish before Task B can start, A is `--inward` and B is `--outward`. Never reverse this.
 
 ### `get-link-types` — List link types
 

@@ -1,6 +1,6 @@
 ---
 name: review
-description: "Request a code review on completed work. Use after completing features, before merging, or when stuck and wanting a fresh perspective."
+description: "Request a code review on completed work. Use after completing features, before merging, before creating a PR, when stuck and wanting a fresh perspective, or when the user asks for a review of their changes."
 ---
 
 # Requesting Code Review

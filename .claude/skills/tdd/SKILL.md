@@ -1,17 +1,13 @@
 ---
 name: tdd
-description: "Full TDD procedure with examples. Use when implementing features or bugfixes, before writing implementation code. Core cycle: write failing test, watch it fail, implement minimal code."
+description: "Full TDD procedure with examples. Use when implementing features or bugfixes, before writing implementation code. Core cycle: write failing test, watch it fail, implement minimal code. Use whenever you're about to write production code."
 ---
 
 # Test-Driven Development (TDD)
 
-## The Iron Law
+## Why Test First?
 
-```
-NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
-```
-
-Write code before the test? Delete it. Start over. No exceptions.
+A test written after the code doesn't prove the code works — it only proves the test matches what you wrote. A test written *before* the code proves the code satisfies a requirement. If you wrote code before the test, delete it and start over — the test needs to drive the design.
 
 ## Red-Green-Refactor
 
@@ -51,8 +47,6 @@ test('retry works', async () => {
 Requirements: one behavior, clear name, real code (no mocks unless unavoidable).
 
 ### Verify RED — Watch It Fail (MANDATORY)
-
-> **Command rule:** always use `npm run test`, `npm run lint`, `npm run test:e2e` — never `npx jest`, `npx vitest`, `npx playwright test`, etc. Check `package.json` scripts first.
 
 ```bash
 npm run test path/to/test.test.ts

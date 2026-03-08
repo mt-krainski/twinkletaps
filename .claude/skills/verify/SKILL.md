@@ -1,17 +1,13 @@
 ---
 name: verify
-description: "Verification before claiming completion. Use before claiming work is complete, before committing, or before creating PRs. Evidence before assertions, always."
+description: "Verification before claiming completion. Use before saying 'done', before claiming work is complete, before committing, before creating PRs, or before claiming tests pass. Evidence before assertions, always."
 ---
 
 # Verification Before Completion
 
-## The Iron Law
+## Why Fresh Evidence?
 
-```
-NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
-```
-
-If you haven't run the verification command in this message, you cannot claim it passes.
+Stale results lie. Code changes between runs, environments drift, tests get added. The only way to know the current state is to check the current state. If you haven't run the verification command in this message, you cannot claim it passes.
 
 ## The Gate Function
 
@@ -36,26 +32,12 @@ BEFORE claiming any status:
 | Bug fixed | Test original symptom | Code changed, assumed fixed |
 | Task completed | VCS diff shows changes | Delegate reports "success" |
 
-## Red Flags — STOP
+## Watch For
 
-- Using "should", "probably", "seems to"
-- Expressing satisfaction before verification
-- About to commit/push/PR without verification
-- Trusting delegate success reports without verification
-- ANY wording implying success without running verification
+These phrases signal you're about to claim without evidence:
+- "should work now", "probably", "seems to"
+- Expressing satisfaction before running verification
+- About to commit/push/PR without checking
+- Trusting a delegate's success report without your own verification
 
-## Rationalization Prevention
-
-| Excuse | Reality |
-|--------|---------|
-| "Should work now" | RUN the verification |
-| "I'm confident" | Confidence ≠ evidence |
-| "Just this once" | No exceptions |
-| "Linter passed" | Linter ≠ compiler |
-| "Delegate said success" | Verify independently |
-
-## The Bottom Line
-
-**Run the command. Read the output. THEN claim the result.**
-
-Non-negotiable.
+In each case: run the command, read the output, then make the claim.

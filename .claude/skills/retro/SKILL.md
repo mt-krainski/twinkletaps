@@ -66,5 +66,4 @@ Stop here. Do not proceed until user responds.
 1. Write retro to `.claude/retrospectives/YYYY-MM-DD-retro.md`
 2. Include: date, summary, past action status, ideas, agreed actions
 3. Stage the retro file: `git add .claude/retrospectives/YYYY-MM-DD-retro.md`
-4. `agent-utils git-commit -m 'retro: YYYY-MM-DD retrospective'`
-5. `agent-utils git-push`
+4. Use the `/commit` skill to commit and push (message: `retro: YYYY-MM-DD retrospective`).
