@@ -4,6 +4,15 @@
 
 This is a simple Arduino project with a Next.js web app. Modern development practices with a focus on performance and developer experience.
 
+## Project Structure (Monorepo)
+
+- `twinkletaps-app/` — Next.js web app (the main `src/` lives here)
+- `agent-utils/` — CLI wrappers for git/GitHub operations
+- `jira-utils/` — Jira CLI tool
+- `ticket-loop/` — Automated task processing loop
+- `twinkletaps-lamp/` — Arduino firmware
+- `cursor-retro/` — Session transcript extraction tool
+
 ## Project Conventions
 
 - **Component layout:** `src/components/ui/` — shadcn primitives (unchanged). `src/components/app/` — app components (shell and domain content); each in its own dir with `ComponentName.tsx`, stories, and `index.ts`. `src/components/providers/` — context providers.
@@ -26,7 +35,7 @@ Root `.github/workflows/ci.yml` is deprecated. New packages add dedicated workfl
 - Analyze codebase patterns before bigger changes and follow them.
 - If functions moved in a change chain, don't move them back without good reason.
 - **Prefer package scripts over arbitrary commands.** Before running any tool or CLI command, check `package.json` `scripts` for an equivalent. Use `npm run <script>` instead of `npx <tool>`, `yarn dlx`, or direct binary invocations. If a script exists, always use it — never call the underlying binary directly.
-- **Shell commands:** In run/shell commands, avoid: &&, ||, ;, |, >, $(), and backticks. These break wildcard matching and trigger explicit approval. Prefer single commands or separate invocations.
+- **Shell commands:** In run/shell commands, avoid: &&, ||, ;, |, >, $(), and backticks. These break wildcard matching and trigger explicit approval. Prefer single commands or separate invocations. To parse large command output, re-fetch with `--pretty` (for jira-utils) and read in chunks with the Read tool — never pipe to python/jq.
 - **File reading:** Always use the `Read` tool to read files rather than `cat` via Bash. To check if a file exists before reading, use `Read` and handle the error gracefully.
 - **Test failures are urgent.** Flag prominently. Fix if related to your changes. If environmental, try fixing. Otherwise make it clearly visible.
 - **No guessing.** Never guess API signatures, library behavior, migration tooling, or root causes. Verify by reading source, checking docs, or running commands. If unsure, say so and investigate.

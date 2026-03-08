@@ -53,7 +53,8 @@
       "Read",
       "Edit",
       "Write",
-      "mcp__*"
+      "mcp__*",
+      "WebSearch"
     ],
     "deny": [
       "Bash(rm -rf *)",

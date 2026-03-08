@@ -184,6 +184,10 @@ JIRA_API_TOKEN=<token>
 
 ## Rules
 
+**Always pass `--pretty` to `jira-utils search`.** Without it, the output is a single JSON line that exceeds the Read tool's token limit and cannot be chunked. Always use `--pretty` so results are multi-line and can be read in chunks with the Read tool.
+
+**Check `--help` before first use.** If you haven't used a `jira-utils` subcommand in this session, run `jira-utils <subcommand> --help` first to confirm available flags. Do not guess flag names.
+
 **Always use `jira-utils` CLI for Jira operations.** Do not use MCP `gravitalforge-atlassian` tools (`jira_get_issue`, `jira_transition_issue`, `jira_create_issue`, etc.) as a fallback. Do not attempt raw `curl`/`httpx` calls to the Jira API.
 
 **Never chain with `cd`.** Run `jira-utils` directly — it is installed globally via `uv tool install` and loads `.env` by searching upward from CWD. Do not use `cd /path && jira-utils ...`.
