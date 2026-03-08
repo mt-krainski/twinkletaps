@@ -1,6 +1,0 @@
-swappable
-viewsets
-Browsable
-asgi
-Validator
-twinkletaps

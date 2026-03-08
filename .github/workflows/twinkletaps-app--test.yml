@@ -1,0 +1,60 @@
+name: twinkletaps-app Unit and Component Tests
+on:
+  workflow_call:
+    inputs:
+      cache-key:
+        required: true
+        type: string
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:54322/postgres"
+      MQTT_BROKER_URL: ${{ vars.MQTT_BROKER_URL }}
+      MQTT_PUBLISHER_USERNAME: ${{ vars.MQTT_PUBLISHER_USERNAME }}
+      MQTT_PUBLISHER_PASSWORD: ${{ secrets.MQTT_PUBLISHER_PASSWORD }}
+      MQTT_TEST_TOPIC: ${{ vars.MQTT_TEST_TOPIC }}
+    defaults:
+      run:
+        working-directory: twinkletaps-app
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Restore dependencies from cache
+        uses: actions/cache@v4
+        with:
+          path: twinkletaps-app/node_modules
+          key: ${{ inputs.cache-key }}
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('twinkletaps-app/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright dependencies
+        run: |
+          npx playwright install --with-deps
+
+      - name: Test
+        run: npm run test:unit:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./twinkletaps-app/coverage/lcov.info
+          flags: unit-storybook
+          token: ${{ secrets.CODECOV_TOKEN }}

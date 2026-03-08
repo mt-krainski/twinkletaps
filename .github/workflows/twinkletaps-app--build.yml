@@ -1,0 +1,49 @@
+name: twinkletaps-app Build
+on:
+  workflow_call:
+    inputs:
+      cache-key:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:54322/postgres"
+    defaults:
+      run:
+        working-directory: twinkletaps-app
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Restore dependencies from cache
+        uses: actions/cache@v4
+        with:
+          path: twinkletaps-app/node_modules
+          key: ${{ inputs.cache-key }}
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            twinkletaps-app/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('twinkletaps-app/package-lock.json') }}-${{ hashFiles('twinkletaps-app/**/*.js', 'twinkletaps-app/**/*.jsx', 'twinkletaps-app/**/*.ts', 'twinkletaps-app/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('twinkletaps-app/package-lock.json') }}-
+
+      - name: Try build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54321"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-key"
+        run: npm run build

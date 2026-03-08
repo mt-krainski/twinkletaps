@@ -1,0 +1,31 @@
+import { redirect } from "next/navigation";
+import { getAuthUser } from "@/lib/auth";
+import { getDevice } from "@/lib/services/device";
+import { workspacePath } from "@/lib/workspace-paths";
+import { DeviceView } from "@/app/(authenticated)/devices/[deviceId]/device-view";
+
+type PageProps = {
+  params: Promise<{ workspaceId: string; deviceId: string }>;
+};
+
+export default async function WorkspaceDevicePage({ params }: PageProps) {
+  const user = await getAuthUser();
+  const { deviceId, workspaceId } = await params;
+  const device = await getDevice(user.id, deviceId);
+
+  if (!device || device.workspaceId !== workspaceId) {
+    redirect(workspacePath(workspaceId));
+  }
+
+  return (
+    <DeviceView
+      deviceId={device.id}
+      workspaceId={device.workspaceId}
+      deviceName={device.name}
+      deviceUuid={device.deviceUuid}
+      mqttTopic={device.mqttTopic}
+      mqttUsername={device.mqttUsername ?? undefined}
+      workspaceRole={device.workspaceRole ?? undefined}
+    />
+  );
+}

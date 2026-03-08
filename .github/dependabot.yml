@@ -5,11 +5,37 @@
 
 version: 2
 updates:
-  - package-ecosystem: "pip"
-    directory: "/twinkletaps-be"
+  - package-ecosystem: "uv"
+    directory: "/cursor-retro"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "uv"
+    directory: "/agent-utils"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "uv"
+    directory: "/ticket-loop"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "uv"
+    directory: "/jira-utils"
     schedule:
       interval: "weekly"
   - package-ecosystem: "npm"
-    directory: "/twinkletaps-ui"
+    directory: "/twinkletaps-app"
     schedule:
       interval: "weekly"
+    groups:
+      react-packages:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      node-packages:
+        patterns:
+          - "@types/node"
+          - "node"
+        update-types:
+          - "patch"
+          - "minor"
