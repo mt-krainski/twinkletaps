@@ -1,6 +1,7 @@
 name: cursor-retro CI
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
 on:
   push:
     branches:
@@ -44,3 +45,20 @@ jobs:
       - name: Run hooks
         working-directory: ./cursor-retro
         run: poe hooks-run
+
+  dependabot:
+    name: Dependabot auto-merge
+    needs: [build]
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' && github.event_name == 'pull_request' }}
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Enable auto-merge for Dependabot PRs
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
