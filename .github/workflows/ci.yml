@@ -1,0 +1,111 @@
+name: CI
+permissions:
+  contents: write
+  pull-requests: write
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      agent-utils: ${{ steps.filter.outputs.agent-utils }}
+      cursor-retro: ${{ steps.filter.outputs.cursor-retro }}
+      jira-utils: ${{ steps.filter.outputs.jira-utils }}
+      ticket-loop: ${{ steps.filter.outputs.ticket-loop }}
+      twinkletaps-app: ${{ steps.filter.outputs.twinkletaps-app }}
+      twinkletaps-lamp: ${{ steps.filter.outputs.twinkletaps-lamp }}
+    steps:
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            agent-utils:
+              - 'agent-utils/**'
+              - '.github/workflows/agent-utils--*'
+              - '.github/workflows/ci.yml'
+            cursor-retro:
+              - 'cursor-retro/**'
+              - '.github/workflows/cursor-retro--*'
+              - '.github/workflows/ci.yml'
+            jira-utils:
+              - 'jira-utils/**'
+              - '.github/workflows/jira-utils--*'
+              - '.github/workflows/ci.yml'
+            ticket-loop:
+              - 'ticket-loop/**'
+              - '.github/workflows/ticket-loop--*'
+              - '.github/workflows/ci.yml'
+            twinkletaps-app:
+              - 'twinkletaps-app/**'
+              - '.github/workflows/twinkletaps-app--*'
+              - '.github/workflows/ci.yml'
+            twinkletaps-lamp:
+              - 'twinkletaps-lamp/**'
+              - '.github/workflows/twinkletaps-lamp--*'
+              - '.github/workflows/ci.yml'
+
+  agent-utils:
+    needs: changes
+    if: needs.changes.outputs.agent-utils == 'true'
+    uses: ./.github/workflows/agent-utils--ci.yml
+
+  cursor-retro:
+    needs: changes
+    if: needs.changes.outputs.cursor-retro == 'true'
+    uses: ./.github/workflows/cursor-retro--ci.yml
+
+  jira-utils:
+    needs: changes
+    if: needs.changes.outputs.jira-utils == 'true'
+    uses: ./.github/workflows/jira-utils--ci.yml
+
+  ticket-loop:
+    needs: changes
+    if: needs.changes.outputs.ticket-loop == 'true'
+    uses: ./.github/workflows/ticket-loop--ci.yml
+
+  twinkletaps-app:
+    needs: changes
+    if: needs.changes.outputs.twinkletaps-app == 'true'
+    uses: ./.github/workflows/twinkletaps-app--ci.yml
+    secrets: inherit
+
+  twinkletaps-lamp:
+    needs: changes
+    if: needs.changes.outputs.twinkletaps-lamp == 'true'
+    uses: ./.github/workflows/twinkletaps-lamp--ci.yml
+
+  gate:
+    name: CI Gate
+    needs: [agent-utils, cursor-retro, jira-utils, ticket-loop, twinkletaps-app, twinkletaps-lamp]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check results
+        run: |
+          echo "Results: ${{ toJSON(needs.*.result) }}"
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "Some checks failed or were cancelled"
+            exit 1
+          fi
+
+  dependabot:
+    name: Dependabot auto-merge
+    needs: [gate]
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Enable auto-merge for Dependabot PRs
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
