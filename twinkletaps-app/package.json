@@ -7,7 +7,7 @@
     "dev": "next dev --turbopack",
     "build": "npm run prepare-third-party-licenses-file && cp THIRD_PARTY_LICENSES.txt public/ && next build && node ./scripts/add-copyright-notice.js",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "update-email-templates": "dotenv -e .env -- node scripts/update-email-templates.js",
     "prepare-third-party-licenses-file": "node ./scripts/parse-licenses.js",
     "db:generate": "prisma generate",
