@@ -42,8 +42,8 @@
       "Bash(npm run *)",
       "Bash(npm install)",
       "Bash(npm view *)",
-      "Bash(cd:*)",
-      "Bash(ls:*)",
+      "Bash(cd *)",
+      "Bash(ls *)",
       "Bash(agent-utils/scripts/run-with-tail.sh *)",
       "Bash(agent-utils/scripts/find-grep.sh *)",
       "Bash(agent-utils *)",
@@ -59,13 +59,14 @@
       "WebSearch"
     ],
     "deny": [
-      "Bash(rm -rf *)",
       "Bash(sudo *)",
       "Bash(npm run supr:*)",
       "Write(.claude/**)",
       "Read(.env*)",
       "Bash(cat .env*)",
-      "Bash(grep * .env*)"
+      "Bash(grep * .env*)",
+      "Update($CLAUDE_PROJECT_DIR/.claude/settings.json)"
     ]
   }
 }
+

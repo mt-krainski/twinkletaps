@@ -43,5 +43,31 @@ if [[ "$COMMAND" == "cd "* ]]; then
   fi
 fi
 
+# Allow rm/rm -rf within project directory
+if [[ "$COMMAND" == "rm "* ]]; then
+  # Extract all path arguments (skip flags like -rf, -r, -f)
+  ALL_PATHS_SAFE=true
+  for arg in $COMMAND; do
+    [[ "$arg" == "rm" ]] && continue
+    [[ "$arg" == -* ]] && continue
+    # Resolve to absolute path
+    RESOLVED=$(realpath -m "$arg" 2>/dev/null)
+    if [[ -z "$RESOLVED" || "$RESOLVED" != "$PROJECT_DIR"* || "$RESOLVED" == "$PROJECT_DIR" ]]; then
+      ALL_PATHS_SAFE=false
+      break
+    fi
+  done
+  if [[ "$ALL_PATHS_SAFE" == "true" ]]; then
+    jq -n '{
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        permissionDecision: "allow",
+        permissionDecisionReason: "rm within project directory"
+      }
+    }'
+    exit 0
+  fi
+fi
+
 # No match — fall through to default permission handling
 exit 0
