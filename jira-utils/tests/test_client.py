@@ -131,3 +131,49 @@ class TestRequest:
         self._make_client().get("/rest/api/2/search", params={"jql": "x"})
         call_kwargs = mock_request.call_args[1]
         assert call_kwargs["params"] == {"jql": "x"}
+
+
+class TestResolveAccountId:
+    def _make_client(self):
+        return JiraClient(
+            base_url="https://jira.test",
+            username="user",
+            api_token="token",
+        )
+
+    @patch("jira_utils.client.httpx.request")
+    def test_resolves_display_name(self, mock_request):
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.is_success = True
+        resp.json.return_value = [
+            {"accountId": "abc-123", "displayName": "Jane Doe", "active": True},
+        ]
+        resp.content = b"[...]"
+        mock_request.return_value = resp
+
+        result = self._make_client().resolve_account_id("Jane Doe")
+
+        assert result == "abc-123"
+        call_kwargs = mock_request.call_args[1]
+        assert call_kwargs["params"] == {"query": "Jane Doe"}
+
+    @patch("jira_utils.client.httpx.request")
+    def test_raises_on_no_match(self, mock_request):
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.is_success = True
+        resp.json.return_value = []
+        resp.content = b"[]"
+        mock_request.return_value = resp
+
+        with pytest.raises(ValueError, match="No Jira user found"):
+            self._make_client().resolve_account_id("Nobody")
+
+    @patch("jira_utils.client.httpx.request")
+    def test_returns_accountid_as_is(self, mock_request):
+        """If input looks like an accountId (contains ':'), skip the lookup."""
+        result = self._make_client().resolve_account_id("712020:f516654f-76e2")
+
+        assert result == "712020:f516654f-76e2"
+        mock_request.assert_not_called()

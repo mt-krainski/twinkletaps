@@ -48,7 +48,7 @@ jira-utils create-issue \
   --summary 'Fix login bug' \
   --type Bug \
   --description 'Login fails on mobile' \
-  --assignee matt \
+  --assignee 'Matt Krainski' \
   --components Frontend,API \
   --additional-fields '{"priority": {"name": "High"}, "parent": {"key": "GFD-10"}}' \
   --pretty
@@ -58,9 +58,10 @@ jira-utils create-issue \
 
 ```bash
 jira-utils update-issue --issue-key GFD-42 \
-  --fields '{"summary": "Updated title", "assignee": {"name": "matt"}}' \
+  --fields '{"summary": "Updated title"}' \
   --pretty
 
+jira-utils update-issue --issue-key GFD-42 --assignee "Matt Krainski"
 jira-utils update-issue --issue-key GFD-42 --components Frontend,API
 ```
 

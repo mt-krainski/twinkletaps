@@ -35,7 +35,7 @@ def run_create_issue(
     if description:
         fields["description"] = description
     if assignee:
-        fields["assignee"] = {"name": assignee}
+        fields["assignee"] = {"accountId": client.resolve_account_id(assignee)}
     if components:
         fields["components"] = [{"name": c.strip()} for c in components.split(",")]
     if additional_fields:
@@ -50,7 +50,9 @@ def main(
     summary: str = typer.Option(..., "--summary", help="Issue summary"),
     type: str = typer.Option(..., "--type", help="Issue type (Task, Bug, etc.)"),
     description: str | None = typer.Option(None, "--description", help="Description"),
-    assignee: str | None = typer.Option(None, "--assignee", help="Assignee username"),
+    assignee: str | None = typer.Option(
+        None, "--assignee", help="Assignee display name or accountId"
+    ),
     components: str | None = typer.Option(
         None, "--components", help="Comma-separated component names"
     ),

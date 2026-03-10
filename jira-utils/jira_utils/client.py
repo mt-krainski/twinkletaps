@@ -80,3 +80,17 @@ class JiraClient:
     def put(self, path: str, json: dict | list | None = None) -> dict | list | None:
         """HTTP PUT."""
         return self._request("PUT", path, json=json)
+
+    def resolve_account_id(self, name_or_id: str) -> str:
+        """Resolve a display name to a Jira Cloud accountId.
+
+        If the input already looks like an accountId (contains ':'),
+        it is returned as-is without making an API call.
+        """
+        if ":" in name_or_id:
+            return name_or_id
+
+        results = self.get("/rest/api/2/user/search", params={"query": name_or_id})
+        if not results:
+            raise ValueError(f"No Jira user found matching '{name_or_id}'")
+        return results[0]["accountId"]

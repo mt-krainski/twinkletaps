@@ -35,6 +35,19 @@ class TestRunUpdateIssue:
             {"name": "API"},
         ]
 
+    def test_update_assignee(self):
+        client = MagicMock(spec=JiraClient)
+        client.put.return_value = None
+        client.resolve_account_id.return_value = "abc-123"
+
+        run_update_issue("GFD-42", assignee="Jane Doe", client=client)
+
+        client.resolve_account_id.assert_called_once_with("Jane Doe")
+        client.put.assert_called_once_with(
+            "/rest/api/2/issue/GFD-42",
+            json={"fields": {"assignee": {"accountId": "abc-123"}}},
+        )
+
     def test_empty_update(self):
         client = MagicMock(spec=JiraClient)
         client.put.return_value = None
