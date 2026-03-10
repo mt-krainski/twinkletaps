@@ -87,6 +87,38 @@ def test_refuses_push_when_branch_has_no_prefix(tmp_path: Path) -> None:
     )
 
 
+def test_push_succeeds_on_dependabot_branch(tmp_path: Path) -> None:
+    bare = tmp_path / "bare"
+    bare.mkdir()
+    _run_git(bare, "init", "--bare")
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo(repo)
+    _run_git(repo, "remote", "add", "origin", str(bare))
+    _run_git(repo, "checkout", "-b", "dependabot/npm_and_yarn/some-dep-1.2.3")
+    (repo / "f").write_text("x")
+    _run_git(repo, "add", "f")
+    _run_git(repo, "commit", "-m", "initial")
+    result = _run_git_push(repo)
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_push_succeeds_with_comma_separated_prefixes(tmp_path: Path) -> None:
+    bare = tmp_path / "bare"
+    bare.mkdir()
+    _run_git(bare, "init", "--bare")
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo(repo)
+    _run_git(repo, "remote", "add", "origin", str(bare))
+    _run_git(repo, "checkout", "-b", "feat/my-feature")
+    (repo / "f").write_text("x")
+    _run_git(repo, "add", "f")
+    _run_git(repo, "commit", "-m", "initial")
+    result = _run_git_push(repo, env={"TASK_BRANCH_PREFIX": "task/, feat/"})
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
 def test_refuses_when_detached_head(tmp_path: Path) -> None:
     _init_repo(tmp_path)
     (tmp_path / "f").write_text("x")

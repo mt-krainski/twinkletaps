@@ -41,6 +41,7 @@
       "Bash(mkdir *)",
       "Bash(npm run *)",
       "Bash(npm install)",
+      "Bash(npm install *)",
       "Bash(npm view *)",
       "Bash(cd *)",
       "Bash(ls *)",
