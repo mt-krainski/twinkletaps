@@ -90,9 +90,7 @@ class JiraClient:
         if ":" in name_or_id:
             return name_or_id
 
-        results = self.get(
-            "/rest/api/2/user/search", params={"query": name_or_id}
-        )
+        results = self.get("/rest/api/2/user/search", params={"query": name_or_id})
         if not results:
             raise ValueError(f"No Jira user found matching '{name_or_id}'")
         return results[0]["accountId"]
