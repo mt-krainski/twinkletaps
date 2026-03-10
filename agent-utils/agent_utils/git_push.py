@@ -7,7 +7,7 @@ from pathlib import Path
 import typer
 
 FORBIDDEN_BRANCHES = ("main", "master")
-DEFAULT_PREFIX = "task/"
+DEFAULT_PREFIXES = "task/,dependabot/"
 
 
 def _current_branch(repo: Path) -> str | None:
@@ -35,7 +35,8 @@ def main() -> None:
     Refuses main/master, non-prefix branches, or detached HEAD.
     """
     repo = Path.cwd()
-    prefix = os.environ.get("TASK_BRANCH_PREFIX", DEFAULT_PREFIX)
+    raw = os.environ.get("TASK_BRANCH_PREFIX", "").strip() or DEFAULT_PREFIXES
+    prefixes = [p.strip() for p in raw.split(",") if p.strip()]
 
     branch = _current_branch(repo)
     if branch is None:
@@ -46,9 +47,9 @@ def main() -> None:
         typer.echo(f"git-push: refusing to push '{branch}'", err=True)
         raise typer.Exit(1)
 
-    if not branch.startswith(prefix):
+    if not any(branch.startswith(p) for p in prefixes):
         typer.echo(
-            f"git-push: branch must start with {prefix!r}, got {branch!r}",
+            f"git-push: branch must start with one of {prefixes!r}, got {branch!r}",
             err=True,
         )
         raise typer.Exit(1)
