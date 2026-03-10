@@ -15,6 +15,7 @@ def run_update_issue(
     issue_key: str,
     *,
     fields: str | None = None,
+    assignee: str | None = None,
     components: str | None = None,
     client: JiraClient | None = None,
     env: dict[str, str] | None = None,
@@ -26,6 +27,10 @@ def run_update_issue(
     payload: dict = {}
     if fields:
         payload["fields"] = json.loads(fields)
+    if assignee:
+        payload.setdefault("fields", {})["assignee"] = {
+            "accountId": client.resolve_account_id(assignee)
+        }
     if components:
         payload.setdefault("fields", {})["components"] = [
             {"name": c.strip()} for c in components.split(",")
@@ -42,6 +47,9 @@ def main(
     fields: str | None = typer.Option(
         None, "--fields", help="Fields to update as JSON string"
     ),
+    assignee: str | None = typer.Option(
+        None, "--assignee", help="Assignee display name or accountId"
+    ),
     components: str | None = typer.Option(
         None, "--components", help="Comma-separated component names"
     ),
@@ -51,7 +59,9 @@ def main(
     from jira_utils._output import handle_error, output_json
 
     try:
-        result = run_update_issue(issue_key, fields=fields, components=components)
+        result = run_update_issue(
+            issue_key, fields=fields, assignee=assignee, components=components
+        )
         output_json(result, pretty=pretty)
     except Exception as exc:
         handle_error(exc)

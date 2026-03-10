@@ -28,6 +28,7 @@ class TestRunCreateIssue:
     def test_with_all_options(self):
         client = MagicMock(spec=JiraClient)
         client.post.return_value = {"key": "GFD-100"}
+        client.resolve_account_id.return_value = "abc-123"
 
         run_create_issue(
             "GFD",
@@ -40,9 +41,10 @@ class TestRunCreateIssue:
             client=client,
         )
 
+        client.resolve_account_id.assert_called_once_with("matt")
         call_json = client.post.call_args[1]["json"]
         fields = call_json["fields"]
         assert fields["description"] == "A bug"
-        assert fields["assignee"] == {"name": "matt"}
+        assert fields["assignee"] == {"accountId": "abc-123"}
         assert fields["components"] == [{"name": "Frontend"}, {"name": "API"}]
         assert fields["priority"] == {"name": "High"}
