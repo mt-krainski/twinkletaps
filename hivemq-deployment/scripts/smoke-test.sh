@@ -43,13 +43,8 @@ timeout 5 bash -c 'echo > /dev/tcp/localhost/8000' || { echo "FAIL: WebSocket po
 echo "WebSocket port 8000 is accessible"
 
 if ! command -v mosquitto_pub &> /dev/null; then
-  if [ "${CI:-}" = "true" ]; then
-    echo "ERROR: mosquitto_pub required in CI but not found."
-    exit 1
-  fi
-  echo "mosquitto_pub not found. Install mosquitto-clients (apt) or mosquitto (brew)."
-  echo "Skipping pub/sub test, but broker started successfully."
-  exit 0
+  echo "ERROR: mosquitto_pub not found. Install mosquitto-clients (apt) or mosquitto (brew)."
+  exit 1
 fi
 
 TOPIC="twinkletaps/smoke-test"
