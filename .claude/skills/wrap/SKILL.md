@@ -5,9 +5,9 @@ description: "Finish a development branch: code review -> fix issues -> lint -> 
 
 # Wrap Development Branch
 
-Automated pipeline: review -> fix -> lint -> test -> commit & PR.
+Automated pipeline: review -> fix -> lint -> test -> commit & PR -> CI watch.
 
-**Announce at start:** "Wrapping up — running review -> fix -> lint -> test -> commit & PR."
+**Announce at start:** "Wrapping up — running review -> fix -> lint -> test -> commit & PR -> CI watch."
 
 ## Pipeline
 
@@ -88,16 +88,33 @@ Follow the `/commit` skill. Squash any fixup commits before the final commit.
 If a Jira issue was found in Step 1:
 
 1. Transition to `Review`: `jira-utils transition-issue --issue-key <KEY> --transition-id 2`
-2. Read `humanAtlassianId` from `.workflow`, assign to human via `jira-utils update-issue --issue-key <KEY> --fields '{"assignee": {"name": "<humanAtlassianId>"}}'`
+2. Read `humanAtlassianId` from `.workflow`, assign to human via `jira-utils update-issue --issue-key <KEY> --assignee "<humanAtlassianId>"`
 3. Add comment via `jira-utils add-comment`: summary of implementation + PR link + "Please review and merge, or leave feedback."
 
 **Do NOT transition to `Done`.** Done only after PR is merged to mainline.
+
+### Step 8: CI Watch
+
+**Only runs if a PR was created and changes were pushed.**
+
+Poll CI status every 60 seconds until all checks complete:
+
+```bash
+agent-utils gh-pr-checks <PR_NUMBER>
+```
+
+- **All checks pass:** Report success and finish.
+- **Any check fails:** Investigate with `agent-utils gh-run-view <RUN_ID>` and `agent-utils gh-run-view --log-failed <RUN_ID>`. Fix the issue, commit, push, and restart the CI watch loop.
+- **Still pending:** Sleep 60 seconds and check again.
+
+Do not poll more than 30 times (30 minutes). If CI is still pending after that, report to the user and stop.
 
 ## Failure Modes
 
 **Review finds critical architectural issues:** Stop. Report to user.
 **Tests fail and can't be fixed after thorough investigation:** Stop. Report. Don't create PR with failing tests.
 **No Jira issue found:** Skip Jira steps. Derive PR description from git log.
+**CI fails and can't be fixed after 3 attempts:** Stop. Report the failure details to the user.
 
 ## Red Flags
 
