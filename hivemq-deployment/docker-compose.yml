@@ -1,6 +1,6 @@
 services:
   hivemq:
-    image: hivemq/hivemq-ce:2024.11
+    image: hivemq/hivemq-ce:2024.9
     container_name: twinkletaps-hivemq
     ports:
       - "1883:1883"
