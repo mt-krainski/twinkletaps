@@ -35,7 +35,7 @@ def main() -> None:
     Refuses main/master, non-prefix branches, or detached HEAD.
     """
     repo = Path.cwd()
-    raw = os.environ.get("TASK_BRANCH_PREFIX", DEFAULT_PREFIXES)
+    raw = os.environ.get("TASK_BRANCH_PREFIX", "").strip() or DEFAULT_PREFIXES
     prefixes = [p.strip() for p in raw.split(",") if p.strip()]
 
     branch = _current_branch(repo)

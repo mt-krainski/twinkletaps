@@ -11,6 +11,6 @@ if [ ! -f .env ]; then
   cat > .env <<EOL
 GITHUB_OWNER=
 GITHUB_REPO=
-TASK_BRANCH_PREFIX=
+TASK_BRANCH_PREFIX=task/,dependabot/
 EOL
 fi

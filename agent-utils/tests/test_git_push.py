@@ -99,7 +99,7 @@ def test_push_succeeds_on_dependabot_branch(tmp_path: Path) -> None:
     (repo / "f").write_text("x")
     _run_git(repo, "add", "f")
     _run_git(repo, "commit", "-m", "initial")
-    result = _run_git_push(repo)
+    result = _run_git_push(repo, env={"TASK_BRANCH_PREFIX": ""})
     assert result.returncode == 0, result.stderr or result.stdout
 
 
