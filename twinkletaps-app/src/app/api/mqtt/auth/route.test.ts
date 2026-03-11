@@ -1,6 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
 
+const mockConfig = vi.hoisted(() => ({
+  mqttAuth: {
+    secret: "test-secret" as string | undefined,
+    publisherUsername: "publisher_user" as string | undefined,
+    publisherPassword: "publisher_pass" as string | undefined,
+  },
+}));
+vi.mock("@/lib/config", () => ({
+  config: mockConfig,
+}));
+
 const mockFindFirst = vi.fn();
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -39,9 +50,9 @@ describe("POST /api/mqtt/auth", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MQTT_AUTH_SECRET = "test-secret";
-    process.env.MQTT_PUBLISHER_USERNAME = "publisher_user";
-    process.env.MQTT_PUBLISHER_PASSWORD = "publisher_pass";
+    mockConfig.mqttAuth.secret = "test-secret";
+    mockConfig.mqttAuth.publisherUsername = "publisher_user";
+    mockConfig.mqttAuth.publisherPassword = "publisher_pass";
   });
 
   it("authenticates a valid device and returns allowed topics", async () => {
@@ -166,7 +177,7 @@ describe("POST /api/mqtt/auth", () => {
   });
 
   it("returns 500 when MQTT_AUTH_SECRET is not configured", async () => {
-    delete process.env.MQTT_AUTH_SECRET;
+    mockConfig.mqttAuth.secret = undefined;
 
     const res = await POST(
       makeRequest(
@@ -184,8 +195,8 @@ describe("POST /api/mqtt/auth", () => {
     expect(res.status).toBe(400);
   });
 
-  it("does not match publisher when MQTT_PUBLISHER_USERNAME is unset", async () => {
-    delete process.env.MQTT_PUBLISHER_USERNAME;
+  it("does not match publisher when publisherUsername is unset", async () => {
+    mockConfig.mqttAuth.publisherUsername = undefined;
     mockFindFirst.mockResolvedValue(null);
 
     const res = await POST(

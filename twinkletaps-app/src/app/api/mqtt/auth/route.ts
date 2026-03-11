@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { config } from "@/lib/config";
 import { prisma } from "@/lib/prisma";
 import { MQTT_TOPIC_PREFIX } from "@/lib/services/device";
 import { verifyMqttPassword } from "@/lib/services/mqtt-auth";
 
 export async function POST(request: Request) {
-  const expectedToken = process.env.MQTT_AUTH_SECRET;
-  if (!expectedToken) {
+  const { secret, publisherUsername, publisherPassword } = config.mqttAuth;
+  if (!secret) {
     return NextResponse.json(
       { error: "Server misconfigured" },
       { status: 500 },
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   }
 
   const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${expectedToken}`) {
+  if (authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -28,8 +29,6 @@ export async function POST(request: Request) {
   }
 
   // Publisher user gets publish access to all device topics
-  const publisherUsername = process.env.MQTT_PUBLISHER_USERNAME;
-  const publisherPassword = process.env.MQTT_PUBLISHER_PASSWORD;
   if (publisherUsername && username === publisherUsername) {
     if (password === publisherPassword) {
       return NextResponse.json({
