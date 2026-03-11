@@ -8,7 +8,7 @@ import typer
 OWNER_ENV = "GITHUB_OWNER"
 REPO_ENV = "GITHUB_REPO"
 
-app = typer.Typer()
+app = typer.Typer(invoke_without_command=True)
 
 
 def run_gh_pr_reply(
@@ -71,7 +71,7 @@ def run_gh_pr_reply(
     return subprocess.run(cmd, capture_output=True, text=True, env=environ)
 
 
-@app.command()
+@app.callback()
 def main(
     pr_number: int = typer.Argument(..., help="PR number"),
     body: str = typer.Option(
