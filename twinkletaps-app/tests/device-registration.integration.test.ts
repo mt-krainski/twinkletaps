@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "../src/lib/prisma";
 import { registerDeviceForUser } from "../src/lib/services/device";
+import { verifyMqttPassword } from "../src/lib/services/mqtt-auth";
 
 const hasDb =
   !!process.env.DATABASE_URL &&
@@ -15,7 +16,6 @@ const describeIfDb = hasDb ? describe : describe.skip;
 describeIfDb("device registration (integration)", () => {
   let profileId: string;
   let workspaceId: string;
-  let mqttCredentialId: string;
   let supabaseAdmin: ReturnType<typeof createClient>;
   let authUserId: string;
 
@@ -50,15 +50,6 @@ describeIfDb("device registration (integration)", () => {
     }
     profileId = authUserId;
     workspaceId = membership.workspaceId;
-
-    const cred = await prisma.mqttCredential.create({
-      data: {
-        username: `mqtt-int-${crypto.randomUUID().slice(0, 8)}`,
-        password: "test-password",
-        allocatedUuid: crypto.randomUUID(),
-      },
-    });
-    mqttCredentialId = cred.id;
   }, 15000);
 
   afterEach(async () => {
@@ -70,11 +61,10 @@ describeIfDb("device registration (integration)", () => {
       where: { userId: profileId, workspaceId },
     });
     await prisma.workspace.delete({ where: { id: workspaceId } });
-    await prisma.mqttCredential.delete({ where: { id: mqttCredentialId } });
     await supabaseAdmin.auth.admin.deleteUser(authUserId);
   }, 10000);
 
-  it("creates device with claimed credential and returns credentials", async () => {
+  it("creates device with generated credentials and stores bcrypt hash", async () => {
     const result = await registerDeviceForUser(
       profileId,
       workspaceId,
@@ -84,7 +74,7 @@ describeIfDb("device registration (integration)", () => {
     expect(result.deviceId).toBeDefined();
     expect(result.deviceUuid).toBeDefined();
     expect(result.mqttTopic).toBe(`twinkletaps/devices/${result.deviceUuid}`);
-    expect(result.mqttUsername).toBeDefined();
+    expect(result.mqttUsername).toMatch(/^dev_[a-z0-9]+$/);
     expect(result.mqttPassword).toBeDefined();
 
     const device = await prisma.device.findUnique({
@@ -96,11 +86,13 @@ describeIfDb("device registration (integration)", () => {
     expect(device!.deviceUuid).toBe(result.deviceUuid);
     expect(device!.mqttTopic).toBe(result.mqttTopic);
     expect(device!.mqttUsername).toBe(result.mqttUsername);
+    expect(device!.mqttPasswordHash).toBeDefined();
 
-    const credential = await prisma.mqttCredential.findFirst({
-      where: { username: result.mqttUsername },
-    });
-    expect(credential).not.toBeNull();
-    expect(credential!.claimedAt).not.toBeNull();
+    // Verify the returned password matches the stored hash
+    const isValid = await verifyMqttPassword(
+      result.mqttPassword,
+      device!.mqttPasswordHash!,
+    );
+    expect(isValid).toBe(true);
   });
 });
