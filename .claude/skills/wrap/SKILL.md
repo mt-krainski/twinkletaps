@@ -5,9 +5,11 @@ description: "Finish a development branch: code review -> fix issues -> lint -> 
 
 # Wrap Development Branch
 
-Automated pipeline: review -> fix -> lint -> test -> commit & PR -> CI watch.
+**The single exit point for all code changes.** Every change that gets pushed goes through `/wrap`.
 
-**Announce at start:** "Wrapping up — running review -> fix -> lint -> test -> commit & PR -> CI watch."
+Automated pipeline: review -> fix -> lint -> test -> commit -> PR -> Jira -> CI watch.
+
+**Announce at start:** "Wrapping up — running review -> fix -> lint -> test -> commit -> PR -> Jira -> CI watch."
 
 ## Pipeline
 
@@ -31,12 +33,7 @@ Infer Jira issue key from branch name (e.g. `task/GFD-42/slug` -> `GFD-42`). If 
 
 ### Step 2: Code Review
 
-Use the Task tool to spawn the `code-reviewer` agent (`subagent_type: "code-reviewer"`). Provide the review template from `.claude/docs/code-reviewer-template.md` with:
-
-- `{WHAT_WAS_IMPLEMENTED}` — from issue title/description
-- `{PLAN_OR_REQUIREMENTS}` — from issue acceptance criteria
-- `{BASE_SHA}` / `{HEAD_SHA}` — from Step 1
-- `{DESCRIPTION}` — brief summary of changes
+Follow the `/review` skill to spawn the code-reviewer agent. Provide context from Step 1 (SHAs, issue description, acceptance criteria).
 
 Wait for the review result.
 
@@ -50,7 +47,7 @@ Wait for the review result.
 
 If no Critical or Important issues, skip to Step 4.
 
-After fixes, stage and commit (fixup commit, not a PR yet).
+After fixes, stage and commit locally (`git add` + `agent-utils git-commit`). Do not push yet — Step 6 handles the push.
 
 ### Step 4: Lint
 
@@ -77,13 +74,27 @@ npm run test:e2e
 - Never remove or weaken a test to make it pass.
 - Do not proceed to Step 6 until every test is green.
 
-Every claim in Step 6's PR description must be backed by command output.
+Every claim in Step 7's PR description must be backed by command output.
 
-### Step 6: Commit & PR
+### Step 6: Commit & Push
 
-Follow the `/commit` skill. Squash any fixup commits before the final commit.
+Invoke the `/commit` skill. Squash any fixup commits before the final commit.
 
-### Step 7: Update Jira
+This stages, commits, and pushes — but does NOT open a PR (that's Step 7).
+
+### Step 7: Open PR
+
+```bash
+agent-utils gh-pr-create --base <target-branch> --title '[GFD-###] <Title>' --body '<body>'
+```
+
+- **Target branch:** Usually `main`. Ask if unclear.
+- **PR body:** Task ID, "What changed" (brief bullets), "How to test", "Depends on" if relevant.
+- **If a PR already exists** for this branch: skip PR creation. Just push.
+
+Return the PR URL.
+
+### Step 8: Update Jira
 
 If a Jira issue was found in Step 1:
 
@@ -93,9 +104,9 @@ If a Jira issue was found in Step 1:
 
 **Do NOT transition to `Done`.** Done only after PR is merged to mainline.
 
-### Step 8: CI Watch
+### Step 9: CI Watch
 
-**Only runs if a PR was created and changes were pushed.**
+**Only runs if a PR was created/updated and changes were pushed.**
 
 Poll CI status every 60 seconds until all checks complete:
 
