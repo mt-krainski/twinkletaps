@@ -22,4 +22,9 @@ export const config = {
     username: process.env.MQTT_PUBLISHER_USERNAME,
     password: process.env.MQTT_PUBLISHER_PASSWORD,
   },
+  mqttAuth: {
+    secret: process.env.MQTT_AUTH_SECRET,
+    publisherUsername: process.env.MQTT_PUBLISHER_USERNAME,
+    publisherPassword: process.env.MQTT_PUBLISHER_PASSWORD,
+  },
 } as const;

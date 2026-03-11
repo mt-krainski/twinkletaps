@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { registerDevice, sendTap, generateShareLink } from "./actions";
-import { MqttCredentialPoolEmptyError } from "@/lib/services/device";
 
 const mockGetUser = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({
@@ -19,9 +18,6 @@ vi.mock("@/lib/services/device", () => ({
   registerDeviceForUser: (...args: unknown[]) =>
     mockRegisterDeviceForUser(...args),
   getDevice: (...args: unknown[]) => mockGetDevice(...args),
-  MqttCredentialPoolEmptyError: class extends Error {
-    readonly name = "MqttCredentialPoolEmptyError";
-  },
 }));
 
 const mockPublishToDevice = vi.fn();
@@ -78,15 +74,6 @@ describe("registerDevice", () => {
     expect(mockRegisterDeviceForUser).not.toHaveBeenCalled();
   });
 
-  it("propagates MqttCredentialPoolEmptyError from registerDeviceForUser", async () => {
-    mockRegisterDeviceForUser.mockRejectedValue(
-      new MqttCredentialPoolEmptyError("No unclaimed MQTT credentials in pool"),
-    );
-
-    await expect(registerDevice(workspaceId, "Device")).rejects.toThrow(
-      MqttCredentialPoolEmptyError,
-    );
-  });
 });
 
 describe("sendTap", () => {

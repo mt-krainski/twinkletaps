@@ -46,8 +46,9 @@ model Device {
   avatarUrl   String?   @map("avatar_url")
   deviceUuid  String    @unique @map("device_uuid") @db.Uuid
   mqttTopic   String    @map("mqtt_topic")
-  mqttUsername String?  @map("mqtt_username")
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  mqttUsername     String?  @map("mqtt_username")
+  mqttPasswordHash String?  @map("mqtt_password_hash")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
 

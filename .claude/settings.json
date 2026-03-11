@@ -42,6 +42,7 @@
       "Bash(npm run *)",
       "Bash(npm install)",
       "Bash(npm install *)",
+      "Bash(npm uninstall *)",
       "Bash(npm view *)",
       "Bash(cd *)",
       "Bash(ls *)",
