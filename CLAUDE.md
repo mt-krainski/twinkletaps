@@ -40,7 +40,7 @@ Root `.github/workflows/ci.yml` is deprecated. New packages add dedicated workfl
 - **File reading:** Always use the `Read` tool to read files rather than `cat` via Bash. To check if a file exists before reading, use `Read` and handle the error gracefully.
 - **Test failures are urgent.** Flag prominently. Fix if related to your changes. If environmental, try fixing. Otherwise make it clearly visible.
 - **No guessing.** Never guess API signatures, library behavior, migration tooling, or root causes. Verify by reading source, checking docs, or running commands. If unsure, say so and investigate.
-- **Always use the `/commit` skill when committing.** Never run `git commit` / `git push` ad-hoc — invoke the skill so its rules (staging, message format, explicit branch push, PR creation) are followed consistently.
+- **`/wrap` is the single exit point for all code changes.** Every change that gets pushed goes through `/wrap` (review, lint, test, commit, PR, Jira, CI watch). Use `/commit` only as a low-level utility within `/wrap` — never call it directly to finalize work. Never run `git commit` / `git push` ad-hoc. Exception: `/retro` may use `/commit` directly for retrospective documents that don't affect code.
 
 ### Custom scripts
 

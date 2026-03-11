@@ -98,18 +98,13 @@ agent-utils gh-pr-reply <pr-number> --body 'Your reply'
 
 1. Group changes by file
 2. Implement
-3. Run lint and tests
-4. Reply to each addressed comment on GitHub
+3. Reply to each addressed comment on GitHub
 
-## Step 6: Commit, Push, and Finalize
+## Step 6: Hand Off to /wrap
 
-If code changes were made:
+If code changes were made, invoke `/wrap` to run the full pipeline (lint, test, commit, push, CI watch). Do NOT commit or push directly — `/wrap` handles that.
 
-1. Stage relevant files
-2. `agent-utils git-commit -m '<ISSUE_KEY>: Address PR #N review comments'`
-3. `agent-utils git-push`
-
-If no code changes: replies-only is a valid outcome.
+If no code changes were made (replies-only), this is a valid outcome — no `/wrap` needed.
 
 ## Output
 
@@ -120,5 +115,5 @@ Addressed N comments on PR #X:
 - N pushed back on
 
 Changes made: [brief list]
-Committed and pushed: yes/no
+Handing off to /wrap: yes/no
 ```

@@ -1,0 +1,20 @@
+name: hivemq-deployment CI
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install mosquitto clients
+        run: sudo apt-get update && sudo apt-get install -y mosquitto-clients
+
+      - name: Run smoke test
+        working-directory: ./hivemq-deployment
+        run: bash scripts/smoke-test.sh

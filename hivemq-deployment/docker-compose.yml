@@ -1,0 +1,19 @@
+services:
+  hivemq:
+    image: hivemq/hivemq-ce:2024.9
+    container_name: twinkletaps-hivemq
+    ports:
+      - "1883:1883"
+      - "8000:8000"
+    environment:
+      HIVEMQ_ALLOW_ALL_CLIENTS: "true"
+    volumes:
+      # Placeholder — Docker auto-creates as empty dir until hivemq-auth-extension is built
+      - ../hivemq-auth-extension/build/deploy/twinkletaps-auth-extension:/opt/hivemq/extensions/twinkletaps-auth-extension
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/1883'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped

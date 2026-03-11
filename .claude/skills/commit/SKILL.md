@@ -1,9 +1,13 @@
 ---
 name: commit
-description: "Stage relevant changes, create one commit, push branch, and open a PR with gh. Use when asked to commit and create a PR, or as part of the /wrap pipeline."
+description: "Stage relevant changes, create one commit, and push the branch. Low-level utility — does NOT open PRs or update Jira. Use /wrap for the full pipeline (review, test, commit, PR, Jira, CI watch)."
 ---
 
-# Commit and Open PR
+# Commit and Push
+
+Low-level utility: stage, commit, push. That's it.
+
+For the full pipeline (review, lint, test, PR, Jira, CI), use `/wrap` instead.
 
 Naming conventions (branch, commit, PR title) are defined in the `/workflow` skill. Command syntax is in the `/git-and-github` skill.
 
@@ -35,16 +39,3 @@ agent-utils git-commit -m 'GFD-42: Update app code — Team → Device
 ```bash
 agent-utils git-push
 ```
-
-## 4. Open PR
-
-```bash
-agent-utils gh-pr-create --base <target-branch> --title '[GFD-###] <Title>' --body '<body>'
-```
-
-- **Target branch:** Usually `main`. Ask if unclear.
-- **PR body:** Task ID, "What changed" (brief bullets), "How to test", "Depends on" if relevant.
-
-## 5. Return the PR URL
-
-Return the PR URL from `gh pr create` output to the user.
