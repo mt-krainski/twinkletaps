@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hivemq-extension>
+    <id>twinkletaps-auth-extension</id>
+    <name>Twinkletaps Auth Extension</name>
+    <version>1.0.0</version>
+    <priority>1000</priority>
+    <start-priority>1000</start-priority>
+</hivemq-extension>

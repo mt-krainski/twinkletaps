@@ -14,6 +14,7 @@ jobs:
     outputs:
       agent-utils: ${{ steps.filter.outputs.agent-utils }}
       cursor-retro: ${{ steps.filter.outputs.cursor-retro }}
+      hivemq-auth-extension: ${{ steps.filter.outputs.hivemq-auth-extension }}
       hivemq-deployment: ${{ steps.filter.outputs.hivemq-deployment }}
       jira-utils: ${{ steps.filter.outputs.jira-utils }}
       ticket-loop: ${{ steps.filter.outputs.ticket-loop }}
@@ -32,6 +33,10 @@ jobs:
             cursor-retro:
               - 'cursor-retro/**'
               - '.github/workflows/cursor-retro--*'
+              - '.github/workflows/ci.yml'
+            hivemq-auth-extension:
+              - 'hivemq-auth-extension/**'
+              - '.github/workflows/hivemq-auth-extension--*'
               - '.github/workflows/ci.yml'
             hivemq-deployment:
               - 'hivemq-deployment/**'
@@ -64,6 +69,11 @@ jobs:
     if: needs.changes.outputs.cursor-retro == 'true'
     uses: ./.github/workflows/cursor-retro--ci.yml
 
+  hivemq-auth-extension:
+    needs: changes
+    if: needs.changes.outputs.hivemq-auth-extension == 'true'
+    uses: ./.github/workflows/hivemq-auth-extension--ci.yml
+
   hivemq-deployment:
     needs: changes
     if: needs.changes.outputs.hivemq-deployment == 'true'
@@ -92,7 +102,7 @@ jobs:
 
   gate:
     name: CI Gate
-    needs: [agent-utils, cursor-retro, hivemq-deployment, jira-utils, ticket-loop, twinkletaps-app, twinkletaps-lamp]
+    needs: [agent-utils, cursor-retro, hivemq-auth-extension, hivemq-deployment, jira-utils, ticket-loop, twinkletaps-app, twinkletaps-lamp]
     if: always()
     runs-on: ubuntu-latest
     steps:

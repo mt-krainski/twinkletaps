@@ -54,10 +54,15 @@
       "Bash(grep:*)",
       "Bash(uv run:*)",
       "Bash(uv add:*)",
+      "Bash(./gradlew *)",
+      "Bash(gradle*)",
+      "Bash(java*)",
+      "WebFetch(domain:docs.hivemq.com)",
       "Read",
       "Edit",
       "Write",
       "mcp__*",
+      "mcp__context7__*",
       "WebSearch"
     ],
     "deny": [
