@@ -1,15 +1,13 @@
+import { randomUUID } from "node:crypto";
 import { prisma } from "../prisma";
+import { generateMqttCredentials, hashMqttPassword } from "./mqtt-auth";
 import { getUserWorkspaceRole } from "./workspace";
-import {
-  claimMqttCredential,
-  MqttCredentialPoolEmptyError,
-} from "./mqtt-credentials";
 
 export type DeviceRole = "user";
 
 const NAME_MIN_LENGTH = 1;
 const NAME_MAX_LENGTH = 100;
-const MQTT_TOPIC_PREFIX = "twinkletaps/devices";
+export const MQTT_TOPIC_PREFIX = "twinkletaps/devices";
 
 export type RegisterDeviceResult = {
   deviceId: string;
@@ -39,9 +37,10 @@ export async function registerDeviceForUser(
     );
   }
 
-  const credential = await claimMqttCredential();
-  const deviceUuid = credential.allocatedUuid;
-  const mqttTopic = `${MQTT_TOPIC_PREFIX}/${credential.allocatedUuid}`;
+  const deviceUuid = randomUUID();
+  const mqttTopic = `${MQTT_TOPIC_PREFIX}/${deviceUuid}`;
+  const credentials = generateMqttCredentials();
+  const passwordHash = await hashMqttPassword(credentials.password);
 
   const device = await prisma.device.create({
     data: {
@@ -49,7 +48,8 @@ export async function registerDeviceForUser(
       name: trimmedName,
       deviceUuid,
       mqttTopic,
-      mqttUsername: credential.username,
+      mqttUsername: credentials.username,
+      mqttPasswordHash: passwordHash,
     },
   });
 
@@ -57,12 +57,10 @@ export async function registerDeviceForUser(
     deviceId: device.id,
     deviceUuid,
     mqttTopic,
-    mqttUsername: credential.username,
-    mqttPassword: credential.password,
+    mqttUsername: credentials.username,
+    mqttPassword: credentials.password,
   };
 }
-
-export { MqttCredentialPoolEmptyError };
 
 export async function getWorkspaceDevices(userId: string, workspaceId: string) {
   const workspaceRole = await getUserWorkspaceRole(userId, workspaceId);

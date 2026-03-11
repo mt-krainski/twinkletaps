@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  registerDeviceForUser,
-  MqttCredentialPoolEmptyError,
-} from "./device";
+import { registerDeviceForUser } from "./device";
 
 const mockGetUserWorkspaceRole = vi.fn();
 vi.mock("./workspace", () => ({
@@ -10,12 +7,15 @@ vi.mock("./workspace", () => ({
     mockGetUserWorkspaceRole(...args),
 }));
 
-const mockClaimMqttCredential = vi.fn();
-vi.mock("./mqtt-credentials", () => ({
-  claimMqttCredential: () => mockClaimMqttCredential(),
-  MqttCredentialPoolEmptyError: class extends Error {
-    readonly name = "MqttCredentialPoolEmptyError";
-  },
+const mockGenerateMqttCredentials = vi.fn();
+const mockHashMqttPassword = vi.fn();
+vi.mock("./mqtt-auth", () => ({
+  generateMqttCredentials: () => mockGenerateMqttCredentials(),
+  hashMqttPassword: (pw: string) => mockHashMqttPassword(pw),
+}));
+
+vi.mock("node:crypto", () => ({
+  randomUUID: () => "generated-device-uuid",
 }));
 
 const mockDeviceCreate = vi.fn();
@@ -30,42 +30,44 @@ vi.mock("../prisma", () => ({
 describe("registerDeviceForUser", () => {
   const userId = "user-1";
   const workspaceId = "ws-1";
-  const allocatedUuid = "alloc-uuid-1";
-  const credential = {
-    username: "mqtt-user",
-    password: "mqtt-pass",
-    allocatedUuid,
+  const generatedCredentials = {
+    username: "dev_abc123",
+    password: "random-base64url-password",
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetUserWorkspaceRole.mockResolvedValue("admin");
-    mockClaimMqttCredential.mockResolvedValue(credential);
+    mockGenerateMqttCredentials.mockReturnValue(generatedCredentials);
+    mockHashMqttPassword.mockResolvedValue("$2a$10$hashedpassword");
     mockDeviceCreate.mockResolvedValue({
       id: "device-id-1",
-      deviceUuid: allocatedUuid,
-      mqttTopic: `twinkletaps/devices/${allocatedUuid}`,
-      mqttUsername: credential.username,
+      deviceUuid: "generated-device-uuid",
+      mqttTopic: "twinkletaps/devices/generated-device-uuid",
+      mqttUsername: generatedCredentials.username,
     });
   });
 
-  it("creates device with correct fields and returns credentials including password", async () => {
+  it("creates device with generated credentials and returns password", async () => {
     const result = await registerDeviceForUser(userId, workspaceId, "My Device");
 
     expect(result).toEqual({
       deviceId: "device-id-1",
-      deviceUuid: allocatedUuid,
-      mqttTopic: `twinkletaps/devices/${allocatedUuid}`,
-      mqttUsername: credential.username,
-      mqttPassword: credential.password,
+      deviceUuid: "generated-device-uuid",
+      mqttTopic: "twinkletaps/devices/generated-device-uuid",
+      mqttUsername: generatedCredentials.username,
+      mqttPassword: generatedCredentials.password,
     });
+    expect(mockGenerateMqttCredentials).toHaveBeenCalled();
+    expect(mockHashMqttPassword).toHaveBeenCalledWith(generatedCredentials.password);
     expect(mockDeviceCreate).toHaveBeenCalledWith({
       data: {
         workspaceId,
         name: "My Device",
-        deviceUuid: allocatedUuid,
-        mqttTopic: `twinkletaps/devices/${allocatedUuid}`,
-        mqttUsername: credential.username,
+        deviceUuid: "generated-device-uuid",
+        mqttTopic: "twinkletaps/devices/generated-device-uuid",
+        mqttUsername: generatedCredentials.username,
+        mqttPasswordHash: "$2a$10$hashedpassword",
       },
     });
   });
@@ -86,7 +88,7 @@ describe("registerDeviceForUser", () => {
     await expect(
       registerDeviceForUser(userId, workspaceId, "Device"),
     ).rejects.toThrow("Only workspace admins can register devices");
-    expect(mockClaimMqttCredential).not.toHaveBeenCalled();
+    expect(mockGenerateMqttCredentials).not.toHaveBeenCalled();
     expect(mockDeviceCreate).not.toHaveBeenCalled();
   });
 
@@ -94,23 +96,13 @@ describe("registerDeviceForUser", () => {
     await expect(
       registerDeviceForUser(userId, workspaceId, "   "),
     ).rejects.toThrow("Device name must be between 1 and 100 characters");
-    expect(mockClaimMqttCredential).not.toHaveBeenCalled();
+    expect(mockGenerateMqttCredentials).not.toHaveBeenCalled();
   });
 
   it("throws when name exceeds 100 characters", async () => {
     await expect(
       registerDeviceForUser(userId, workspaceId, "a".repeat(101)),
     ).rejects.toThrow("Device name must be between 1 and 100 characters");
-    expect(mockClaimMqttCredential).not.toHaveBeenCalled();
-  });
-
-  it("throws MqttCredentialPoolEmptyError when pool is empty", async () => {
-    mockClaimMqttCredential.mockRejectedValue(
-      new MqttCredentialPoolEmptyError("No unclaimed MQTT credentials in pool"),
-    );
-
-    await expect(
-      registerDeviceForUser(userId, workspaceId, "Device"),
-    ).rejects.toThrow(MqttCredentialPoolEmptyError);
+    expect(mockGenerateMqttCredentials).not.toHaveBeenCalled();
   });
 });
