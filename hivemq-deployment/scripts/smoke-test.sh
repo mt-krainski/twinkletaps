@@ -17,6 +17,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Override auth so the smoke test can do anonymous pub/sub without a running backend
+export HIVEMQ_ALLOW_ALL_CLIENTS=true
+
 echo "Starting HiveMQ broker..."
 docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" up -d
 
