@@ -32,6 +32,13 @@ jobs:
         working-directory: ./jira-utils
         run: poe test-full
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./jira-utils/coverage.xml
+          flags: jira-utils
+          token: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Run lint
         working-directory: ./jira-utils
         run: poe lint

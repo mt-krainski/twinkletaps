@@ -90,6 +90,7 @@ gh-pr-close = "python -m agent_utils.gh_pr_close"
 sequence = [
     { cmd = "coverage run -m pytest --showlocals" },
     { cmd = "coverage report" },
+    { cmd = "coverage xml" },
 ]
 
 [tool.poe.tasks.lint]
