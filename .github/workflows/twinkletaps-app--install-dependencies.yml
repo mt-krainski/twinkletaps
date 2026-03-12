@@ -6,6 +6,9 @@ on:
         description: "Cache key for dependencies"
         value: ${{ jobs.install-dependencies.outputs.cache-key }}
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   install-dependencies:
     runs-on: ubuntu-latest

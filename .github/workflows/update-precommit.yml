@@ -8,6 +8,9 @@ on:
     - cron: "0 2 1 * *"
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   update-precommit:
     runs-on: ubuntu-latest
