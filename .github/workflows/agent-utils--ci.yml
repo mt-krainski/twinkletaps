@@ -42,6 +42,13 @@ jobs:
         working-directory: ./agent-utils
         run: poe test-full
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./agent-utils/coverage.xml
+          flags: agent-utils
+          token: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Run lint
         working-directory: ./agent-utils
         run: poe lint

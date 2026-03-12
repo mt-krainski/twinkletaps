@@ -24,6 +24,9 @@ ticket-loop = "ticket_loop.main:app"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.coverage.run]
+source = ["ticket_loop"]
+
 [tool.ruff]
 line-length = 88
 
@@ -71,6 +74,7 @@ hooks-update = "pre-commit autoupdate"
 sequence = [
     { cmd = "coverage run -m pytest --showlocals" },
     { cmd = "coverage report" },
+    { cmd = "coverage xml" },
 ]
 
 [tool.poe.tasks.lint]

@@ -17,3 +17,15 @@ flags:
   integration:
     paths:
       - twinkletaps-app/src/
+  agent-utils:
+    paths:
+      - agent-utils/agent_utils/
+  cursor-retro:
+    paths:
+      - cursor-retro/cursor_retro/
+  jira-utils:
+    paths:
+      - jira-utils/jira_utils/
+  ticket-loop:
+    paths:
+      - ticket-loop/ticket_loop/
