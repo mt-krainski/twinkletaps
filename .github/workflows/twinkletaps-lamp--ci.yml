@@ -9,9 +9,6 @@ on:
       - main
   pull_request:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build-twinkletaps-lamp:
     runs-on: ubuntu-latest
