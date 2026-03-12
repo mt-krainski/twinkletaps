@@ -38,6 +38,8 @@
       "Bash(git rev-parse HEAD)",
       "Bash(git log)",
       "Bash(git log *)",
+      "Bash(git cherry-pick *)",
+      "Bash(git reset *)",
       "Bash(mkdir *)",
       "Bash(npm run *)",
       "Bash(npm install)",
