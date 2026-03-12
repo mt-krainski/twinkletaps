@@ -20,10 +20,10 @@ jobs:
       cache-key: ${{ steps.set-cache-key.outputs.key }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
 
@@ -33,7 +33,7 @@ jobs:
 
       - name: Cache dependencies
         id: cache-deps
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: twinkletaps-app/node_modules
           key: ${{ steps.set-cache-key.outputs.key }}
