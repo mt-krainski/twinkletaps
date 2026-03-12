@@ -2,6 +2,22 @@ import { prisma } from "../prisma";
 
 export type WorkspaceRole = "admin" | "member" | "guest";
 
+export async function createWorkspace(userId: string, name: string) {
+  return prisma.$transaction(async (tx) => {
+    const workspace = await tx.workspace.create({
+      data: { name },
+    });
+    await tx.userWorkspace.create({
+      data: {
+        userId,
+        workspaceId: workspace.id,
+        role: "admin",
+      },
+    });
+    return workspace;
+  });
+}
+
 export async function getUserWorkspaces(userId: string) {
   return prisma.userWorkspace.findMany({
     where: {
