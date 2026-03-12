@@ -38,6 +38,13 @@ jobs:
         working-directory: ./cursor-retro
         run: poe test-full
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./cursor-retro/coverage.xml
+          flags: cursor-retro
+          token: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Run lint
         working-directory: ./cursor-retro
         run: poe lint
