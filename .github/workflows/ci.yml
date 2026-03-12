@@ -73,6 +73,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.hivemq-auth-extension == 'true'
     uses: ./.github/workflows/hivemq-auth-extension--ci.yml
+    secrets: inherit
 
   hivemq-deployment:
     needs: changes

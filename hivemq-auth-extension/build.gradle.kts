@@ -1,9 +1,10 @@
 plugins {
     java
+    jacoco
 }
 
 group = "com.twinkletaps"
-version = "1.0.0"
+version = "0.1.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -25,6 +26,15 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        csv.required.set(false)
+    }
 }
 
 tasks.register<Copy>("deployExtension") {
