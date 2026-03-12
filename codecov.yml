@@ -17,3 +17,6 @@ flags:
   integration:
     paths:
       - twinkletaps-app/src/
+  hivemq-auth-extension:
+    paths:
+      - hivemq-auth-extension/src/main/

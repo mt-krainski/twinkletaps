@@ -1,0 +1,42 @@
+name: hivemq-auth-extension CI
+on:
+  workflow_call:
+    secrets:
+      CODECOV_TOKEN:
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and test
+        working-directory: ./hivemq-auth-extension
+        run: ./gradlew build
+
+      - name: Verify deploy output
+        working-directory: ./hivemq-auth-extension
+        run: |
+          test -f build/deploy/twinkletaps-auth-extension/hivemq-extension.xml
+          ls -la build/deploy/twinkletaps-auth-extension/
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./hivemq-auth-extension/build/reports/jacoco/test/jacocoTestReport.xml
+          flags: hivemq-auth-extension
+          token: ${{ secrets.CODECOV_TOKEN }}
