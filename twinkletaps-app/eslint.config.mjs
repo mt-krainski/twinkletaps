@@ -14,7 +14,7 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   {
-    ignores: ["src/generated/**", ".next/**", "coverage/**", "scripts/**", "next-env.d.ts"],
+    ignores: ["src/generated/**", ".next/**", "coverage/**", "scripts/**", "playwright-report/**", "next-env.d.ts"],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   ...storybook.configs["flat/recommended"],

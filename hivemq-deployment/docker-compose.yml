@@ -5,10 +5,11 @@ services:
     ports:
       - "1883:1883"
       - "8000:8000"
+    env_file:
+      - path: ../.env
+        required: false
     environment:
       HIVEMQ_ALLOW_ALL_CLIENTS: "${HIVEMQ_ALLOW_ALL_CLIENTS:-false}"
-      TWINKLETAPS_AUTH_URL: "${TWINKLETAPS_AUTH_URL}"
-      TWINKLETAPS_AUTH_SECRET: "${TWINKLETAPS_AUTH_SECRET}"
     volumes:
       # Placeholder — Docker auto-creates as empty dir until hivemq-auth-extension is built
       - ../hivemq-auth-extension/build/deploy/twinkletaps-auth-extension:/opt/hivemq/extensions/twinkletaps-auth-extension
