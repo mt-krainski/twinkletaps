@@ -63,11 +63,13 @@ jobs:
     needs: changes
     if: needs.changes.outputs.agent-utils == 'true'
     uses: ./.github/workflows/agent-utils--ci.yml
+    secrets: inherit
 
   cursor-retro:
     needs: changes
     if: needs.changes.outputs.cursor-retro == 'true'
     uses: ./.github/workflows/cursor-retro--ci.yml
+    secrets: inherit
 
   hivemq-auth-extension:
     needs: changes
@@ -84,11 +86,13 @@ jobs:
     needs: changes
     if: needs.changes.outputs.jira-utils == 'true'
     uses: ./.github/workflows/jira-utils--ci.yml
+    secrets: inherit
 
   ticket-loop:
     needs: changes
     if: needs.changes.outputs.ticket-loop == 'true'
     uses: ./.github/workflows/ticket-loop--ci.yml
+    secrets: inherit
 
   twinkletaps-app:
     needs: changes

@@ -23,6 +23,9 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.coverage.run]
+source = ["cursor_retro"]
+
 [tool.ruff]
 line-length = 88
 
@@ -69,6 +72,7 @@ hooks-run = "pre-commit run --all-files"
 sequence = [
     { cmd = "coverage run -m pytest --showlocals" },
     { cmd = "coverage report" },
+    { cmd = "coverage xml" },
 ]
 
 [tool.poe.tasks.lint]

@@ -20,3 +20,15 @@ flags:
   hivemq-auth-extension:
     paths:
       - hivemq-auth-extension/src/main/
+  agent-utils:
+    paths:
+      - agent-utils/agent_utils/
+  cursor-retro:
+    paths:
+      - cursor-retro/cursor_retro/
+  jira-utils:
+    paths:
+      - jira-utils/jira_utils/
+  ticket-loop:
+    paths:
+      - ticket-loop/ticket_loop/

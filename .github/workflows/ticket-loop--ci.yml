@@ -32,6 +32,13 @@ jobs:
         working-directory: ./ticket-loop
         run: poe test-full
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./ticket-loop/coverage.xml
+          flags: ticket-loop
+          token: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Run lint
         working-directory: ./ticket-loop
         run: poe lint

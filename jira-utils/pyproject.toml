@@ -25,6 +25,9 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.coverage.run]
+source = ["jira_utils"]
+
 [tool.ruff]
 line-length = 88
 
@@ -72,6 +75,7 @@ hooks-update = "pre-commit autoupdate"
 sequence = [
     { cmd = "coverage run -m pytest --showlocals" },
     { cmd = "coverage report" },
+    { cmd = "coverage xml" },
 ]
 
 [tool.poe.tasks.lint]
