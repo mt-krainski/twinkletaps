@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  createWorkspace,
   getWorkspaceMembers,
   updateWorkspaceMemberRole,
   removeWorkspaceMember,
@@ -9,16 +10,22 @@ import {
 const mockUserWorkspaceFindUnique = vi.fn();
 const mockUserWorkspaceFindMany = vi.fn();
 const mockUserWorkspaceUpdateMany = vi.fn();
+const mockUserWorkspaceCreate = vi.fn();
+const mockWorkspaceCreate = vi.fn();
 const mockDeviceFindMany = vi.fn();
 const mockUserDeviceUpdateMany = vi.fn();
 const mockTransaction = vi.fn();
 
 vi.mock("../prisma", () => ({
   prisma: {
+    workspace: {
+      create: (args: unknown) => mockWorkspaceCreate(args),
+    },
     userWorkspace: {
       findUnique: (args: unknown) => mockUserWorkspaceFindUnique(args),
       findMany: (args: unknown) => mockUserWorkspaceFindMany(args),
       updateMany: (args: unknown) => mockUserWorkspaceUpdateMany(args),
+      create: (args: unknown) => mockUserWorkspaceCreate(args),
     },
     device: {
       findMany: (args: unknown) => mockDeviceFindMany(args),
@@ -29,6 +36,59 @@ vi.mock("../prisma", () => ({
     $transaction: (fn: (tx: unknown) => Promise<unknown>) => mockTransaction(fn),
   },
 }));
+
+describe("createWorkspace", () => {
+  const userId = "user-1";
+  const workspaceName = "My Workspace";
+  const createdWorkspace = {
+    id: "ws-new",
+    name: workspaceName,
+    avatarUrl: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockTransaction.mockImplementation(
+      async (fn: (tx: unknown) => Promise<unknown>) => {
+        const tx = {
+          workspace: { create: mockWorkspaceCreate },
+          userWorkspace: { create: mockUserWorkspaceCreate },
+        };
+        return fn(tx);
+      },
+    );
+  });
+
+  it("creates workspace and admin membership in a transaction", async () => {
+    mockWorkspaceCreate.mockResolvedValue(createdWorkspace);
+    mockUserWorkspaceCreate.mockResolvedValue({});
+
+    const result = await createWorkspace(userId, workspaceName);
+
+    expect(result).toEqual(createdWorkspace);
+    expect(mockTransaction).toHaveBeenCalledTimes(1);
+    expect(mockWorkspaceCreate).toHaveBeenCalledWith({
+      data: { name: workspaceName },
+    });
+    expect(mockUserWorkspaceCreate).toHaveBeenCalledWith({
+      data: {
+        userId,
+        workspaceId: createdWorkspace.id,
+        role: "admin",
+      },
+    });
+  });
+
+  it("propagates error when workspace creation fails", async () => {
+    mockWorkspaceCreate.mockRejectedValue(new Error("DB error"));
+
+    await expect(createWorkspace(userId, workspaceName)).rejects.toThrow("DB error");
+    expect(mockUserWorkspaceCreate).not.toHaveBeenCalled();
+  });
+});
 
 describe("getWorkspaceMembers", () => {
   beforeEach(() => vi.clearAllMocks());
