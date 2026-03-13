@@ -3,6 +3,7 @@ import { NavbarView, type NavbarViewProps } from "./NavbarView";
 import { expect, fn, within } from "storybook/test";
 import { withDropdown } from "@/test-utils/storybook";
 import { mockProfile, mockWorkspaces } from "@/test-utils/storybook";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 type NavbarViewStoryArgs = NavbarViewProps & {
   onAccountClick: () => void;
@@ -14,6 +15,13 @@ type NavbarViewStoryArgs = NavbarViewProps & {
 const meta: Meta<NavbarViewStoryArgs> = {
   title: "Components/Navbar",
   component: NavbarView,
+  decorators: [
+    (Story) => (
+      <SidebarProvider>
+        <Story />
+      </SidebarProvider>
+    ),
+  ],
   parameters: {
     layout: "fullscreen",
   },

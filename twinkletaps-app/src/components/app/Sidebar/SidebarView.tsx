@@ -20,7 +20,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
 } from "@/components/ui/sidebar";
 
 export interface SearchResult {
@@ -67,9 +66,8 @@ export function SidebarView({
   onSearchModalOpenChange,
 }: SidebarViewProps) {
   return (
-    <SidebarProvider>
-      <div className="flex min-h-svh w-full">
-        <Sidebar className={cn("w-64", className)}>
+    <>
+      <Sidebar className={cn("w-64", className)}>
           <SidebarContent>
             <SidebarGroup>
               <SidebarGroupContent>
@@ -199,9 +197,8 @@ export function SidebarView({
               </div>
             </DialogContent>
           </Dialog>
-        </Sidebar>
-        {children}
-      </div>
-    </SidebarProvider>
+      </Sidebar>
+      {children}
+    </>
   );
 }

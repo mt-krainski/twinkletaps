@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { login, seedMqttCredentials } from "../src/test-utils/playwright";
+import { login, openSidebarOnMobile, seedMqttCredentials } from "../src/test-utils/playwright";
 
 test.describe.configure({ retries: 2 });
 
@@ -12,9 +12,6 @@ test("device invite: admin shares device, member accepts", async ({
   browser,
   isMobile,
 }) => {
-  // The sidebar footer is a Sheet on mobile and has no trigger in the current UI
-  test.skip(isMobile, "Sidebar is inaccessible on mobile — SidebarTrigger not present");
-
   const runId = crypto.randomUUID();
   const adminEmail = `testadmin-${runId}@test.com`;
   const memberEmail = `testmember-${runId}@test.com`;
@@ -28,6 +25,7 @@ test("device invite: admin shares device, member accepts", async ({
   await expect(page).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
 
   // ── Admin: register a device via sidebar ─────────────────────────
+  await openSidebarOnMobile(page, isMobile);
   await expect(
     page.getByRole("button", { name: "Register Device" }),
   ).toBeVisible({ timeout: 10000 });

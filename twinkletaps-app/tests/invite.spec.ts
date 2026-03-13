@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { login } from "../src/test-utils/playwright";
+import { login, openSidebarOnMobile } from "../src/test-utils/playwright";
 
 test.describe.configure({ retries: 2 });
 
@@ -8,9 +8,6 @@ test("workspace invite: user A creates link, user B accepts", async ({
   browser,
   isMobile,
 }) => {
-  // The sidebar footer is a Sheet on mobile and has no trigger in the current UI
-  test.skip(isMobile, "Sidebar is inaccessible on mobile — SidebarTrigger not present");
-
   const runId = crypto.randomUUID();
   const adminEmail = `testadmin-${runId}@test.com`;
   const memberEmail = `testmember-${runId}@test.com`;
@@ -23,6 +20,7 @@ test("workspace invite: user A creates link, user B accepts", async ({
   await expect(page).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
 
   // ── User A: open "Invite to workspace" from sidebar ───────────────
+  await openSidebarOnMobile(page, isMobile);
   await expect(
     page.getByRole("button", { name: "Invite to workspace" }),
   ).toBeVisible({ timeout: 10000 });

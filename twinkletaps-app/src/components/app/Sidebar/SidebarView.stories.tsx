@@ -8,6 +8,7 @@ import {
 } from "./SidebarView";
 import { expect, fn, within } from "storybook/test";
 import { mockDevices } from "@/test-utils/storybook";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 type SidebarViewStoryArgs = SidebarViewProps & {
   onHomeClick: () => void;
@@ -17,6 +18,13 @@ type SidebarViewStoryArgs = SidebarViewProps & {
 const meta: Meta<SidebarViewStoryArgs> = {
   title: "Components/Sidebar",
   component: SidebarView,
+  decorators: [
+    (Story) => (
+      <SidebarProvider>
+        <Story />
+      </SidebarProvider>
+    ),
+  ],
   parameters: {
     layout: "fullscreen",
   },

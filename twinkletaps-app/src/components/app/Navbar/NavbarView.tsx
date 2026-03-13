@@ -23,6 +23,7 @@ import {
 import type { UserProfile } from "@/components/providers/user-profile-provider";
 import type { WorkspaceInfo } from "@/components/providers/workspace-provider";
 import { Logo } from "@/components/app/Logo";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export interface NavbarViewProps {
   className?: string;
@@ -56,6 +57,7 @@ export function NavbarView({
         )}
       >
         <div className="flex items-center gap-4">
+          <SidebarTrigger className="md:hidden" />
           <Logo />
 
           {workspaces.length > 0 && (

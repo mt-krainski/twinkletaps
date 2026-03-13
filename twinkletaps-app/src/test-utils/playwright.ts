@@ -109,3 +109,13 @@ export async function login(page: Page, userEmail: string) {
 
   await page.getByRole("button", { name: "Verify" }).click();
 }
+
+/** Click the sidebar trigger to open the sidebar Sheet on mobile viewports. No-op on desktop. */
+export async function openSidebarOnMobile(page: Page, isMobile: boolean) {
+  if (!isMobile) return;
+  const trigger = page.getByRole("button", { name: "Toggle Sidebar" });
+  await trigger.click();
+  await expect(page.getByRole("button", { name: "Home" })).toBeVisible({
+    timeout: 5000,
+  });
+}
