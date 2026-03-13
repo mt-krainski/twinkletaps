@@ -58,7 +58,9 @@ test("device invite: admin shares device, member accepts", async ({
   });
 
   // ── Admin: open ShareDialog and generate a device invite link ─────
-  await page.getByRole("button", { name: "Share" }).click();
+  const shareButton = page.getByRole("button", { name: "Share" });
+  if (isMobile) await shareButton.scrollIntoViewIfNeeded();
+  await shareButton.click({ force: isMobile });
   await page.getByRole("button", { name: "Generate link" }).click();
 
   // Read the invite URL from the <code> element scoped to the dialog
