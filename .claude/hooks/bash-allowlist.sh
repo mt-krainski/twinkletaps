@@ -52,7 +52,7 @@ if [[ "$COMMAND" == "rm "* ]]; then
     [[ "$arg" == "rm" ]] && continue
     [[ "$arg" == -* ]] && continue
     # Resolve to absolute path
-    RESOLVED=$(realpath -m "$arg" 2>/dev/null)
+    RESOLVED=$(realpath "$arg" 2>/dev/null)
     if [[ -z "$RESOLVED" || "$RESOLVED" != "$PROJECT_DIR"* || "$RESOLVED" == "$PROJECT_DIR" ]]; then
       ALL_PATHS_SAFE=false
       break

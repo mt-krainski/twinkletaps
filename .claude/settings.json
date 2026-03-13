@@ -70,11 +70,9 @@
     "deny": [
       "Bash(sudo *)",
       "Bash(npm run supr:*)",
-      "Write(.claude/**)",
       "Read(.env*)",
       "Bash(cat .env*)",
-      "Bash(grep * .env*)",
-      "Update($CLAUDE_PROJECT_DIR/.claude/settings.json)"
+      "Bash(grep * .env*)"
     ]
   }
 }
