@@ -31,8 +31,10 @@ DOWNSTREAM_WIP_CHECK: dict[str, str] = {
 
 PERMISSIONS_INSTRUCTION = (
     " If any tool use or command is denied due to permission settings, "
-    "stop and clearly explain which operation was blocked and what "
-    "permission is needed. Do not attempt workarounds."
+    "stop and do not attempt workarounds. "
+    "Communicate the blocker via Jira: add a comment to the task explaining "
+    "which operation was blocked and what permission is needed, then reassign "
+    "the task to the user."
 )
 
 PROMPT_FETCH_BOARD = (
@@ -307,8 +309,7 @@ def handle_to_do(task: dict, *, skip_permissions: bool = False) -> None:
         "PR target. Create a feature branch from it. "
         "Implement the task following the repo's conventions and skills "
         "(use the /execute skill). "
-        "When done, wrap up: lint, test, commit, and create a PR "
-        "(use the /wrap skill).",
+        "When done, use the /wrap skill to finalize.",
         session_id=session_id,
         skip_permissions=skip_permissions,
     )
