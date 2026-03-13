@@ -9,43 +9,16 @@ from typing import Annotated, Any
 
 import typer
 from dotenv import load_dotenv
+from jira_utils.fetch_task import run_fetch_task
 
 PACKAGE_ROOT = Path(__file__).resolve().parent.parent
 REPO_ROOT = PACKAGE_ROOT.parent
-SCHEMA_DIR = PACKAGE_ROOT / "schemas"
 SESSIONS_FILE = PACKAGE_ROOT / "sessions.jsonl"
-
-COLUMNS_PRIORITY_ORDER = ["review", "planning", "in_progress", "to_do"]
-SKIP_COLUMNS = {"in_progress"}
-
-WIP_LIMITS: dict[str, int] = {
-    "to_do": 15,
-    "review": 3,
-}
-
-# Don't pick from a column if its downstream column is at/above WIP limit.
-DOWNSTREAM_WIP_CHECK: dict[str, str] = {
-    "planning": "to_do",
-    "to_do": "review",
-}
 
 PERMISSIONS_INSTRUCTION = (
     " If any tool use or command is denied due to permission settings, "
     "stop and clearly explain which operation was blocked and what "
     "permission is needed. Do not attempt workarounds."
-)
-
-PROMPT_FETCH_BOARD = (
-    "Fetch all issues from Jira project GFD where status not in (Done, Invalid), "
-    "using jira_search with limit 50. Paginate with start_at if there are more. "
-    "Group them by status column: Planning → planning, To Do → to_do, "
-    "In Progress → in_progress, Review → review. Within each column, "
-    "preserve the order returned by Jira (rank order). For each issue, "
-    "extract: key, summary, issue_type (Epic or Task), priority, assignee "
-    "display name (null if unassigned), parent_key (parent epic key, null for "
-    "epics themselves), blocked_by (from issuelinks where type is 'Blocks' and "
-    "the link direction is inward — meaning those issues block this one), and "
-    "labels."
 )
 
 
@@ -100,36 +73,6 @@ def _run_with_session_retry(
         raise
 
 
-def run_claude(
-    prompt: str,
-    *,
-    session_id: str,
-    schema_path: Path,
-    skip_permissions: bool = False,
-) -> dict:
-    """Run claude CLI with structured output and return parsed result."""
-    cmd = [
-        *_claude_base_cmd(session_id=session_id, skip_permissions=skip_permissions),
-        "--output-format",
-        "json",
-        "--json-schema",
-        schema_path.read_text(),
-        prompt,
-    ]
-    result = _run_with_session_retry(
-        cmd,
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
-    output = json.loads(result.stdout)
-    if isinstance(output, list):
-        envelope = output[-1]
-    else:
-        envelope = output
-    return envelope["structured_output"]
-
-
 def run_claude_task(
     prompt: str, *, session_id: str, skip_permissions: bool = False
 ) -> None:
@@ -141,54 +84,6 @@ def run_claude_task(
         prompt,
     ]
     _run_with_session_retry(cmd, cwd=REPO_ROOT)
-
-
-def fetch_board_state(session_id: str, *, skip_permissions: bool = False) -> dict:
-    """Fetch current Jira board state grouped by column."""
-    return run_claude(
-        PROMPT_FETCH_BOARD,
-        session_id=session_id,
-        schema_path=SCHEMA_DIR / "board_state.json",
-        skip_permissions=skip_permissions,
-    )
-
-
-def _is_wip_blocked(column: str, board_state: dict) -> bool:
-    """Check if a column is blocked by its downstream WIP limit."""
-    downstream = DOWNSTREAM_WIP_CHECK.get(column)
-    if downstream is None:
-        return False
-    limit = WIP_LIMITS[downstream]
-    count = len(board_state.get(downstream, []))
-    if count >= limit:
-        print(
-            f"  Skipping {column}: downstream {downstream} is at WIP limit "
-            f"({count}/{limit})"
-        )
-        return True
-    return False
-
-
-def find_agent_task(board_state: dict, agent_name: str) -> tuple[str, dict] | None:
-    """Find the right-most top-most task assigned to the agent.
-
-    Scans columns in priority order (review, then planning, then to_do;
-    in_progress is skipped), returning the first task whose assignee matches
-    agent_name. Skips columns whose downstream column is at or above its
-    WIP limit.
-
-    Returns:
-        (column, task) tuple, or None if no task is assigned to the agent.
-    """
-    for column in COLUMNS_PRIORITY_ORDER:
-        if column in SKIP_COLUMNS:
-            continue
-        if _is_wip_blocked(column, board_state):
-            continue
-        for task in board_state.get(column, []):
-            if task.get("assignee") == agent_name:
-                return column, task
-    return None
 
 
 def save_session(task_key: str, session_id: str) -> None:
@@ -361,19 +256,20 @@ def _run_loop(*, skip_permissions: bool = False) -> None:
     agent_name = os.environ["JIRA_AGENT_USERNAME"]
     print(f"Agent: {agent_name}")
 
-    board_session_id = str(uuid.uuid4())
     print("Fetching board state from Jira...")
-    board_state = fetch_board_state(board_session_id, skip_permissions=skip_permissions)
+    result = run_fetch_task(project="GFD", assigned_to_user_name=agent_name)
+
+    board_state = result["board_state"]
     for col, issues in board_state.items():
         print(f"  {col}: {len(issues)} issue(s)")
-    print("Looking for tasks assigned to agent...")
+    print(f"Selection: {result['reason']}")
 
-    result = find_agent_task(board_state, agent_name)
-    if result is None:
+    task = result["selected_task"]
+    if task is None:
         print("No tasks assigned to agent.")
         return
 
-    column, task = result
+    column = result["selected_column"]
     print(f"Selected: {task['key']} ({task['summary']}) from column '{column}'")
     print(f"Invoking {column} handler...")
 

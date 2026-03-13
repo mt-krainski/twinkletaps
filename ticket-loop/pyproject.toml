@@ -6,6 +6,7 @@ authors = [{name = "Matt Krainski", email = "mt.krainski@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "jira-utils",
     "python-dotenv>=1.2.2,<2.0.0",
     "typer>=0.24.1,<0.25.0",
 ]
@@ -58,6 +59,9 @@ convention = "google"
 [tool.uv]
 add-bounds = "major"
 preview = true
+
+[tool.uv.sources]
+jira-utils = { path = "../jira-utils" }
 
 [tool.poe]
 envfile = ".env"
