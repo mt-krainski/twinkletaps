@@ -1,11 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { login, seedMqttCredentials } from "../src/test-utils/playwright";
+import { login } from "../src/test-utils/playwright";
 
 test.describe.configure({ retries: 2 });
-
-test.beforeAll(async () => {
-  await seedMqttCredentials();
-});
 
 test("device invite: admin shares device, member accepts", async ({
   page,
