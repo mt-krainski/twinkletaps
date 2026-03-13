@@ -7,6 +7,7 @@ from jira_utils.add_comment import app as add_comment_app
 from jira_utils.add_to_sprint import app as add_to_sprint_app
 from jira_utils.create_issue import app as create_issue_app
 from jira_utils.create_issue_link import app as create_issue_link_app
+from jira_utils.fetch_task import app as fetch_task_app
 from jira_utils.get_board_issues import app as get_board_issues_app
 from jira_utils.get_boards import app as get_boards_app
 from jira_utils.get_issue import app as get_issue_app
@@ -34,6 +35,7 @@ app.add_typer(add_comment_app, name="add-comment")
 app.add_typer(add_to_sprint_app, name="add-to-sprint")
 app.add_typer(create_issue_app, name="create-issue")
 app.add_typer(create_issue_link_app, name="create-issue-link")
+app.add_typer(fetch_task_app, name="fetch-task")
 app.add_typer(get_board_issues_app, name="get-board-issues")
 app.add_typer(get_boards_app, name="get-boards")
 app.add_typer(get_issue_app, name="get-issue")
