@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { login, openSidebarOnMobile, seedMqttCredentials } from "../src/test-utils/playwright";
+import { login, openSidebarOnMobile, closeSidebarOnMobile, seedMqttCredentials } from "../src/test-utils/playwright";
 
 test.describe.configure({ retries: 2 });
 
@@ -42,6 +42,8 @@ test("device invite: admin shares device, member accepts", async ({
   await page.getByRole("button", { name: "Done" }).click();
 
   // ── Admin: navigate to the device ────────────────────────────────
+  // On mobile the sidebar Sheet is still open after the dialog — close it
+  await closeSidebarOnMobile(page, isMobile);
   // router.refresh() in onSuccess causes the page to reload with the new device
   // Click the device card in the main content area (has role="button")
   const deviceCard = page.getByRole("main").getByRole("button", { name: deviceName });

@@ -119,3 +119,13 @@ export async function openSidebarOnMobile(page: Page, isMobile: boolean) {
     timeout: 5000,
   });
 }
+
+/** Close the sidebar Sheet on mobile by clicking the trigger again. No-op on desktop. */
+export async function closeSidebarOnMobile(page: Page, isMobile: boolean) {
+  if (!isMobile) return;
+  const trigger = page.getByRole("button", { name: "Toggle Sidebar" });
+  await trigger.click();
+  await expect(page.getByRole("button", { name: "Home" })).not.toBeVisible({
+    timeout: 5000,
+  });
+}

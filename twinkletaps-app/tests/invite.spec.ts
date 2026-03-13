@@ -24,7 +24,8 @@ test("workspace invite: user A creates link, user B accepts", async ({
   await expect(
     page.getByRole("button", { name: "Invite to workspace" }),
   ).toBeVisible({ timeout: 10000 });
-  await page.getByRole("button", { name: "Invite to workspace" }).click();
+  // On mobile the SidebarContent div can intercept pointer events on the SidebarFooter button
+  await page.getByRole("button", { name: "Invite to workspace" }).click({ force: isMobile });
 
   // ShareDialog opens — click "Generate link"
   await page.getByRole("button", { name: "Generate link" }).click();
