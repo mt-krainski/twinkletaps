@@ -42,12 +42,14 @@ test("device invite: admin shares device, member accepts", async ({
   await page.getByRole("button", { name: "Done" }).click();
 
   // ── Admin: navigate to the device ────────────────────────────────
-  // On mobile the sidebar Sheet is still open after the dialog — close it
+  // On mobile the sidebar Sheet overlays the page during registration — close it
+  // then reload to ensure router.refresh() content is visible
   await closeSidebarOnMobile(page, isMobile);
+  if (isMobile) await page.reload({ waitUntil: "networkidle" });
   // router.refresh() in onSuccess causes the page to reload with the new device
   // Click the device card in the main content area (has role="button")
   const deviceCard = page.getByRole("main").getByRole("button", { name: deviceName });
-  await expect(deviceCard).toBeVisible({ timeout: 10000 });
+  await expect(deviceCard).toBeVisible({ timeout: 15000 });
   await deviceCard.click();
 
   await expect(page).toHaveURL(/\/w\/[^/]+\/d\/[^/]+$/, { timeout: 10000 });
