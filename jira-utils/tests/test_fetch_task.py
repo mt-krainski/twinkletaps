@@ -2,6 +2,8 @@
 
 from unittest.mock import MagicMock
 
+import pytest
+
 from jira_utils.client import JiraClient
 from jira_utils.fetch_task import run_fetch_task
 
@@ -291,3 +293,59 @@ class TestRunFetchTask:
         result = run_fetch_task("GFD", "Bot", client=client)
 
         assert result["selected_task"]["key"] == "GFD-2"
+
+
+class TestEnvVarFallbacks:
+    """Tests for project and user name env var resolution."""
+
+    def test_project_from_env_var(self):
+        """Project falls back to JIRA_PROJECT_ID env var."""
+        issues = [_issue("GFD-1", "Review", assignee="Bot")]
+        client = MagicMock(spec=JiraClient)
+        client.post.return_value = _search_response(issues)
+        env = {"JIRA_PROJECT_ID": "GFD"}
+
+        result = run_fetch_task(assigned_to_user_name="Bot", client=client, env=env)
+
+        assert result["selected_task"]["key"] == "GFD-1"
+
+    def test_project_missing_raises(self):
+        """ValueError when no project from arg or env."""
+        client = MagicMock(spec=JiraClient)
+
+        with pytest.raises(ValueError, match="Project is required"):
+            run_fetch_task(assigned_to_user_name="Bot", client=client, env={})
+
+    def test_user_name_from_env_var(self):
+        """User name falls back to JIRA_AGENT_USERNAME env var."""
+        issues = [_issue("GFD-1", "Review", assignee="Bot")]
+        client = MagicMock(spec=JiraClient)
+        client.post.return_value = _search_response(issues)
+        env = {"JIRA_AGENT_USERNAME": "Bot"}
+
+        result = run_fetch_task("GFD", client=client, env=env)
+
+        assert result["selected_task"]["key"] == "GFD-1"
+
+    def test_user_name_from_myself_endpoint(self):
+        """User name falls back to /myself API when no arg or env var."""
+        issues = [_issue("GFD-1", "Review", assignee="Bot")]
+        client = MagicMock(spec=JiraClient)
+        client.post.return_value = _search_response(issues)
+        client.get.return_value = {"displayName": "Bot"}
+
+        result = run_fetch_task("GFD", client=client, env={})
+
+        client.get.assert_called_once_with("/rest/api/3/myself")
+        assert result["selected_task"]["key"] == "GFD-1"
+
+    def test_explicit_args_override_env(self):
+        """Explicit args take precedence over env vars."""
+        issues = [_issue("GFD-1", "Review", assignee="Bot")]
+        client = MagicMock(spec=JiraClient)
+        client.post.return_value = _search_response(issues)
+        env = {"JIRA_PROJECT_ID": "OTHER", "JIRA_AGENT_USERNAME": "Other"}
+
+        result = run_fetch_task("GFD", "Bot", client=client, env=env)
+
+        assert result["selected_task"]["key"] == "GFD-1"

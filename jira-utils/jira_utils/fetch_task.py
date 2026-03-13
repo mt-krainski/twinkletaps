@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import typer
 
 from jira_utils.client import JiraClient
@@ -116,9 +118,9 @@ def _wip_count(tasks: list[dict]) -> int:
 
 
 def _select_task(
-    board_state: dict[str, list[dict]], agent_name: str
+    board_state: dict[str, list[dict]], assigned_to_user_name: str
 ) -> tuple[dict | None, str | None, str]:
-    """Select the next task for the agent."""
+    """Select the next task for the given user."""
     for column in _COLUMN_PRIORITY:
         if column in _SKIP_COLUMNS:
             continue
@@ -133,36 +135,67 @@ def _select_task(
         tasks = board_state.get(column, [])
         for task in tasks:
             assignee = (task["assignee"] or "").strip()
-            if assignee != agent_name.strip():
+            if assignee != assigned_to_user_name.strip():
                 continue
             if task["blocked_by"]:
                 continue
             reason = (
                 f"Selected {task['key']} from {column} column "
-                f"(assigned to {agent_name}, no active blockers)"
+                f"(assigned to {assigned_to_user_name}, no active blockers)"
             )
             return task, column, reason
 
-    return None, None, f"No eligible tasks found for {agent_name}"
+    return None, None, f"No eligible tasks found for {assigned_to_user_name}"
+
+
+def _resolve_current_user(client: JiraClient) -> str:
+    """Fetch the authenticated user's display name via the myself endpoint."""
+    result = client.get("/rest/api/3/myself")
+    if not result or not isinstance(result, dict):
+        raise ValueError("Could not determine current user from Jira /myself endpoint")
+    name = result.get("displayName", "")
+    if not name:
+        raise ValueError("Jira /myself endpoint returned no displayName")
+    return name
 
 
 def run_fetch_task(
-    project: str,
-    agent_name: str,
+    project: str | None = None,
+    assigned_to_user_name: str | None = None,
     *,
     client: JiraClient | None = None,
     env: dict[str, str] | None = None,
 ) -> dict:
-    """Fetch the next task for an agent from a Jira project.
+    """Fetch the next task for a user from a Jira project.
+
+    Args:
+        project: Jira project key. Falls back to JIRA_PROJECT_ID env var.
+        assigned_to_user_name: Jira display name to filter by. Falls back to
+            JIRA_AGENT_USERNAME env var, then to the authenticated user.
+        client: Optional JiraClient instance (built from env if omitted).
+        env: Optional env dict overriding os.environ for config resolution.
 
     Returns a dict with board_state, selected_task, selected_column, reason.
     """
+    source = env if env is not None else os.environ
     if client is None:
         client = JiraClient.from_env(env)
 
+    if not project:
+        project = source.get("JIRA_PROJECT_ID", "")
+    if not project:
+        raise ValueError("Project is required: pass --project or set JIRA_PROJECT_ID")
+
+    if not assigned_to_user_name:
+        assigned_to_user_name = source.get("JIRA_AGENT_USERNAME", "")
+    if not assigned_to_user_name:
+        assigned_to_user_name = _resolve_current_user(client)
+
     issues = _fetch_all_issues(project, client)
     board_state = _group_by_column(issues)
-    selected_task, selected_column, reason = _select_task(board_state, agent_name)
+    selected_task, selected_column, reason = _select_task(
+        board_state, assigned_to_user_name
+    )
 
     return {
         "board_state": board_state,
@@ -174,15 +207,22 @@ def run_fetch_task(
 
 @app.callback()
 def main(
-    project: str = typer.Option(..., "--project", help="Jira project key"),
-    agent_name: str = typer.Option(..., "--agent-name", help="Agent display name"),
+    project: str | None = typer.Option(
+        None, "--project", help="Jira project key (or JIRA_PROJECT_ID env var)"
+    ),
+    assigned_to_user_name: str | None = typer.Option(
+        None,
+        "--assigned-to-user-name",
+        help="Jira display name (or JIRA_AGENT_USERNAME env var; "
+        "defaults to authenticated user)",
+    ),
     pretty: bool = typer.Option(False, "--pretty", help="Pretty-print JSON"),
 ) -> None:
-    """Fetch the next task for an agent from a Jira project board."""
+    """Fetch the next task for a user from a Jira project board."""
     from jira_utils._output import handle_error, output_json
 
     try:
-        result = run_fetch_task(project, agent_name)
+        result = run_fetch_task(project, assigned_to_user_name)
         output_json(result, pretty=pretty)
     except Exception as exc:
         handle_error(exc)
