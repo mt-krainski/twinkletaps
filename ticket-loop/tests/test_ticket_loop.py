@@ -12,6 +12,7 @@ from ticket_loop.main import (
     _swap_session_to_resume,
     find_agent_task,
     get_session,
+    handle_in_progress,
     resume_session,
     save_session,
 )
@@ -49,12 +50,13 @@ def test_find_agent_task_priority_order():
     assert task["key"] == "GFD-1"
 
 
-def test_find_agent_task_skips_in_progress():
-    """In-progress column is ignored; next eligible column is used."""
+def test_find_agent_task_selects_in_progress():
+    """In-progress tasks are selected (higher priority than to_do)."""
     board = {"in_progress": [_task("GFD-10")], "to_do": [_task("GFD-11")]}
     result = find_agent_task(board, "Bot")
     assert result is not None
-    assert result[0] == "to_do"
+    assert result[0] == "in_progress"
+    assert result[1]["key"] == "GFD-10"
 
 
 def test_find_agent_task_no_match():
@@ -223,3 +225,67 @@ def test_session_file_format(tmp_path, monkeypatch):
         record = json.loads(line)
         assert "task_key" in record
         assert "session_id" in record
+
+
+# -- handle_in_progress --
+
+
+def test_handle_in_progress_resumes_session(tmp_path, monkeypatch):
+    """When a saved session exists, resume it with run_claude_task."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+    monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
+
+    save_session("GFD-50", "existing-sid")
+    task = {"key": "GFD-50", "summary": "Stuck task", "labels": []}
+
+    with patch("ticket_loop.main.run_claude_task") as mock_claude:
+        handle_in_progress(task)
+
+    mock_claude.assert_called_once()
+    call_kwargs = mock_claude.call_args
+    assert call_kwargs.kwargs["session_id"] == "existing-sid"
+    assert "GFD-50" in call_kwargs.args[0]
+
+
+def test_handle_in_progress_reassigns_when_no_session(tmp_path, monkeypatch):
+    """When no session exists, add a Jira comment and reassign to human."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+    monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
+
+    task = {"key": "GFD-51", "summary": "Orphan task", "labels": []}
+
+    with (
+        patch("ticket_loop.main.subprocess.run") as mock_run,
+        patch("ticket_loop.main.run_claude_task") as mock_claude,
+    ):
+        handle_in_progress(task)
+
+    # Should NOT launch a Claude session
+    mock_claude.assert_not_called()
+
+    # Should have called jira-utils add-comment and update-issue --assignee
+    commands = [call.args[0] for call in mock_run.call_args_list]
+    comment_cmd = next(c for c in commands if "add-comment" in c)
+    assert "--issue-key" in comment_cmd
+    assert "GFD-51" in comment_cmd
+
+    reassign_cmd = next(c for c in commands if "update-issue" in c)
+    assert "--assignee" in reassign_cmd
+    assert "human-123" in reassign_cmd
+
+
+def test_handle_in_progress_passes_skip_permissions(tmp_path, monkeypatch):
+    """skip_permissions flag is forwarded to run_claude_task when resuming."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+    monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
+
+    save_session("GFD-52", "perm-sid")
+    task = {"key": "GFD-52", "summary": "Task", "labels": []}
+
+    with patch("ticket_loop.main.run_claude_task") as mock_claude:
+        handle_in_progress(task, skip_permissions=True)
+
+    assert mock_claude.call_args.kwargs["skip_permissions"] is True
