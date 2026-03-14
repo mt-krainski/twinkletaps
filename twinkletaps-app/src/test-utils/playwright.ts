@@ -1,4 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
 import { Page, expect } from "@playwright/test";
 
 interface MailpitRecipient {
@@ -34,37 +33,6 @@ interface MailpitResponse {
   start: number;
   tags: string[];
   messages: MailpitMessage[];
-}
-
-/**
- * Re-seed unclaimed MQTT credentials so device-registration tests don't
- * fail when the pool is exhausted from previous runs.
- * Cleans up stale e2e-seeded credentials first to avoid accumulation.
- */
-export async function seedMqttCredentials(count = 5) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
-
-  // Clean up unclaimed credentials from previous e2e runs
-  await supabase
-    .from("mqtt_credentials")
-    .delete()
-    .like("username", "e2e-device-%")
-    .is("claimed_at", null);
-
-  const rows = Array.from({ length: count }, () => ({
-    username: `e2e-device-${crypto.randomUUID().slice(0, 8)}`,
-    password: "test-password",
-    allocated_uuid: crypto.randomUUID(),
-  }));
-
-  const { error } = await supabase
-    .from("mqtt_credentials")
-    .insert(rows);
-
-  if (error) throw new Error(`Failed to seed MQTT credentials: ${error.message}`);
 }
 
 export async function login(page: Page, userEmail: string) {

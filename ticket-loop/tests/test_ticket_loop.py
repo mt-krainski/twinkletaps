@@ -2,15 +2,15 @@
 
 import json
 import subprocess
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from ticket_loop.main import (
-    _is_wip_blocked,
+    COLUMN_HANDLERS,
+    _run_loop,
     _run_with_session_retry,
     _swap_session_to_resume,
-    find_agent_task,
     get_session,
     handle_in_progress,
     resume_session,
@@ -18,16 +18,21 @@ from ticket_loop.main import (
 )
 
 
-def _task(key: str, assignee: str | None = "Bot") -> dict:
-    return {"key": key, "summary": f"Task {key}", "assignee": assignee}
-
-
-BOARD = {
-    "review": [_task("GFD-1"), _task("GFD-2", "matt")],
-    "in_progress": [_task("GFD-3")],
-    "to_do": [_task("GFD-4", "matt"), _task("GFD-5")],
-    "planning": [_task("GFD-6")],
-}
+def _fetch_result(
+    selected_task: dict | None = None,
+    selected_column: str | None = None,
+    reason: str = "test reason",
+    board_state: dict | None = None,
+) -> dict:
+    """Build a run_fetch_task return value."""
+    if board_state is None:
+        board_state = {"review": [], "to_do": [], "planning": []}
+    return {
+        "board_state": board_state,
+        "selected_task": selected_task,
+        "selected_column": selected_column,
+        "reason": reason,
+    }
 
 
 # -- import smoke test --
@@ -38,72 +43,115 @@ def test_module_imports():
     import ticket_loop.main  # noqa: F401
 
 
-# -- find_agent_task --
+# -- _run_loop handler dispatch --
 
 
-def test_find_agent_task_priority_order():
-    """Review tasks are picked before planning/to_do."""
-    result = find_agent_task(BOARD, "Bot")
-    assert result is not None
-    column, task = result
-    assert column == "review"
-    assert task["key"] == "GFD-1"
+def test_run_loop_dispatches_to_review(monkeypatch):
+    """_run_loop dispatches to handle_review for review column."""
+    monkeypatch.setenv("JIRA_AGENT_USERNAME", "Bot")
+    task = {"key": "GFD-1", "summary": "Fix bug", "labels": []}
+    result = _fetch_result(selected_task=task, selected_column="review")
+    mock_handler = MagicMock()
+
+    with (
+        patch("ticket_loop.main.run_fetch_task", return_value=result),
+        patch.dict(COLUMN_HANDLERS, {"review": mock_handler}),
+    ):
+        _run_loop()
+
+    mock_handler.assert_called_once_with(task, skip_permissions=False)
 
 
-def test_find_agent_task_selects_in_progress():
-    """In-progress tasks are selected (higher priority than to_do)."""
-    board = {"in_progress": [_task("GFD-10")], "to_do": [_task("GFD-11")]}
-    result = find_agent_task(board, "Bot")
-    assert result is not None
-    assert result[0] == "in_progress"
-    assert result[1]["key"] == "GFD-10"
+def test_run_loop_dispatches_to_todo(monkeypatch):
+    """_run_loop dispatches to handle_to_do for to_do column."""
+    monkeypatch.setenv("JIRA_AGENT_USERNAME", "Bot")
+    task = {"key": "GFD-2", "summary": "New feature", "labels": []}
+    result = _fetch_result(selected_task=task, selected_column="to_do")
+    mock_handler = MagicMock()
+
+    with (
+        patch("ticket_loop.main.run_fetch_task", return_value=result),
+        patch.dict(COLUMN_HANDLERS, {"to_do": mock_handler}),
+    ):
+        _run_loop()
+
+    mock_handler.assert_called_once_with(task, skip_permissions=False)
 
 
-def test_find_agent_task_no_match():
-    """Returns None when no tasks match the agent username."""
-    board = {"to_do": [_task("GFD-1", "matt")]}
-    assert find_agent_task(board, "Bot") is None
+def test_run_loop_dispatches_to_planning(monkeypatch):
+    """_run_loop dispatches to handle_planning for planning column."""
+    monkeypatch.setenv("JIRA_AGENT_USERNAME", "Bot")
+    task = {"key": "GFD-3", "summary": "Plan work", "labels": []}
+    result = _fetch_result(selected_task=task, selected_column="planning")
+    mock_handler = MagicMock()
+
+    with (
+        patch("ticket_loop.main.run_fetch_task", return_value=result),
+        patch.dict(COLUMN_HANDLERS, {"planning": mock_handler}),
+    ):
+        _run_loop()
+
+    mock_handler.assert_called_once_with(task, skip_permissions=False)
 
 
-def test_find_agent_task_empty_board():
-    """Empty board returns None."""
-    assert find_agent_task({}, "Bot") is None
+def test_run_loop_no_task_available(monkeypatch):
+    """_run_loop returns without calling a handler when no task is selected."""
+    monkeypatch.setenv("JIRA_AGENT_USERNAME", "Bot")
+    result = _fetch_result(reason="No eligible tasks found for Bot")
+    mock_handler = MagicMock()
+
+    with (
+        patch("ticket_loop.main.run_fetch_task", return_value=result),
+        patch.dict(COLUMN_HANDLERS, {"review": mock_handler}),
+    ):
+        _run_loop()
+
+    mock_handler.assert_not_called()
 
 
-# -- WIP limits --
+def test_run_loop_passes_skip_permissions(monkeypatch):
+    """skip_permissions flag is forwarded to the handler."""
+    monkeypatch.setenv("JIRA_AGENT_USERNAME", "Bot")
+    task = {"key": "GFD-4", "summary": "Task", "labels": []}
+    result = _fetch_result(selected_task=task, selected_column="to_do")
+    mock_handler = MagicMock()
+
+    with (
+        patch("ticket_loop.main.run_fetch_task", return_value=result),
+        patch.dict(COLUMN_HANDLERS, {"to_do": mock_handler}),
+    ):
+        _run_loop(skip_permissions=True)
+
+    mock_handler.assert_called_once_with(task, skip_permissions=True)
 
 
-def test_wip_blocked_planning_when_todo_full():
-    """Planning is blocked when to_do hits its WIP limit."""
-    board = {"to_do": [_task(f"GFD-{i}") for i in range(15)]}
-    assert _is_wip_blocked("planning", board) is True
+def test_run_loop_calls_fetch_task_with_correct_args(monkeypatch):
+    """_run_loop passes project and agent name to run_fetch_task."""
+    monkeypatch.setenv("JIRA_AGENT_USERNAME", "Bot")
+    result = _fetch_result()
+
+    with patch("ticket_loop.main.run_fetch_task", return_value=result) as mock_fetch:
+        _run_loop()
+
+    mock_fetch.assert_called_once_with(project="GFD", assigned_to_user_name="Bot")
 
 
-def test_wip_not_blocked_planning_when_todo_has_room():
-    """Planning is not blocked when to_do has capacity."""
-    board = {"to_do": [_task("GFD-1")]}
-    assert _is_wip_blocked("planning", board) is False
-
-
-def test_wip_blocked_todo_when_review_full():
-    """To_do is blocked when review hits its WIP limit."""
-    board = {"review": [_task(f"GFD-{i}") for i in range(3)]}
-    assert _is_wip_blocked("to_do", board) is True
-
-
-def test_wip_not_blocked_review():
-    """Review has no downstream check."""
-    assert _is_wip_blocked("review", {}) is False
-
-
-def test_find_agent_task_respects_wip_limit():
-    """Planning task is skipped when to_do is at WIP limit."""
+def test_run_loop_logs_board_state(monkeypatch, capsys):
+    """_run_loop prints board state summary for observability."""
+    monkeypatch.setenv("JIRA_AGENT_USERNAME", "Bot")
     board = {
-        "review": [],
-        "planning": [_task("GFD-99")],
-        "to_do": [_task(f"GFD-{i}", "matt") for i in range(15)],
+        "review": [{"key": "GFD-1"}],
+        "to_do": [{"key": "GFD-2"}, {"key": "GFD-3"}],
     }
-    assert find_agent_task(board, "Bot") is None
+    result = _fetch_result(board_state=board, reason="No eligible tasks found for Bot")
+
+    with patch("ticket_loop.main.run_fetch_task", return_value=result):
+        _run_loop()
+
+    output = capsys.readouterr().out
+    assert "review: 1 issue(s)" in output
+    assert "to_do: 2 issue(s)" in output
+    assert "No eligible tasks found for Bot" in output
 
 
 # -- session store --

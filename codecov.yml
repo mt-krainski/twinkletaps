@@ -10,6 +10,33 @@ coverage:
 comment:
   layout: reach,diff,flags
 
+component_management:
+  individual_components:
+    - component_id: twinkletaps-app
+      name: twinkletaps-app
+      paths:
+        - twinkletaps-app/**
+    - component_id: hivemq-auth-extension
+      name: hivemq-auth-extension
+      paths:
+        - hivemq-auth-extension/**
+    - component_id: agent-utils
+      name: agent-utils
+      paths:
+        - agent-utils/**
+    - component_id: cursor-retro
+      name: cursor-retro
+      paths:
+        - cursor-retro/**
+    - component_id: jira-utils
+      name: jira-utils
+      paths:
+        - jira-utils/**
+    - component_id: ticket-loop
+      name: ticket-loop
+      paths:
+        - ticket-loop/**
+
 flags:
   unit-storybook:
     paths:

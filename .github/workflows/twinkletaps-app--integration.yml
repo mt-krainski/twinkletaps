@@ -49,6 +49,30 @@ jobs:
           echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY" >> $GITHUB_ENV
           echo "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres" >> $GITHUB_ENV
 
+      - name: Start HiveMQ broker
+        working-directory: hivemq-deployment
+        run: |
+          # Allow all MQTT clients in CI (no auth extension needed).
+          # Shell export overrides docker-compose environment default (false).
+          export HIVEMQ_ALLOW_ALL_CLIENTS=true
+          docker compose up -d
+          echo "Waiting for HiveMQ to be healthy..."
+          RETRIES=30
+          while [ $RETRIES -gt 0 ]; do
+            STATUS=$(docker compose ps --format json 2>/dev/null | grep -o '"Health":"[^"]*"' | head -1 || true)
+            if echo "$STATUS" | grep -q "healthy"; then
+              echo "HiveMQ is healthy"
+              break
+            fi
+            RETRIES=$((RETRIES - 1))
+            sleep 2
+          done
+          if [ $RETRIES -eq 0 ]; then
+            echo "ERROR: HiveMQ did not become healthy"
+            docker compose logs
+            exit 1
+          fi
+
       - name: Run integration tests
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
@@ -56,10 +80,11 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
           DATABASE_URL: ${{ env.DATABASE_URL }}
           NEXT_PUBLIC_COMPANY_NAME: Test Company
-          MQTT_BROKER_URL: ${{ vars.MQTT_BROKER_URL }}
-          MQTT_PUBLISHER_USERNAME: ${{ vars.MQTT_PUBLISHER_USERNAME }}
-          MQTT_PUBLISHER_PASSWORD: ${{ secrets.MQTT_PUBLISHER_PASSWORD }}
-          MQTT_TEST_TOPIC: ${{ vars.MQTT_TEST_TOPIC }}
+          MQTT_BROKER_URL: mqtt://localhost:1883
+          # Arbitrary values — HiveMQ runs with ALLOW_ALL_CLIENTS=true in CI
+          MQTT_PUBLISHER_USERNAME: ci-publisher
+          MQTT_PUBLISHER_PASSWORD: ci-publisher-pass
+          MQTT_TEST_TOPIC: twinkletaps/ci-test
         run: npm run test:integration:coverage
 
       - name: Upload coverage to Codecov

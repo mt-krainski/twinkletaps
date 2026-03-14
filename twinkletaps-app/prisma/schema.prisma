@@ -135,14 +135,3 @@ model Invitation {
   @@index([workspaceId, type], map: "invitations_workspace_id_type_idx")
   @@map("invitations")
 }
-
-model MqttCredential {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  username      String    @unique
-  password      String
-  allocatedUuid String    @unique @map("allocated_uuid") @db.Uuid
-  claimedAt     DateTime? @map("claimed_at") @db.Timestamptz
-
-  @@index([claimedAt], map: "mqtt_credentials_claimed_at_idx")
-  @@map("mqtt_credentials")
-}
