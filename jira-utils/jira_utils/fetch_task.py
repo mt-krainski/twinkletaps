@@ -19,11 +19,11 @@ _STATUS_MAP: dict[str, str] = {
     "Review": "review",
 }
 
-# Column priority order (in_progress is in list but skipped via _SKIP_COLUMNS)
-_COLUMN_PRIORITY = ["review", "planning", "in_progress", "to_do"]
+# Column priority order — in_progress first (anomalous state, fix ASAP)
+_COLUMN_PRIORITY = ["in_progress", "review", "planning", "to_do"]
 
 # Columns to skip during selection
-_SKIP_COLUMNS = {"in_progress"}
+_SKIP_COLUMNS: set[str] = set()
 
 # WIP limits per column (epics excluded from count)
 _WIP_LIMITS: dict[str, int] = {"to_do": 15, "review": 3}

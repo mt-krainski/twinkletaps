@@ -17,8 +17,10 @@ SESSIONS_FILE = PACKAGE_ROOT / "sessions.jsonl"
 
 PERMISSIONS_INSTRUCTION = (
     " If any tool use or command is denied due to permission settings, "
-    "stop and clearly explain which operation was blocked and what "
-    "permission is needed. Do not attempt workarounds."
+    "stop and do not attempt workarounds. "
+    "Communicate the blocker via Jira: add a comment to the task explaining "
+    "which operation was blocked and what permission is needed, then reassign "
+    "the task to the user."
 )
 
 
@@ -184,9 +186,51 @@ def _handle_implementation_review(
 
 
 def handle_in_progress(task: dict, *, skip_permissions: bool = False) -> None:
-    """Handle a task in the In Progress column (skipped)."""
-    raise NotImplementedError(
-        f"In Progress handler not yet implemented for {task['key']}"
+    """Handle a task stuck in In Progress — resume or reassign.
+
+    If a saved session exists, resume it so Claude can pick up where it left
+    off.  If no session is found (e.g. the task was moved to In Progress
+    manually, or the session was lost), reassign the task to the human with
+    a Jira comment explaining the interruption.
+    """
+    human_id = os.environ["HUMAN_ATLASSIAN_ID"]
+    try:
+        session_id = get_session(task["key"])
+    except KeyError:
+        print(f"  No session found for {task['key']} — reassigning to human")
+        comment_cmd = [  # noqa: S607
+            "jira-utils",
+            "add-comment",
+            "--issue-key",
+            task["key"],
+            "--body",
+            f"Task {task['key']} was found in In Progress with no "
+            "recoverable session. This likely means the agent was "
+            "interrupted or crashed. Reassigning to human for triage.",
+        ]
+        subprocess.run(comment_cmd, check=True)  # noqa: S603
+        reassign_cmd = [  # noqa: S607
+            "jira-utils",
+            "update-issue",
+            "--issue-key",
+            task["key"],
+            "--assignee",
+            human_id,
+        ]
+        subprocess.run(reassign_cmd, check=True)  # noqa: S603
+        return
+
+    print(f"  Resuming session {session_id}")
+    run_claude_task(
+        f"Task {task['key']} ({task['summary']}) was found stuck in In Progress, "
+        "likely due to a previous interruption or crash. "
+        "Check the current state of the branch and any open PRs for this task. "
+        "Continue the implementation from where it left off. "
+        "When done, use the /wrap skill to finalize. "
+        "If you cannot continue (e.g. branch deleted, work is stale), reassign "
+        f"the task to '{human_id}' with a Jira comment explaining the situation.",
+        session_id=session_id,
+        skip_permissions=skip_permissions,
     )
 
 
@@ -202,8 +246,7 @@ def handle_to_do(task: dict, *, skip_permissions: bool = False) -> None:
         "PR target. Create a feature branch from it. "
         "Implement the task following the repo's conventions and skills "
         "(use the /execute skill). "
-        "When done, wrap up: lint, test, commit, and create a PR "
-        "(use the /wrap skill).",
+        "When done, use the /wrap skill to finalize.",
         session_id=session_id,
         skip_permissions=skip_permissions,
     )

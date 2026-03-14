@@ -86,8 +86,8 @@ class TestRunFetchTask:
         assert result["selected_task"]["key"] == "GFD-2"
         assert result["selected_column"] == "planning"
 
-    def test_skip_in_progress_column(self):
-        """In-progress column is skipped entirely."""
+    def test_in_progress_selected_first(self):
+        """In-progress tasks have highest priority."""
         issues = [
             _issue("GFD-1", "In Progress", assignee="Bot"),
             _issue("GFD-2", "To Do", assignee="Bot"),
@@ -97,8 +97,8 @@ class TestRunFetchTask:
 
         result = run_fetch_task("GFD", "Bot", client=client)
 
-        assert result["selected_task"]["key"] == "GFD-2"
-        assert result["selected_column"] == "to_do"
+        assert result["selected_task"]["key"] == "GFD-1"
+        assert result["selected_column"] == "in_progress"
 
     def test_wip_limit_blocks_downstream(self):
         """Planning is skipped when downstream to_do is at WIP limit."""
