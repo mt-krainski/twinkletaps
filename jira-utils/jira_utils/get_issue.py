@@ -13,12 +13,9 @@ def run_get_issue(
     issue_key: str,
     *,
     fields: str | None = None,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> dict:
     """Fetch an issue. Returns the raw JSON dict from Jira."""
-    if client is None:
-        client = JiraClient.from_env(env)
     params = {}
     if fields:
         params["fields"] = fields
@@ -37,9 +34,11 @@ def main(
 ) -> None:
     """Get a Jira issue by key."""
     from jira_utils._output import handle_error, output_json
+    from jira_utils.client import build_client
 
     try:
-        result = run_get_issue(issue_key, fields=fields)
+        client = build_client()
+        result = run_get_issue(issue_key, fields=fields, client=client)
         output_json(result, pretty=pretty)
     except Exception as exc:
         handle_error(exc)

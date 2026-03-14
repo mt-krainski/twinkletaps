@@ -9,6 +9,7 @@ from typing import Annotated, Any
 
 import typer
 from dotenv import load_dotenv
+from jira_utils.client import build_client
 from jira_utils.fetch_task import run_fetch_task
 
 PACKAGE_ROOT = Path(__file__).resolve().parent.parent
@@ -300,7 +301,12 @@ def _run_loop(*, skip_permissions: bool = False) -> None:
     print(f"Agent: {agent_name}")
 
     print("Fetching board state from Jira...")
-    result = run_fetch_task(project="GFD", assigned_to_user_name=agent_name)
+    client = build_client()
+    result = run_fetch_task(
+        project="GFD",
+        assigned_to_user_name=agent_name,
+        client=client,
+    )
 
     board_state = result["board_state"]
     for col, issues in board_state.items():

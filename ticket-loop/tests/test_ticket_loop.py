@@ -54,6 +54,7 @@ def test_run_loop_dispatches_to_review(monkeypatch):
     mock_handler = MagicMock()
 
     with (
+        patch("ticket_loop.main.build_client"),
         patch("ticket_loop.main.run_fetch_task", return_value=result),
         patch.dict(COLUMN_HANDLERS, {"review": mock_handler}),
     ):
@@ -70,6 +71,7 @@ def test_run_loop_dispatches_to_todo(monkeypatch):
     mock_handler = MagicMock()
 
     with (
+        patch("ticket_loop.main.build_client"),
         patch("ticket_loop.main.run_fetch_task", return_value=result),
         patch.dict(COLUMN_HANDLERS, {"to_do": mock_handler}),
     ):
@@ -86,6 +88,7 @@ def test_run_loop_dispatches_to_planning(monkeypatch):
     mock_handler = MagicMock()
 
     with (
+        patch("ticket_loop.main.build_client"),
         patch("ticket_loop.main.run_fetch_task", return_value=result),
         patch.dict(COLUMN_HANDLERS, {"planning": mock_handler}),
     ):
@@ -101,6 +104,7 @@ def test_run_loop_no_task_available(monkeypatch):
     mock_handler = MagicMock()
 
     with (
+        patch("ticket_loop.main.build_client"),
         patch("ticket_loop.main.run_fetch_task", return_value=result),
         patch.dict(COLUMN_HANDLERS, {"review": mock_handler}),
     ):
@@ -117,6 +121,7 @@ def test_run_loop_passes_skip_permissions(monkeypatch):
     mock_handler = MagicMock()
 
     with (
+        patch("ticket_loop.main.build_client"),
         patch("ticket_loop.main.run_fetch_task", return_value=result),
         patch.dict(COLUMN_HANDLERS, {"to_do": mock_handler}),
     ):
@@ -126,14 +131,22 @@ def test_run_loop_passes_skip_permissions(monkeypatch):
 
 
 def test_run_loop_calls_fetch_task_with_correct_args(monkeypatch):
-    """_run_loop passes project and agent name to run_fetch_task."""
+    """_run_loop passes project, agent name, and client to run_fetch_task."""
     monkeypatch.setenv("JIRA_AGENT_USERNAME", "Bot")
     result = _fetch_result()
+    mock_client = MagicMock()
 
-    with patch("ticket_loop.main.run_fetch_task", return_value=result) as mock_fetch:
+    with (
+        patch("ticket_loop.main.build_client", return_value=mock_client),
+        patch("ticket_loop.main.run_fetch_task", return_value=result) as mock_fetch,
+    ):
         _run_loop()
 
-    mock_fetch.assert_called_once_with(project="GFD", assigned_to_user_name="Bot")
+    mock_fetch.assert_called_once_with(
+        project="GFD",
+        assigned_to_user_name="Bot",
+        client=mock_client,
+    )
 
 
 def test_run_loop_logs_board_state(monkeypatch, capsys):
@@ -145,7 +158,10 @@ def test_run_loop_logs_board_state(monkeypatch, capsys):
     }
     result = _fetch_result(board_state=board, reason="No eligible tasks found for Bot")
 
-    with patch("ticket_loop.main.run_fetch_task", return_value=result):
+    with (
+        patch("ticket_loop.main.build_client"),
+        patch("ticket_loop.main.run_fetch_task", return_value=result),
+    ):
         _run_loop()
 
     output = capsys.readouterr().out

@@ -17,13 +17,9 @@ def run_update_issue(
     fields: str | None = None,
     assignee: str | None = None,
     components: str | None = None,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> dict | None:
     """Update an issue's fields. Returns None (204) on success."""
-    if client is None:
-        client = JiraClient.from_env(env)
-
     payload: dict = {}
     if fields:
         payload["fields"] = json.loads(fields)
@@ -57,10 +53,16 @@ def main(
 ) -> None:
     """Update a Jira issue."""
     from jira_utils._output import handle_error, output_json
+    from jira_utils.client import build_client
 
     try:
+        client = build_client()
         result = run_update_issue(
-            issue_key, fields=fields, assignee=assignee, components=components
+            issue_key,
+            fields=fields,
+            assignee=assignee,
+            components=components,
+            client=client,
         )
         output_json(result, pretty=pretty)
     except Exception as exc:

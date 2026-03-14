@@ -13,12 +13,9 @@ def run_add_comment(
     issue_key: str,
     body: str,
     *,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> dict:
     """Add a comment. Returns the created comment dict."""
-    if client is None:
-        client = JiraClient.from_env(env)
     return client.post(f"/rest/api/2/issue/{issue_key}/comment", json={"body": body})
 
 
@@ -32,9 +29,11 @@ def main(
 ) -> None:
     """Add a comment to a Jira issue."""
     from jira_utils._output import handle_error, output_json
+    from jira_utils.client import build_client
 
     try:
-        result = run_add_comment(issue_key, body)
+        client = build_client()
+        result = run_add_comment(issue_key, body, client=client)
         output_json(result, pretty=pretty)
     except Exception as exc:
         handle_error(exc)

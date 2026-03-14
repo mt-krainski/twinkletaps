@@ -12,12 +12,9 @@ app = typer.Typer(invoke_without_command=True)
 def run_get_link_types(
     *,
     filter: str | None = None,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> dict:
     """Fetch issue link types, optionally filtered by name substring."""
-    if client is None:
-        client = JiraClient.from_env(env)
     result = client.get("/rest/api/2/issueLinkType")
     if filter:
         lower = filter.lower()
@@ -38,9 +35,11 @@ def main(
 ) -> None:
     """Get available issue link types."""
     from jira_utils._output import handle_error, output_json
+    from jira_utils.client import build_client
 
     try:
-        result = run_get_link_types(filter=filter)
+        client = build_client()
+        result = run_get_link_types(filter=filter, client=client)
         output_json(result, pretty=pretty)
     except Exception as exc:
         handle_error(exc)

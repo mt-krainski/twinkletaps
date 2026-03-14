@@ -12,12 +12,9 @@ app = typer.Typer(invoke_without_command=True)
 def run_get_project_versions(
     project_key: str,
     *,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> list:
     """Fetch project versions."""
-    if client is None:
-        client = JiraClient.from_env(env)
     return client.get(f"/rest/api/2/project/{project_key}/versions")
 
 
@@ -30,9 +27,11 @@ def main(
 ) -> None:
     """Get versions for a Jira project."""
     from jira_utils._output import handle_error, output_json
+    from jira_utils.client import build_client
 
     try:
-        result = run_get_project_versions(project_key)
+        client = build_client()
+        result = run_get_project_versions(project_key, client=client)
         output_json(result, pretty=pretty)
     except Exception as exc:
         handle_error(exc)

@@ -13,12 +13,9 @@ def run_move_to_board(
     board_id: int,
     issues: str,
     *,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> dict | None:
     """Move issues onto a board. Returns None (204) on success."""
-    if client is None:
-        client = JiraClient.from_env(env)
     issue_keys = [k.strip() for k in issues.split(",")]
     return client.post(
         f"/rest/agile/1.0/board/{board_id}/issue",
@@ -34,9 +31,11 @@ def main(
 ) -> None:
     """Move issues to a Jira agile board."""
     from jira_utils._output import handle_error, output_json
+    from jira_utils.client import build_client
 
     try:
-        result = run_move_to_board(board_id, issues)
+        client = build_client()
+        result = run_move_to_board(board_id, issues, client=client)
         output_json(result, pretty=pretty)
     except Exception as exc:
         handle_error(exc)

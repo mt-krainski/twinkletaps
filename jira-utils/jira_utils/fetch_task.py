@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-
 import typer
 
 from jira_utils.client import JiraClient
@@ -163,31 +161,21 @@ def run_fetch_task(
     project: str | None = None,
     assigned_to_user_name: str | None = None,
     *,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> dict:
     """Fetch the next task for a user from a Jira project.
 
     Args:
-        project: Jira project key. Falls back to JIRA_PROJECT_ID env var.
-        assigned_to_user_name: Jira display name to filter by. Falls back to
-            JIRA_AGENT_USERNAME env var, then to the authenticated user.
-        client: Optional JiraClient instance (built from env if omitted).
-        env: Optional env dict overriding os.environ for config resolution.
+        project: Jira project key.
+        assigned_to_user_name: Jira display name to filter by.
+            Falls back to the authenticated user via /myself.
+        client: JiraClient instance.
 
     Returns a dict with board_state, selected_task, selected_column, reason.
     """
-    source = env if env is not None else os.environ
-    if client is None:
-        client = JiraClient.from_env(env)
-
     if not project:
-        project = source.get("JIRA_PROJECT_ID", "")
-    if not project:
-        raise ValueError("Project is required: pass --project or set JIRA_PROJECT_ID")
+        raise ValueError("Project is required")
 
-    if not assigned_to_user_name:
-        assigned_to_user_name = source.get("JIRA_AGENT_USERNAME", "")
     if not assigned_to_user_name:
         assigned_to_user_name = _resolve_current_user(client)
 
@@ -208,11 +196,15 @@ def run_fetch_task(
 @app.callback()
 def main(
     project: str | None = typer.Option(
-        None, "--project", help="Jira project key (or JIRA_PROJECT_ID env var)"
+        None,
+        "--project",
+        envvar="JIRA_PROJECT_ID",
+        help="Jira project key (or JIRA_PROJECT_ID env var)",
     ),
     assigned_to_user_name: str | None = typer.Option(
         None,
         "--assigned-to-user-name",
+        envvar="JIRA_AGENT_USERNAME",
         help="Jira display name (or JIRA_AGENT_USERNAME env var; "
         "defaults to authenticated user)",
     ),
@@ -220,9 +212,11 @@ def main(
 ) -> None:
     """Fetch the next task for a user from a Jira project board."""
     from jira_utils._output import handle_error, output_json
+    from jira_utils.client import build_client
 
     try:
-        result = run_fetch_task(project, assigned_to_user_name)
+        client = build_client()
+        result = run_fetch_task(project, assigned_to_user_name, client=client)
         output_json(result, pretty=pretty)
     except Exception as exc:
         handle_error(exc)
