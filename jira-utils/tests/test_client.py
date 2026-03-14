@@ -4,40 +4,40 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from jira_utils.client import JiraApiError, JiraClient
+from jira_utils.client import JiraApiError, JiraClient, build_client
 
 
-class TestFromEnv:
-    def test_builds_from_env_dict(self):
-        env = {
-            "JIRA_URL": "https://example.atlassian.net/",
-            "JIRA_USERNAME": "user@example.com",
-            "JIRA_API_TOKEN": "tok123",
-        }
-        client = JiraClient.from_env(env)
+class TestBuildClient:
+    def test_builds_from_env(self, monkeypatch):
+        monkeypatch.setenv("JIRA_URL", "https://example.atlassian.net/")
+        monkeypatch.setenv("JIRA_USERNAME", "user@example.com")
+        monkeypatch.setenv("JIRA_API_TOKEN", "tok123")
+        client = build_client()
         assert client.base_url == "https://example.atlassian.net"
         assert client.username == "user@example.com"
         assert client.api_token == "tok123"
 
-    def test_strips_trailing_slash(self):
-        env = {
-            "JIRA_URL": "https://x.atlassian.net///",
-            "JIRA_USERNAME": "u",
-            "JIRA_API_TOKEN": "t",
-        }
-        client = JiraClient.from_env(env)
+    def test_strips_trailing_slash(self, monkeypatch):
+        monkeypatch.setenv("JIRA_URL", "https://x.atlassian.net///")
+        monkeypatch.setenv("JIRA_USERNAME", "u")
+        monkeypatch.setenv("JIRA_API_TOKEN", "t")
+        client = build_client()
         assert client.base_url == "https://x.atlassian.net"
 
     @pytest.mark.parametrize("missing", ["JIRA_URL", "JIRA_USERNAME", "JIRA_API_TOKEN"])
-    def test_raises_on_missing_var(self, missing):
-        env = {
+    def test_raises_on_missing_var(self, missing, monkeypatch):
+        all_vars = {
             "JIRA_URL": "https://x.atlassian.net",
             "JIRA_USERNAME": "u",
             "JIRA_API_TOKEN": "t",
         }
-        del env[missing]
+        for key, val in all_vars.items():
+            if key != missing:
+                monkeypatch.setenv(key, val)
+            else:
+                monkeypatch.delenv(key, raising=False)
         with pytest.raises(ValueError, match=missing):
-            JiraClient.from_env(env)
+            build_client()
 
 
 class TestRequest:

@@ -14,12 +14,9 @@ def run_get_boards(
     project: str | None = None,
     name: str | None = None,
     type: str | None = None,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> dict:
     """Fetch agile boards, optionally filtered."""
-    if client is None:
-        client = JiraClient.from_env(env)
     params: dict = {}
     if project:
         params["projectKeyOrId"] = project
@@ -39,9 +36,11 @@ def main(
 ) -> None:
     """Get Jira agile boards."""
     from jira_utils._output import handle_error, output_json
+    from jira_utils.client import build_client
 
     try:
-        result = run_get_boards(project=project, name=name, type=type)
+        client = build_client()
+        result = run_get_boards(project=project, name=name, type=type, client=client)
         output_json(result, pretty=pretty)
     except Exception as exc:
         handle_error(exc)

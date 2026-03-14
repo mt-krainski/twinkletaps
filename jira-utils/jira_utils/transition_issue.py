@@ -14,13 +14,9 @@ def run_transition_issue(
     transition_id: str,
     *,
     comment: str | None = None,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> dict | None:
     """Transition an issue. Returns None (204) on success."""
-    if client is None:
-        client = JiraClient.from_env(env)
-
     payload: dict = {"transition": {"id": transition_id}}
     if comment:
         payload["update"] = {"comment": [{"add": {"body": comment}}]}
@@ -41,9 +37,13 @@ def main(
 ) -> None:
     """Transition a Jira issue to a new status."""
     from jira_utils._output import handle_error, output_json
+    from jira_utils.client import build_client
 
     try:
-        result = run_transition_issue(issue_key, transition_id, comment=comment)
+        client = build_client()
+        result = run_transition_issue(
+            issue_key, transition_id, comment=comment, client=client
+        )
         output_json(result, pretty=pretty)
     except Exception as exc:
         handle_error(exc)

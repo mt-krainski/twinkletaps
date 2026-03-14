@@ -13,12 +13,9 @@ def run_add_to_sprint(
     sprint_id: int,
     issues: str,
     *,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> dict | None:
     """Add issues to a sprint. Returns None (204) on success."""
-    if client is None:
-        client = JiraClient.from_env(env)
     issue_keys = [k.strip() for k in issues.split(",")]
     return client.post(
         f"/rest/agile/1.0/sprint/{sprint_id}/issue",
@@ -34,9 +31,11 @@ def main(
 ) -> None:
     """Add issues to a Jira sprint."""
     from jira_utils._output import handle_error, output_json
+    from jira_utils.client import build_client
 
     try:
-        result = run_add_to_sprint(sprint_id, issues)
+        client = build_client()
+        result = run_add_to_sprint(sprint_id, issues, client=client)
         output_json(result, pretty=pretty)
     except Exception as exc:
         handle_error(exc)

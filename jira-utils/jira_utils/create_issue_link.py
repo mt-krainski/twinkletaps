@@ -14,12 +14,9 @@ def run_create_issue_link(
     inward: str,
     outward: str,
     *,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> dict | None:
     """Create an issue link. Returns None (201/204) on success."""
-    if client is None:
-        client = JiraClient.from_env(env)
     return client.post(
         "/rest/api/2/issueLink",
         json={
@@ -39,9 +36,11 @@ def main(
 ) -> None:
     """Create a link between two Jira issues."""
     from jira_utils._output import handle_error, output_json
+    from jira_utils.client import build_client
 
     try:
-        result = run_create_issue_link(type, inward, outward)
+        client = build_client()
+        result = run_create_issue_link(type, inward, outward, client=client)
         output_json(result, pretty=pretty)
     except Exception as exc:
         handle_error(exc)
