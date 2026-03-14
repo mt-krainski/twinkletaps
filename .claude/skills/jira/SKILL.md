@@ -72,7 +72,7 @@ jira-utils transition-issue --issue-key GFD-42 --transition-id 21
 jira-utils transition-issue --issue-key GFD-42 --transition-id 31 --comment 'Done!'
 ```
 
-Transition IDs: `3` Planning, `11` To Do, `21` In Progress, `2` Review, `31` Done, `32` Invalid.
+Transition IDs: `3` Planning, `4` Plan Review, `11` To Do, `21` In Progress, `2` Review, `31` Done, `32` Invalid.
 
 ### `get-transitions` — List available transitions
 
