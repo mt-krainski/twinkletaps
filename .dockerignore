@@ -1,0 +1,5 @@
+# Only include what the HiveMQ Dockerfile needs
+*
+!hivemq-auth-extension/
+hivemq-auth-extension/build/
+hivemq-auth-extension/.gradle/

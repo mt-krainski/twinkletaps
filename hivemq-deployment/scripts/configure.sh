@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# HiveMQ env vars live in the root .env (loaded via docker-compose env_file).
+# HiveMQ env vars are passed via explicit environment: block in docker-compose.yml.
 # Delegate to the root configure script which seeds all env vars.
 
 set -euo pipefail

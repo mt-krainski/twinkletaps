@@ -18,3 +18,5 @@ jobs:
       - name: Run smoke test
         working-directory: ./hivemq-deployment
         run: bash scripts/smoke-test.sh
+        env:
+          HIVEMQ_ALLOW_ALL_CLIENTS: "true"
