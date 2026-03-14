@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: "Development workflow reference — Jira statuses, naming conventions, workflow types (planning vs implementation), review procedures, and task lifecycle. Use whenever you need to interact with Jira tasks, transition issue statuses, create branches or PRs, understand the development process, or determine what to do with a task in any column (Planning, To Do, In Progress, Review). This is the single source of truth for how work moves through the system."
+description: "Development workflow reference — Jira statuses, naming conventions, workflow types (planning vs implementation), review procedures, and task lifecycle. Use whenever you need to interact with Jira tasks, transition issue statuses, create branches or PRs, understand the development process, or determine what to do with a task in any column (Planning, Plan Review, To Do, In Progress, Review). This is the single source of truth for how work moves through the system."
 ---
 
 # Development Workflow: Jira + Small Reviewable Increments
@@ -22,12 +22,13 @@ Issue statuses and transition IDs:
 
 | Status      | Transition ID | Meaning                               |
 |-------------|---------------|---------------------------------------|
-| Planning    | —             | Needs implementation planning         |
+| Planning    | `3`           | Needs implementation planning         |
+| Plan Review | `4`           | Plan awaiting human review            |
 | To Do       | `11`          | Approved and ready to implement       |
 | In Progress | `21`          | Currently being implemented           |
-| Review      | `2`           | PR open, awaiting review              |
+| Review      | `2`           | PR open, awaiting code review         |
 | Done        | `31`          | Merged to mainline                    |
-| Invalid     | —             | Cancelled or not applicable           |
+| Invalid     | `32`          | Cancelled or not applicable           |
 
 Use `jira-utils transition-issue` to move between statuses. Use `jira-utils get-issue` / `jira-utils search` to read issues. Use `jira-utils create-issue` to create. Use `jira-utils update-issue` to update. Use `jira-utils add-comment` for branch/PR/status updates. See `/jira` skill for full syntax.
 
@@ -59,27 +60,34 @@ Workflow parameters are in `.workflow` at repo root (`key=value` format). **Read
 
 ## Workflow Types
 
-There are two distinct workflow types, differentiated by the `plan` label on the Jira task.
+There are two distinct workflow types, distinguished by their Jira status columns.
 
-### Planning Workflow (label: `plan`)
+### Planning Workflow
 
 For tasks that require analysis and planning before implementation.
 
+**Simple task (single implementation task):**
 ```
-Planning → Review (human approves plan) → [create epic + tasks] → Done
+Planning → Plan Review (human approves) → To Do
+```
+
+**Complex task (epic with multiple tasks):**
+```
+Planning → Plan Review (human approves) → [create epic + tasks] → Done
 ```
 
 1. Task starts in **Planning**, assigned to you.
-2. Use the `/plan` skill to analyze the codebase and produce a plan. **Add the `plan` label to the task**, write the plan to the task description, transition to **Review**, assign to human.
+2. Use the `/plan` skill to analyze the codebase and produce a plan. Write the plan to the task description, transition to **Plan Review** (ID `4`), assign to human.
 3. Human reviews and leaves a comment (approval or change requests), then reassigns to you.
-4. You pick it up in **Review**, see the `plan` label → read comments:
-   - **Approval comment** → create implementation Epic + Tasks (via `/plan` skill's post-approval flow) → transition the planning task to **Done**.
-   - **Change requests** → update the plan, reassign back to human, keep in **Review**.
+4. You pick it up in **Plan Review**, read comments:
+   - **Approval (simple task)** → transition the planning task to **To Do** (ID `11`) so it enters the implementation workflow.
+   - **Approval (complex task)** → create implementation Epic + Tasks (via `/plan` skill's post-approval flow) → transition the planning task to **Done** (ID `31`).
+   - **Change requests** → update the plan, reassign back to human, keep in **Plan Review**.
    - **No comment from human** → reassign back to human asking for explicit feedback. Silence does NOT mean approval.
 
-### Implementation Workflow (default, no label)
+### Implementation Workflow
 
-For tasks that are ready to implement. No label required.
+For tasks that are ready to implement (in **To Do** column).
 
 ```
 To Do → In Progress → Review → Done
@@ -92,15 +100,9 @@ To Do → In Progress → Review → Done
 
 ### Review & Merge
 
-When assigned a task in `Review` status, **check for the `plan` label first** to determine which workflow applies:
+The **Review** column is exclusively for implementation code reviews (PRs). Plan reviews use the separate **Plan Review** column.
 
-**If task has `plan` label** → this is a plan review task:
-1. Fetch Jira issue comments via `jira-utils get-issue` to read human feedback.
-2. If comment approves the plan → create implementation Epic + Tasks using the plan from the task description (via `/plan` skill), then transition planning task to Done.
-3. If comment contains change requests → address the feedback, update the plan, reassign back to human.
-4. If no new comment from human → reassign back to human with a comment asking for explicit approval or feedback.
-
-**If task does NOT have `plan` label** → this is an implementation review task:
+When assigned a task in `Review` status:
 1. Fetch Jira issue comments via `jira-utils get-issue`.
 2. Fetch PR comments via `agent-utils gh-pr-fetch`.
 3. Determine intent:
@@ -216,7 +218,7 @@ Branch name and PR URL are posted as **Jira comments**, not in the description.
 ## Operating Mode
 
 1. Invoke `/plan` with a description of work → plan produced and presented.
-2. Human approves the plan → Epic + Tasks created in Jira.
+2. Human approves the plan → simple task transitions to To Do, complex task creates Epic + Tasks in Jira.
 3. Pick next issue, invoke `/execute` on that Jira issue → code + issue to `Review`.
 4. Review the PR → merge + transition to `Done`.
 

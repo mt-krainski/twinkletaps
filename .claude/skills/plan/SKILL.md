@@ -17,21 +17,33 @@ The planner agent produces a structured plan. The plan skill is responsible for 
 
 1. Present the plan to the user.
 2. **Wait for human approval before proceeding.** Do not create Jira issues until explicitly approved.
-3. After approval: create Jira Epic + Tasks (see "Creating Jira Issues" below).
+3. After approval: follow the Post-Approval flow below (simple or complex path).
 
 ### Ticket-Loop Mode (non-interactive, invoked via ticket-loop)
 
 When running non-interactively (the prompt mentions the task is from a script or ticket-loop):
 
-1. **Add the `plan` label** to the Jira task using `jira-utils update-issue`.
-2. Write the plan to the Jira task description using `jira-utils update-issue`.
-3. Reassign the task to the human (`humanAtlassianId` from `.workflow`).
-4. Transition the task to Review (transition ID `2`) using `jira-utils transition-issue`.
-5. **Stop.** Do not create implementation tickets — that happens after the human approves the plan.
+1. Write the plan to the Jira task description using `jira-utils update-issue`.
+2. Reassign the task to the human (`humanAtlassianId` from `.workflow`).
+3. Transition the task to Plan Review (transition ID `4`) using `jira-utils transition-issue`.
+4. **Stop.** Do not create implementation tickets — that happens after the human approves the plan.
 
-## Creating Jira Issues (Post-Approval)
+## Post-Approval
 
-After human approves the plan:
+After human approves the plan, determine whether this is a simple or complex task:
+
+### Simple task (single implementation task)
+
+If the plan results in a single implementation task (no epic needed):
+
+1. Update the planning task's description with the implementation plan using `jira-utils update-issue`.
+2. Transition the planning task to **To Do** (transition ID `11`).
+
+The planning task itself becomes the implementation task.
+
+### Complex task (epic with multiple tasks)
+
+If the plan requires multiple tasks:
 
 1. Create a Jira Epic if one doesn't already exist:
    ```bash
@@ -43,7 +55,6 @@ After human approves the plan:
    jira-utils create-issue --project GFD --type Task --summary '[task title]' --description '[description]' --additional-fields '{"parent": {"key": "GFD-###"}}'
    jira-utils move-to-board --board-id 1 --issues GFD-[new-key]
    ```
-3. If only one task is needed: skip the Epic, create a single implementation Task directly.
 
 Issue IDs are auto-assigned by Jira. Tasks are created in `To Do` status by default.
 

@@ -7,7 +7,7 @@ description: "Fetch the next task to work on from a specific Jira board column. 
 
 ## How to Fetch from a Column
 
-Board columns and their exact status names are defined in the `/workflow` skill. Use the **exact status name** (e.g. `"Planning"`, `"To Do"`, `"In Progress"`, `"Review"`, `"Done"`). Do not guess or substitute column names.
+Board columns and their exact status names are defined in the `/workflow` skill. Use the **exact status name** (e.g. `"Planning"`, `"Plan Review"`, `"To Do"`, `"In Progress"`, `"Review"`, `"Done"`). Do not guess or substitute column names.
 
 ```bash
 jira-utils search --jql 'project = GFD AND status = "<exact status name>" ORDER BY rank ASC' --fields summary,status,priority,issuetype,parent --limit 1
