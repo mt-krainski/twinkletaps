@@ -61,7 +61,7 @@ add-bounds = "major"
 preview = true
 
 [tool.uv.sources]
-jira-utils = { path = "../jira-utils" }
+jira-utils = { path = "../jira-utils", editable = true }
 
 [tool.poe]
 envfile = ".env"

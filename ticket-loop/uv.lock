@@ -196,7 +196,7 @@ wheels = [
 [[package]]
 name = "jira-utils"
 version = "0.0.1"
-source = { directory = "../jira-utils" }
+source = { editable = "../jira-utils" }
 dependencies = [
     { name = "httpx" },
     { name = "python-dotenv" },
@@ -356,7 +356,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "jira-utils", directory = "../jira-utils" },
+    { name = "jira-utils", editable = "../jira-utils" },
     { name = "python-dotenv", specifier = ">=1.2.2,<2.0.0" },
     { name = "typer", specifier = ">=0.24.1,<0.25.0" },
 ]
