@@ -40,6 +40,7 @@ jobs:
               - '.github/workflows/ci.yml'
             hivemq-deployment:
               - 'hivemq-deployment/**'
+              - 'hivemq-auth-extension/**'
               - '.github/workflows/hivemq-deployment--*'
               - '.github/workflows/ci.yml'
             jira-utils:
