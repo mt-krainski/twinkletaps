@@ -85,7 +85,7 @@ jobs:
           MQTT_PUBLISHER_PASSWORD: ci-publisher-pass
           MQTT_BROKER_URL: mqtt://localhost:1883
         run: |
-          npm run dev > /tmp/nextjs.log 2>&1 &
+          npm run dev -- --hostname 0.0.0.0 > /tmp/nextjs.log 2>&1 &
           echo "Waiting for Next.js dev server..."
           RETRIES=30
           while [ $RETRIES -gt 0 ]; do
