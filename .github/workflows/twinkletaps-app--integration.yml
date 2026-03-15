@@ -101,6 +101,19 @@ jobs:
             exit 1
           fi
 
+      - name: Verify MQTT auth endpoint
+        run: |
+          echo "=== Testing auth endpoint with publisher credentials ==="
+          curl -v -X POST http://localhost:3000/api/mqtt/auth \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer test-auth-secret" \
+            -d '{"username": "ci-publisher", "password": "ci-publisher-pass"}' || true
+          echo ""
+          echo "=== Testing auth endpoint without auth header ==="
+          curl -v -X POST http://localhost:3000/api/mqtt/auth \
+            -H "Content-Type: application/json" \
+            -d '{"username": "ci-publisher", "password": "ci-publisher-pass"}' || true
+
       - name: Run integration tests
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
@@ -113,6 +126,16 @@ jobs:
           MQTT_PUBLISHER_PASSWORD: ci-publisher-pass
           MQTT_AUTH_SECRET: test-auth-secret
         run: npm run test:integration:coverage
+
+      - name: Dump logs on failure
+        if: failure()
+        working-directory: hivemq-deployment
+        run: |
+          echo "=== HiveMQ container logs ==="
+          docker compose -f docker-compose.yml -f ../.github/docker-compose.ci-integration.yml logs 2>&1 || true
+          echo ""
+          echo "=== Next.js dev server logs ==="
+          cat /tmp/nextjs.log 2>/dev/null || echo "No Next.js log file found"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
