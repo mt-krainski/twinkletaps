@@ -52,24 +52,23 @@ jobs:
       - name: Start HiveMQ broker
         working-directory: hivemq-deployment
         env:
-          TWINKLETAPS_AUTH_URL: "http://host.docker.internal:3000/api/mqtt/auth"
+          TWINKLETAPS_AUTH_URL: "http://localhost:3000/api/mqtt/auth"
           TWINKLETAPS_AUTH_SECRET: "test-auth-secret"
         run: |
-          docker compose up -d --build
+          docker compose -f docker-compose.yml -f ../.github/docker-compose.ci-integration.yml up -d --build
           echo "Waiting for HiveMQ to be healthy..."
           RETRIES=30
           while [ $RETRIES -gt 0 ]; do
-            STATUS=$(docker compose ps --format json 2>/dev/null | grep -o '"Health":"[^"]*"' | head -1 || true)
-            if echo "$STATUS" | grep -q "healthy"; then
-              echo "HiveMQ is healthy"
+            if bash -c 'echo > /dev/tcp/localhost/1883' 2>/dev/null; then
+              echo "HiveMQ is ready (port 1883 open)"
               break
             fi
             RETRIES=$((RETRIES - 1))
             sleep 2
           done
           if [ $RETRIES -eq 0 ]; then
-            echo "ERROR: HiveMQ did not become healthy"
-            docker compose logs
+            echo "ERROR: HiveMQ did not become ready"
+            docker compose -f docker-compose.yml -f ../.github/docker-compose.ci-integration.yml logs
             exit 1
           fi
 
