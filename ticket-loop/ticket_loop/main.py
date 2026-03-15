@@ -118,60 +118,11 @@ def get_session(task_key: str) -> str:
     return session_id
 
 
-def _task_has_label(task: dict, label: str) -> bool:
-    """Check if a task has a specific label."""
-    return label in (task.get("labels") or [])
-
-
 def handle_review(task: dict, *, skip_permissions: bool = False) -> None:
-    """Handle a task in the Review column — route by label."""
+    """Handle a task in the Review column — implementation reviews only."""
     session_id = get_session(task["key"])
     human_id = os.environ["HUMAN_ATLASSIAN_ID"]
     print(f"  Resuming session {session_id}")
-
-    if _task_has_label(task, "plan"):
-        _handle_plan_review(
-            task,
-            session_id=session_id,
-            human_id=human_id,
-            skip_permissions=skip_permissions,
-        )
-    else:
-        _handle_implementation_review(
-            task,
-            session_id=session_id,
-            human_id=human_id,
-            skip_permissions=skip_permissions,
-        )
-
-
-def _handle_plan_review(
-    task: dict, *, session_id: str, human_id: str, skip_permissions: bool
-) -> None:
-    """Handle a plan review task — read comments, create issues or iterate."""
-    run_claude_task(
-        f"Task {task['key']} ({task['summary']}) is a planning task in Review "
-        "(it has the 'plan' label). "
-        "Read the latest comments on the Jira task to determine the human's intent. "
-        "If the human approved the plan (e.g. 'approved', 'looks good', 'lgtm'), "
-        "create the implementation Epic + Tasks from the plan in the task description "
-        "using the /plan skill's post-approval flow, then transition this planning "
-        "task to Done (transition ID 31). "
-        "If the human left change requests or questions, address the feedback, "
-        "update the plan in the task description, and reassign back to "
-        f"'{human_id}'. Keep the task in Review. "
-        "If there is NO new comment from the human, reassign back to "
-        f"'{human_id}' with a comment asking for explicit approval or feedback. "
-        "Silence does NOT mean approval.",
-        session_id=session_id,
-        skip_permissions=skip_permissions,
-    )
-
-
-def _handle_implementation_review(
-    task: dict, *, session_id: str, human_id: str, skip_permissions: bool
-) -> None:
-    """Handle an implementation review task — address PR feedback."""
     run_claude_task(
         f"Task {task['key']} ({task['summary']}) is in Review. "
         "Check the comments on the Jira task AND on the associated pull request. "
@@ -180,6 +131,29 @@ def _handle_implementation_review(
         "When done, commit and push the changes. "
         "Add relevant comments to the Jira task and/or pull request. "
         f"Then reassign the Jira task to '{human_id}'.",
+        session_id=session_id,
+        skip_permissions=skip_permissions,
+    )
+
+
+def handle_plan_review(task: dict, *, skip_permissions: bool = False) -> None:
+    """Handle a task in the Plan Review column."""
+    session_id = get_session(task["key"])
+    human_id = os.environ["HUMAN_ATLASSIAN_ID"]
+    print(f"  Resuming session {session_id}")
+    run_claude_task(
+        f"Task {task['key']} ({task['summary']}) is in the Plan Review column. "
+        "Read the latest comments on the Jira task to determine the human's intent. "
+        "If the human approved the plan (e.g. 'approved', 'looks good', 'lgtm'), "
+        "create the implementation Epic + Tasks from the plan in the task description "
+        "using the /plan skill's post-approval flow, then transition this planning "
+        "task to Done (transition ID 31). "
+        "If the human left change requests or questions, address the feedback, "
+        "update the plan in the task description, and reassign back to "
+        f"'{human_id}'. Keep the task in Plan Review. "
+        "If there is NO new comment from the human, reassign back to "
+        f"'{human_id}' with a comment asking for explicit approval or feedback. "
+        "Silence does NOT mean approval.",
         session_id=session_id,
         skip_permissions=skip_permissions,
     )
@@ -264,10 +238,9 @@ def handle_planning(task: dict, *, skip_permissions: bool = False) -> None:
         "This is invoked through a script (ticket-loop). Your only way to "
         "communicate back to the user is via Jira. "
         "After producing the plan: "
-        f"1. Add the 'plan' label to task {task['key']} using jira-utils update-issue. "
-        f"2. Write the plan to the task description using jira-utils update-issue. "
-        f"3. Reassign the task to '{human_id}'. "
-        "4. Transition the task to Review (transition ID 2). "
+        f"1. Write the plan to the task description using jira-utils update-issue. "
+        f"2. Reassign the task to '{human_id}'. "
+        "3. Transition the task to Plan Review (transition ID 4). "
         "Do NOT create implementation tickets — that happens after human approval. "
         "If you have questions, write your plan so far into the Jira ticket, ask "
         "questions as a comment, and reassign the issue to the user.",
@@ -278,6 +251,7 @@ def handle_planning(task: dict, *, skip_permissions: bool = False) -> None:
 
 COLUMN_HANDLERS = {
     "review": handle_review,
+    "plan_review": handle_plan_review,
     "in_progress": handle_in_progress,
     "to_do": handle_to_do,
     "planning": handle_planning,

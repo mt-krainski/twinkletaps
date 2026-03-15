@@ -281,6 +281,94 @@ class TestRunFetchTask:
         # review at WIP 3 => to_do downstream blocked, no other columns => None
         assert result["selected_task"] is None
 
+    def test_plan_review_status_mapped_to_column(self):
+        """Plan Review status is mapped to plan_review column."""
+        issues = [_issue("GFD-1", "Plan Review", assignee="Bot")]
+        client = MagicMock(spec=JiraClient)
+        client.post.return_value = _search_response(issues)
+
+        result = run_fetch_task("GFD", "Bot", client=client)
+
+        assert "plan_review" in result["board_state"]
+        assert result["selected_task"]["key"] == "GFD-1"
+        assert result["selected_column"] == "plan_review"
+
+    def test_plan_review_priority_after_review_before_planning(self):
+        """Plan Review is selected before planning but after review."""
+        issues = [
+            _issue("GFD-1", "Planning", assignee="Bot"),
+            _issue("GFD-2", "Plan Review", assignee="Bot"),
+        ]
+        client = MagicMock(spec=JiraClient)
+        client.post.return_value = _search_response(issues)
+
+        result = run_fetch_task("GFD", "Bot", client=client)
+
+        assert result["selected_task"]["key"] == "GFD-2"
+        assert result["selected_column"] == "plan_review"
+
+    def test_review_picked_over_plan_review(self):
+        """Review column has priority over Plan Review."""
+        issues = [
+            _issue("GFD-1", "Plan Review", assignee="Bot"),
+            _issue("GFD-2", "Review", assignee="Bot"),
+        ]
+        client = MagicMock(spec=JiraClient)
+        client.post.return_value = _search_response(issues)
+
+        result = run_fetch_task("GFD", "Bot", client=client)
+
+        assert result["selected_task"]["key"] == "GFD-2"
+        assert result["selected_column"] == "review"
+
+    def test_plan_review_wip_limit_blocks_planning(self):
+        """Planning is blocked when plan_review is at WIP limit (3)."""
+        plan_review_issues = [
+            _issue(f"GFD-{i}", "Plan Review", assignee="Other") for i in range(1, 4)
+        ]
+        planning_issue = _issue("GFD-100", "Planning", assignee="Bot")
+
+        client = MagicMock(spec=JiraClient)
+        client.post.return_value = _search_response(
+            plan_review_issues + [planning_issue]
+        )
+
+        result = run_fetch_task("GFD", "Bot", client=client)
+
+        # plan_review at WIP 3 => planning blocked
+        assert result["selected_task"] is None
+
+    def test_planning_blocked_by_either_plan_review_or_to_do_wip(self):
+        """Planning blocked when to_do is at WIP limit even if plan_review is not."""
+        to_do_issues = [
+            _issue(f"GFD-{i}", "To Do", assignee="Other") for i in range(1, 16)
+        ]
+        planning_issue = _issue("GFD-100", "Planning", assignee="Bot")
+
+        client = MagicMock(spec=JiraClient)
+        client.post.return_value = _search_response(to_do_issues + [planning_issue])
+
+        result = run_fetch_task("GFD", "Bot", client=client)
+
+        # to_do at WIP 15 => planning blocked
+        assert result["selected_task"] is None
+
+    def test_plan_review_wip_does_not_block_to_do(self):
+        """plan_review WIP limit does NOT block the to_do column."""
+        plan_review_issues = [
+            _issue(f"GFD-{i}", "Plan Review", assignee="Other") for i in range(1, 4)
+        ]
+        to_do_issue = _issue("GFD-10", "To Do", assignee="Bot")
+
+        client = MagicMock(spec=JiraClient)
+        client.post.return_value = _search_response(plan_review_issues + [to_do_issue])
+
+        result = run_fetch_task("GFD", "Bot", client=client)
+
+        # plan_review at WIP 3 does not block to_do
+        assert result["selected_task"]["key"] == "GFD-10"
+        assert result["selected_column"] == "to_do"
+
     def test_unassigned_task_skipped(self):
         """Tasks with no assignee are skipped."""
         issues = [

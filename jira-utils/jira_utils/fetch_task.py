@@ -14,22 +14,27 @@ app = typer.Typer(invoke_without_command=True)
 # Status name -> column key mapping
 _STATUS_MAP: dict[str, str] = {
     "Planning": "planning",
+    "Plan Review": "plan_review",
     "To Do": "to_do",
     "In Progress": "in_progress",
     "Review": "review",
 }
 
 # Column priority order — in_progress first (anomalous state, fix ASAP)
-_COLUMN_PRIORITY = ["in_progress", "review", "planning", "to_do"]
+_COLUMN_PRIORITY = ["in_progress", "review", "plan_review", "planning", "to_do"]
 
 # Columns to skip during selection
 _SKIP_COLUMNS: set[str] = set()
 
 # WIP limits per column (epics excluded from count)
-_WIP_LIMITS: dict[str, int] = {"to_do": 15, "review": 3}
+_WIP_LIMITS: dict[str, int] = {"to_do": 15, "review": 3, "plan_review": 3}
 
-# Downstream column mapping for WIP checks
-_DOWNSTREAM: dict[str, str] = {"planning": "to_do", "to_do": "review"}
+# Downstream columns checked for WIP limits before picking from a column
+_DOWNSTREAM: dict[str, list[str]] = {
+    "planning": ["plan_review", "to_do"],
+    "plan_review": ["to_do"],
+    "to_do": ["review"],
+}
 
 # Statuses that mean a blocker is resolved
 _RESOLVED_STATUSES = {"Done", "Invalid"}
@@ -125,12 +130,17 @@ def _select_task(
         if column in _SKIP_COLUMNS:
             continue
 
-        # Check downstream WIP limit
-        downstream = _DOWNSTREAM.get(column)
-        if downstream and downstream in _WIP_LIMITS:
-            downstream_tasks = board_state.get(downstream, [])
-            if _wip_count(downstream_tasks) >= _WIP_LIMITS[downstream]:
-                continue
+        # Check downstream WIP limits
+        downstreams = _DOWNSTREAM.get(column, [])
+        blocked = False
+        for ds in downstreams:
+            if ds in _WIP_LIMITS:
+                ds_tasks = board_state.get(ds, [])
+                if _wip_count(ds_tasks) >= _WIP_LIMITS[ds]:
+                    blocked = True
+                    break
+        if blocked:
+            continue
 
         tasks = board_state.get(column, [])
         for task in tasks:
