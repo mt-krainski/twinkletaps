@@ -13,6 +13,8 @@ from ticket_loop.main import (
     _swap_session_to_resume,
     get_session,
     handle_in_progress,
+    handle_plan_review,
+    handle_review,
     resume_session,
     save_session,
 )
@@ -26,7 +28,7 @@ def _fetch_result(
 ) -> dict:
     """Build a run_fetch_task return value."""
     if board_state is None:
-        board_state = {"review": [], "to_do": [], "planning": []}
+        board_state = {"review": [], "plan_review": [], "to_do": [], "planning": []}
     return {
         "board_state": board_state,
         "selected_task": selected_task,
@@ -337,3 +339,83 @@ def test_handle_in_progress_passes_skip_permissions(tmp_path, monkeypatch):
         handle_in_progress(task, skip_permissions=True)
 
     assert mock_claude.call_args.kwargs["skip_permissions"] is True
+
+
+# -- plan_review column handler --
+
+
+def test_column_handlers_includes_plan_review():
+    """COLUMN_HANDLERS maps plan_review to handle_plan_review."""
+    assert "plan_review" in COLUMN_HANDLERS
+    assert COLUMN_HANDLERS["plan_review"] is handle_plan_review
+
+
+def test_run_loop_dispatches_to_plan_review(monkeypatch):
+    """_run_loop dispatches to handle_plan_review for plan_review column."""
+    monkeypatch.setenv("JIRA_AGENT_USERNAME", "Bot")
+    task = {"key": "GFD-5", "summary": "Review plan", "labels": []}
+    result = _fetch_result(selected_task=task, selected_column="plan_review")
+    mock_handler = MagicMock()
+
+    with (
+        patch("ticket_loop.main.run_fetch_task", return_value=result),
+        patch.dict(COLUMN_HANDLERS, {"plan_review": mock_handler}),
+    ):
+        _run_loop()
+
+    mock_handler.assert_called_once_with(task, skip_permissions=False)
+
+
+def test_handle_plan_review_resumes_session(tmp_path, monkeypatch):
+    """handle_plan_review looks up the saved session and runs a Claude task."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+    monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
+
+    save_session("GFD-60", "plan-review-sid")
+    task = {"key": "GFD-60", "summary": "Plan task", "labels": []}
+
+    with patch("ticket_loop.main.run_claude_task") as mock_claude:
+        handle_plan_review(task)
+
+    mock_claude.assert_called_once()
+    call_kwargs = mock_claude.call_args
+    assert call_kwargs.kwargs["session_id"] == "plan-review-sid"
+    assert "GFD-60" in call_kwargs.args[0]
+    assert "Plan Review" in call_kwargs.args[0]
+
+
+def test_handle_plan_review_passes_skip_permissions(tmp_path, monkeypatch):
+    """skip_permissions flag is forwarded to run_claude_task."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+    monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
+
+    save_session("GFD-61", "perm-sid")
+    task = {"key": "GFD-61", "summary": "Plan task", "labels": []}
+
+    with patch("ticket_loop.main.run_claude_task") as mock_claude:
+        handle_plan_review(task, skip_permissions=True)
+
+    assert mock_claude.call_args.kwargs["skip_permissions"] is True
+
+
+# -- handle_review no longer checks plan label --
+
+
+def test_handle_review_does_not_branch_on_plan_label(tmp_path, monkeypatch):
+    """handle_review always does implementation review, regardless of labels."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+    monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
+
+    save_session("GFD-70", "review-sid")
+    task = {"key": "GFD-70", "summary": "Review task", "labels": ["plan"]}
+
+    with patch("ticket_loop.main.run_claude_task") as mock_claude:
+        handle_review(task)
+
+    # Should mention PR/implementation review, not plan review
+    prompt = mock_claude.call_args.args[0]
+    assert "Review" in prompt
+    assert "pull request" in prompt.lower() or "address-pr" in prompt.lower()
