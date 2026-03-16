@@ -38,12 +38,12 @@ test.describe("MQTT authenticated flow", () => {
 
     const dialog = page.getByRole("dialog");
 
-    // Each CredentialRow renders: <Label> + <code>{value}</code> + <CopyButton aria-label="Copy {label}">
-    // Use the CopyButton aria-label to anchor to the correct row, then extract <code> text
+    // Each CredentialRow renders: <div> <Label> <code>{value}</code> <CopyButton aria-label="Copy {label}"> </div>
+    // Navigate up from the copy button to its parent CredentialRow div, then extract <code> text
     const getCredential = async (label: string) => {
       const row = dialog
-        .locator("div")
-        .filter({ has: page.getByRole("button", { name: `Copy ${label}` }) });
+        .getByRole("button", { name: `Copy ${label}` })
+        .locator("xpath=..");
       return row.locator("code").textContent({ timeout: 5000 });
     };
 
