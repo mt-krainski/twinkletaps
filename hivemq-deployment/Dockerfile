@@ -6,5 +6,5 @@ RUN ./gradlew deployExtension --no-daemon
 
 # Stage 2: HiveMQ CE with baked-in extension
 FROM hivemq/hivemq-ce:2024.9
-COPY --from=builder /build/build/deploy/twinkletaps-auth-extension \
+COPY --chown=10000:10000 --from=builder /build/build/deploy/twinkletaps-auth-extension \
      /opt/hivemq/extensions/twinkletaps-auth-extension

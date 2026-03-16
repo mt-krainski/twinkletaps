@@ -1,6 +1,7 @@
 plugins {
     java
     jacoco
+    id("com.gradleup.shadow") version "8.3.6"
 }
 
 group = "com.twinkletaps"
@@ -38,9 +39,8 @@ tasks.jacocoTestReport {
 }
 
 tasks.register<Copy>("deployExtension") {
-    dependsOn(tasks.jar)
-    from(tasks.jar)
-    from(configurations.runtimeClasspath)
+    dependsOn(tasks.named("shadowJar"))
+    from(tasks.named("shadowJar"))
     from("src/main/resources/hivemq-extension.xml")
     into("build/deploy/twinkletaps-auth-extension")
 }

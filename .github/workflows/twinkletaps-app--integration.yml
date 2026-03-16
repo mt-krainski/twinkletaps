@@ -51,27 +51,68 @@ jobs:
 
       - name: Start HiveMQ broker
         working-directory: hivemq-deployment
+        env:
+          TWINKLETAPS_AUTH_URL: "http://127.0.0.1:3000/api/mqtt/auth"
+          TWINKLETAPS_AUTH_SECRET: "test-auth-secret"
         run: |
-          # Allow all MQTT clients in CI (no auth extension needed).
-          # Shell export overrides docker-compose environment default (false).
-          export HIVEMQ_ALLOW_ALL_CLIENTS=true
-          docker compose up -d
+          docker compose up -d --build
           echo "Waiting for HiveMQ to be healthy..."
           RETRIES=30
           while [ $RETRIES -gt 0 ]; do
-            STATUS=$(docker compose ps --format json 2>/dev/null | grep -o '"Health":"[^"]*"' | head -1 || true)
-            if echo "$STATUS" | grep -q "healthy"; then
-              echo "HiveMQ is healthy"
+            if bash -c 'echo > /dev/tcp/localhost/1883' 2>/dev/null; then
+              echo "HiveMQ is ready (port 1883 open)"
               break
             fi
             RETRIES=$((RETRIES - 1))
             sleep 2
           done
           if [ $RETRIES -eq 0 ]; then
-            echo "ERROR: HiveMQ did not become healthy"
+            echo "ERROR: HiveMQ did not become ready"
             docker compose logs
             exit 1
           fi
+
+      - name: Start Next.js dev server
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          NEXT_PUBLIC_COMPANY_NAME: Test Company
+          MQTT_AUTH_SECRET: test-auth-secret
+          MQTT_PUBLISHER_USERNAME: ci-publisher
+          MQTT_PUBLISHER_PASSWORD: ci-publisher-pass
+          MQTT_BROKER_URL: mqtt://localhost:1883
+        run: |
+          npm run dev -- --hostname 0.0.0.0 > /tmp/nextjs.log 2>&1 &
+          echo "Waiting for Next.js dev server..."
+          RETRIES=30
+          while [ $RETRIES -gt 0 ]; do
+            if curl -s -o /dev/null http://localhost:3000; then
+              echo "Next.js is ready"
+              break
+            fi
+            RETRIES=$((RETRIES - 1))
+            sleep 2
+          done
+          if [ $RETRIES -eq 0 ]; then
+            echo "ERROR: Next.js did not start"
+            cat /tmp/nextjs.log
+            exit 1
+          fi
+
+      - name: Verify MQTT auth endpoint
+        run: |
+          echo "=== Testing auth endpoint with publisher credentials ==="
+          curl -v -X POST http://localhost:3000/api/mqtt/auth \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer test-auth-secret" \
+            -d '{"username": "ci-publisher", "password": "ci-publisher-pass"}' || true
+          echo ""
+          echo "=== Testing auth endpoint without auth header ==="
+          curl -v -X POST http://localhost:3000/api/mqtt/auth \
+            -H "Content-Type: application/json" \
+            -d '{"username": "ci-publisher", "password": "ci-publisher-pass"}' || true
 
       - name: Run integration tests
         env:
@@ -81,11 +122,20 @@ jobs:
           DATABASE_URL: ${{ env.DATABASE_URL }}
           NEXT_PUBLIC_COMPANY_NAME: Test Company
           MQTT_BROKER_URL: mqtt://localhost:1883
-          # Arbitrary values — HiveMQ runs with ALLOW_ALL_CLIENTS=true in CI
           MQTT_PUBLISHER_USERNAME: ci-publisher
           MQTT_PUBLISHER_PASSWORD: ci-publisher-pass
-          MQTT_TEST_TOPIC: twinkletaps/ci-test
+          MQTT_AUTH_SECRET: test-auth-secret
         run: npm run test:integration:coverage
+
+      - name: Dump logs on failure
+        if: failure()
+        working-directory: hivemq-deployment
+        run: |
+          echo "=== HiveMQ container logs ==="
+          docker compose logs 2>&1 || true
+          echo ""
+          echo "=== Next.js dev server logs ==="
+          cat /tmp/nextjs.log 2>/dev/null || echo "No Next.js log file found"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
