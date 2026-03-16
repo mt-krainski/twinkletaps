@@ -8,19 +8,7 @@ import { prisma } from "../src/lib/prisma";
 import { registerDeviceForUser } from "../src/lib/services/device";
 import { publishToDevice } from "../src/lib/services/mqtt";
 
-const hasMqtt =
-  !!config.mqttPublisher.brokerUrl &&
-  !!config.mqttPublisher.username &&
-  !!config.mqttPublisher.password;
-
-const hasDb =
-  !!process.env.DATABASE_URL &&
-  !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
-  !!process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-const describeIfReady = hasMqtt && hasDb ? describe : describe.skip;
-
-describeIfReady("MQTT publish (integration)", () => {
+describe("MQTT publish (integration)", () => {
   let supabaseAdmin: ReturnType<typeof createClient>;
   let authUserId: string;
   let workspaceId: string;

@@ -1,3 +1,0 @@
-services:
-  hivemq:
-    network_mode: host

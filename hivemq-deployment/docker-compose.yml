@@ -4,6 +4,7 @@ services:
       context: ..
       dockerfile: hivemq-deployment/Dockerfile
     container_name: twinkletaps-hivemq
+    network_mode: host
     ports:
       - "1883:1883"
       - "8000:8000"

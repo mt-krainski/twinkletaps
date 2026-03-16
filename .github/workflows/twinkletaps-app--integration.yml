@@ -55,7 +55,7 @@ jobs:
           TWINKLETAPS_AUTH_URL: "http://127.0.0.1:3000/api/mqtt/auth"
           TWINKLETAPS_AUTH_SECRET: "test-auth-secret"
         run: |
-          docker compose -f docker-compose.yml -f ../.github/docker-compose.ci-integration.yml up -d --build
+          docker compose up -d --build
           echo "Waiting for HiveMQ to be healthy..."
           RETRIES=30
           while [ $RETRIES -gt 0 ]; do
@@ -68,7 +68,7 @@ jobs:
           done
           if [ $RETRIES -eq 0 ]; then
             echo "ERROR: HiveMQ did not become ready"
-            docker compose -f docker-compose.yml -f ../.github/docker-compose.ci-integration.yml logs
+            docker compose logs
             exit 1
           fi
 
@@ -132,7 +132,7 @@ jobs:
         working-directory: hivemq-deployment
         run: |
           echo "=== HiveMQ container logs ==="
-          docker compose -f docker-compose.yml -f ../.github/docker-compose.ci-integration.yml logs 2>&1 || true
+          docker compose logs 2>&1 || true
           echo ""
           echo "=== Next.js dev server logs ==="
           cat /tmp/nextjs.log 2>/dev/null || echo "No Next.js log file found"
