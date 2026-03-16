@@ -19,8 +19,12 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TwinkletapsAuthenticator implements SimpleAuthenticator {
+
+    private static final Logger LOG = Logger.getLogger(TwinkletapsAuthenticator.class.getName());
 
     private final String authUrl;
     private final String authSecret;
@@ -84,6 +88,7 @@ public class TwinkletapsAuthenticator implements SimpleAuthenticator {
                 output.failAuthentication(ConnackReasonCode.NOT_AUTHORIZED, "Authentication failed");
             }
         } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Auth service error for user '" + username + "' calling " + authUrl, e);
             output.failAuthentication(ConnackReasonCode.SERVER_UNAVAILABLE,
                     "Auth service error: " + e.getMessage());
         }
