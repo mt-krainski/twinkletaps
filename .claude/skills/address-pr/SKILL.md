@@ -77,15 +77,19 @@ For multi-item feedback:
 
 ## Step 4: Reply on GitHub
 
+**Argument order matters.** Options MUST come before the PR number (Typer quirk with `invoke_without_command=True`).
+
 ### Inline review comments (threaded)
 ```bash
-agent-utils gh-pr-reply <pr-number> --body 'Your reply' --comment-id <comment_id>
+agent-utils gh-pr-reply --body 'Your reply' --comment-id <comment_id> <pr-number>
 ```
 
 ### General PR conversation
 ```bash
-agent-utils gh-pr-reply <pr-number> --body 'Your reply'
+agent-utils gh-pr-reply --body 'Your reply' <pr-number>
 ```
+
+If you get "Missing option '--body'", check: (1) did you chain with `&&` or `cd`? Split into separate commands. (2) Are quotes correct? Use single quotes for the body.
 
 ### Reply style
 - Concise and technical
