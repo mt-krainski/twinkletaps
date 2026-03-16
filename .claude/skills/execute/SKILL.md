@@ -33,7 +33,7 @@ Follow the issue's Implementation Plan:
 1. Implement strictly according to task scope
 2. **TDD is mandatory.** For each behavior:
    a. Write the failing test
-   b. **HARD GATE — Run the test now.** If it does not FAIL, stop. You have not written a meaningful test. Do not proceed to production code.
+   b. **HARD GATE — Run the test now.** If it does not FAIL, you have not written a meaningful test. Fix the test so it fails for the right reason before proceeding to production code.
    c. Write minimal production code to make the test pass
    d. Run the test again — confirm GREEN
 3. Keep changes within ~200-300 LOC; if scope expands, stop and create follow-up issue

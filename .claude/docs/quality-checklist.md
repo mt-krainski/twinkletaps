@@ -16,16 +16,3 @@ Shared rules that apply across implementation, code review, and planning. This f
 - **Never add test-only methods** to production classes.
 - **Every behavior change needs tests** OR a documented reason + manual verification.
 
-## CLI Rules
-
-- **Use `agent-utils` wrappers** for git/gh operations. Never raw `git commit`, `git push`, or `gh`.
-- **Use `--pretty`** on all `jira-utils` output commands.
-- **Run `--help` before first use** of any CLI command (`agent-utils`, `jira-utils`) in a session. Do not guess flag names or argument order.
-- **No shell chaining.** Never use `&&`, `||`, `;`, `|`, `>`, `$()`, or backticks. Run each command separately.
-
-## Workflow Rules
-
-- **PRs always target `main`**, never stale feature branches.
-- **Never squash/rebase commits.** User squashes at merge time. WIP commits are fine.
-- **`/wrap` is the single exit point** for all code changes. Never use `/commit` directly to finalize work.
-- **Never transition to Done** until the PR is merged to mainline.

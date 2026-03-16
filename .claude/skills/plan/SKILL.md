@@ -74,7 +74,7 @@ Present: **"Issues created in Jira. Which task should I start?"**
 
 Each Task description must include: Problem/Goal, Non-Goals, Acceptance Criteria, Repo Context, Implementation Plan, Test Plan, Verification Notes, Risk/Rollback.
 
-**Quality rules:** Read `.claude/docs/quality-checklist.md` and ensure planned implementations comply. Flag any planned approach that would violate a checklist rule.
+**Quality rules:** Read `.claude/docs/quality-checklist.md` and ensure planned implementations comply. If any planned approach would violate a checklist rule, fix the plan so it complies.
 
 Each story's **Implementation Plan** should include:
 - Exact file paths for every file to create or modify
