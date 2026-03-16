@@ -31,9 +31,19 @@ Execute Jira tasks one at a time. Each issue moves through: `To Do` -> `In Progr
 
 Follow the issue's Implementation Plan:
 1. Implement strictly according to task scope
-2. Use TDD: write failing test -> verify fail -> implement -> verify pass (see `/tdd`)
+2. **TDD is mandatory.** For each behavior:
+   a. Write the failing test
+   b. **HARD GATE — Run the test now.** If it does not FAIL, stop. You have not written a meaningful test. Do not proceed to production code.
+   c. Write minimal production code to make the test pass
+   d. Run the test again — confirm GREEN
 3. Keep changes within ~200-300 LOC; if scope expands, stop and create follow-up issue
 4. Commit frequently using naming conventions from `/workflow`.
+
+See `/tdd` for the full red-green-refactor procedure.
+
+### Step 3b: Quality Check
+
+Before proceeding to verification, read `.claude/docs/quality-checklist.md` and confirm your implementation complies with all rules. Fix any violations now.
 
 ### Step 4: Verify
 
