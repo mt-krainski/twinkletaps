@@ -52,7 +52,7 @@ jobs:
       - name: Start HiveMQ broker
         working-directory: hivemq-deployment
         env:
-          TWINKLETAPS_AUTH_URL: "http://localhost:3000/api/mqtt/auth"
+          TWINKLETAPS_AUTH_URL: "http://127.0.0.1:3000/api/mqtt/auth"
           TWINKLETAPS_AUTH_SECRET: "test-auth-secret"
         run: |
           docker compose -f docker-compose.yml -f ../.github/docker-compose.ci-integration.yml up -d --build
