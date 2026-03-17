@@ -103,9 +103,10 @@ To Do → In Progress → Review → Done
 The **Review** column is exclusively for implementation code reviews (PRs). Plan reviews use the separate **Plan Review** column.
 
 When assigned a task in `Review` status:
-1. Fetch Jira issue comments via `jira-utils get-issue`.
-2. Fetch PR comments via `agent-utils gh-pr-fetch`.
-3. Determine intent:
+1. **Sync with base branch first:** checkout the PR's base branch (usually `main`), pull it, then checkout the development branch and merge the base branch in. Resolve any conflicts before proceeding.
+2. Fetch Jira issue comments via `jira-utils get-issue`.
+3. Fetch PR comments via `agent-utils gh-pr-fetch`.
+4. Determine intent:
    - Clear review comments → address them using `/address-pr`, re-run lint/tests, push.
    - No clear indication → assign to human via `jira-utils update-issue`, add comment asking for clarification.
 
@@ -146,7 +147,7 @@ When assigned a task in `Review` status:
 ### Development
 
 0. Transition issue to `In Progress` via `jira-utils transition-issue`.
-1. Create branch: `task/<ISSUE_KEY>/<slug>`.
+1. **Before creating the branch:** checkout `main` and pull to get the latest state. Then create the branch from there: `task/<ISSUE_KEY>/<slug>`.
 2. Implement strictly according to task scope.
 3. If scope expands: stop and create follow-up task in Jira.
 4. Update tests and docs for the increment.
