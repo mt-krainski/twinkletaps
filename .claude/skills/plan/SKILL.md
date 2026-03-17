@@ -26,7 +26,7 @@ The planner agent returns a structured plan. What you do with it depends on cont
 Detect this mode when the prompt mentions "ticket-loop" or "invoked through a script".
 
 1. Write the plan to the Jira task description using `jira-utils update-issue`.
-2. Reassign the task to the human (use `--assignee "Matt Krainski"` — `jira-utils` resolves the display name).
+2. Reassign the task to the human (read `humanAtlassianId` from `.workflow` and pass it as `--assignee`).
 3. Transition the task to Plan Review (transition ID `4`) using `jira-utils transition-issue`.
 4. If you have questions, write your plan so far into the Jira ticket, ask questions as a comment, and reassign to the human.
 5. **Stop.** Do not create implementation tickets — that happens after the human approves the plan.
