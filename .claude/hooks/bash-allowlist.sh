@@ -11,6 +11,7 @@ ALLOWED_PREFIXES=(
   "agent-utils "
   "git rm "
   "chmod +x "
+  "npm run "
 )
 
 for prefix in "${ALLOWED_PREFIXES[@]}"; do
