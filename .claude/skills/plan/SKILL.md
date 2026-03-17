@@ -1,32 +1,35 @@
 ---
 name: plan
-description: "Planning specialist for breaking specs into Jira tasks. MANDATORY: You MUST use this skill whenever any planning is called for — no exceptions based on perceived scope or simplicity. Tasks that appear simple can hide real complexity; always defer to the planner. Triggers: 'plan implementation', 'plan this', 'analyze and plan', 'break this down', 'create tasks for', 'plan', any request to plan a Jira issue. Do NOT write or modify application code — only create Jira issues."
+description: "Planning specialist — analyzes requirements, explores the codebase, and produces implementation plans. MANDATORY: You MUST use this skill whenever any planning is called for — no exceptions based on perceived scope or simplicity. Tasks that appear simple can hide real complexity; always defer to the planner. Triggers: 'plan implementation', 'plan this', 'analyze and plan', 'break this down', 'create tasks for', 'plan', any request to plan a Jira issue. Do NOT write or modify application code."
 ---
 
-**MANDATORY:** Always invoke this skill when planning is requested. Never do planning inline, regardless of how simple the task seems. The planner runs on a more capable model specifically to catch complexity you might miss.
+## Step 1: Spawn the Planner
 
-Use the Task tool to spawn the `planner` agent with `subagent_type: "planner"`.
+Use the Agent tool to spawn the `planner` agent with `subagent_type: "planner"`.
 
 Pass all user arguments and relevant conversation context in the prompt so the planner has full context to analyze requirements, explore the codebase, and produce a plan.
 
-## After the Planner Returns
+**Do not explore the codebase or draft a plan yourself.** The planner agent does all analysis. Wait for it to return.
 
-The planner agent produces a structured plan. The plan skill is responsible for what happens next.
+## Step 2: Deliver the Plan
 
-### Interactive Mode (normal conversation)
+The planner agent returns a structured plan. What you do with it depends on context.
+
+### Interactive mode (normal conversation)
 
 1. Present the plan to the user.
 2. **Wait for human approval before proceeding.** Do not create Jira issues until explicitly approved.
 3. After approval: follow the Post-Approval flow below (simple or complex path).
 
-### Ticket-Loop Mode (non-interactive, invoked via ticket-loop)
+### Ticket-loop mode (non-interactive)
 
-When running non-interactively (the prompt mentions the task is from a script or ticket-loop):
+Detect this mode when the prompt mentions "ticket-loop" or "invoked through a script".
 
 1. Write the plan to the Jira task description using `jira-utils update-issue`.
-2. Reassign the task to the human (`humanAtlassianId` from `.workflow`).
+2. Reassign the task to the human (read `humanAtlassianId` from `.workflow` and pass it as `--assignee`).
 3. Transition the task to Plan Review (transition ID `4`) using `jira-utils transition-issue`.
-4. **Stop.** Do not create implementation tickets — that happens after the human approves the plan.
+4. If you have questions, write your plan so far into the Jira ticket, ask questions as a comment, and reassign to the human.
+5. **Stop.** Do not create implementation tickets — that happens after the human approves the plan.
 
 ## Post-Approval
 
