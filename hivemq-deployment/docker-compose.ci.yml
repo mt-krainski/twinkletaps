@@ -1,3 +1,6 @@
 services:
   hivemq:
     network_mode: host
+    environment:
+      TWINKLETAPS_AUTH_URL: "${TWINKLETAPS_AUTH_URL}"
+      TWINKLETAPS_AUTH_SECRET: "${TWINKLETAPS_AUTH_SECRET}"

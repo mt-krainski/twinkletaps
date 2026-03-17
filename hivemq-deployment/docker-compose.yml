@@ -14,8 +14,6 @@ services:
         required: false
     environment:
       HIVEMQ_ALLOW_ALL_CLIENTS: "${HIVEMQ_ALLOW_ALL_CLIENTS:-false}"
-      TWINKLETAPS_AUTH_URL: "${TWINKLETAPS_AUTH_URL:-}"
-      TWINKLETAPS_AUTH_SECRET: "${TWINKLETAPS_AUTH_SECRET:-}"
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/1883'"]
       interval: 10s
