@@ -77,6 +77,18 @@
       "Bash(cat .env*)",
       "Bash(grep * .env*)"
     ]
+  },
+  "extraKnownMarketplaces": {
+    "interface-design": {
+      "source": {
+        "source": "github",
+        "repo": "Dammyjay93/interface-design"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "interface-design@interface-design": true
   }
 }
 
