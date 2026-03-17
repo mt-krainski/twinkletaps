@@ -108,17 +108,17 @@ If a Jira issue was found in Step 1:
 
 **Only runs if a PR was created/updated and changes were pushed.**
 
-Poll CI status every 60 seconds until all checks complete:
+Use the Agent tool to spawn a background sub-agent (`run_in_background: true`) with this prompt:
 
-```bash
-agent-utils gh-pr-checks <PR_NUMBER>
-```
+> Poll CI for PR #<PR_NUMBER> every 60 seconds using `agent-utils gh-pr-checks <PR_NUMBER>`. If all checks pass, report success. If any check fails, investigate with `agent-utils gh-run-view <RUN_ID>` and `agent-utils gh-run-view --log-failed <RUN_ID>` and report the failure details. Do not poll more than 30 times (30 minutes). If still pending after that, report timeout.
 
+**Do NOT use `sleep` to poll.** The background agent handles the waiting. You will be notified when it completes.
+
+While CI runs, report to the user: "CI running in background — you'll be notified when it completes."
+
+When the background agent returns:
 - **All checks pass:** Report success and finish.
-- **Any check fails:** Investigate with `agent-utils gh-run-view <RUN_ID>` and `agent-utils gh-run-view --log-failed <RUN_ID>`. Fix the issue, commit, push, and restart the CI watch loop.
-- **Still pending:** Sleep 60 seconds and check again.
-
-Do not poll more than 30 times (30 minutes). If CI is still pending after that, report to the user and stop.
+- **Any check fails:** Investigate, fix the issue, commit, push, and spawn a new CI watch agent.
 
 ## Failure Modes
 

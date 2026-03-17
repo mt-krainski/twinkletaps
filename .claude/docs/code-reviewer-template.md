@@ -27,6 +27,10 @@ git diff --stat {BASE_SHA}..{HEAD_SHA}
 git diff {BASE_SHA}..{HEAD_SHA}
 ```
 
+## Project Quality Checklist
+
+Read `.claude/docs/quality-checklist.md` and verify compliance with ALL rules listed there. Flag any violation as Important or Critical.
+
 ## Review Checklist
 
 **Code Quality:**

@@ -36,6 +36,8 @@ Use the Task tool with `subagent_type: "code-reviewer"`. Provide the review temp
 - `{HEAD_SHA}` — ending commit
 - `{DESCRIPTION}` — brief summary
 
+**Tell the reviewer** to read `.claude/docs/quality-checklist.md` and verify compliance with all checklist rules in addition to general code quality.
+
 **3. Act on feedback:**
 - Fix Critical issues immediately
 - Fix Important issues before proceeding
