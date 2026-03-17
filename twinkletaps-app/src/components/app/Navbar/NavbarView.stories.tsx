@@ -31,16 +31,11 @@ const defaultArgs: NavbarViewProps = {
   signOut: fn(),
   navigateToAccount: fn(),
   navigateToSettings: fn(),
+  onCreateWorkspace: fn(),
 };
 
 export const Default: Story = {
-  args: {
-    ...defaultArgs,
-    navigateToAccount: fn(),
-    navigateToSettings: fn(),
-    signOut: fn(),
-    switchWorkspace: fn(),
-  },
+  args: defaultArgs,
   render: (args) => (
     <div className="h-16 w-full">
       <NavbarView
@@ -52,6 +47,7 @@ export const Default: Story = {
         signOut={args.signOut}
         navigateToAccount={args.navigateToAccount}
         navigateToSettings={args.navigateToSettings}
+        onCreateWorkspace={args.onCreateWorkspace}
       />
     </div>
   ),
@@ -81,6 +77,17 @@ export const Default: Story = {
         await expect(args.switchWorkspace).toHaveBeenCalledWith(
           mockWorkspaces[1].id,
         );
+      },
+    );
+
+    // "Create workspace" option appears in workspace dropdown
+    await withDropdown(
+      canvas.getByText(mockWorkspaces[0].name),
+      userEvent,
+      async (menu) => {
+        const createOption = within(menu).getByText("Create workspace");
+        await userEvent.click(createOption);
+        await expect(args.onCreateWorkspace).toHaveBeenCalled();
       },
     );
 
@@ -121,6 +128,7 @@ export const WithTeamWorkspace: Story = {
         signOut={args.signOut}
         navigateToAccount={args.navigateToAccount}
         navigateToSettings={args.navigateToSettings}
+        onCreateWorkspace={args.onCreateWorkspace}
       />
     </div>
   ),
@@ -172,6 +180,7 @@ export const WithoutWorkspaces: Story = {
         signOut={args.signOut}
         navigateToAccount={args.navigateToAccount}
         navigateToSettings={args.navigateToSettings}
+        onCreateWorkspace={args.onCreateWorkspace}
       />
     </div>
   ),

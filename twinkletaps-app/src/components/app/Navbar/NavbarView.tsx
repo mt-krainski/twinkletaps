@@ -8,6 +8,7 @@ import {
   ChevronDown,
   Building2,
   Loader2,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ export interface NavbarViewProps {
   signOut: () => Promise<void>;
   navigateToAccount: () => void;
   navigateToSettings: () => void;
+  onCreateWorkspace?: () => void;
 }
 
 export function NavbarView({
@@ -46,6 +48,7 @@ export function NavbarView({
   signOut,
   navigateToAccount,
   navigateToSettings,
+  onCreateWorkspace,
 }: NavbarViewProps) {
   return (
     <>
@@ -77,6 +80,15 @@ export function NavbarView({
                     <span className="truncate">{workspace.name}</span>
                   </DropdownMenuCheckboxItem>
                 ))}
+                {onCreateWorkspace && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={onCreateWorkspace}>
+                      <Plus className="h-4 w-4" />
+                      Create workspace
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
