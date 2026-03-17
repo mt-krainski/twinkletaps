@@ -6,6 +6,7 @@ import { useWorkspace } from "@/components/providers/workspace-provider";
 import { RegisterDeviceDialog } from "@/components/app/RegisterDevice";
 import { ShareDialog } from "@/components/app/ShareDialog";
 import { generateShareLink } from "@/app/(authenticated)/devices/actions";
+import { workspaceSettingsPath } from "@/lib/workspace-paths";
 import { SidebarView } from "./SidebarView";
 
 export interface AppSidebarProps {
@@ -38,6 +39,7 @@ export function AppSidebar({
 
   const isAdmin = workspaceRole === "admin";
   const canRegisterDevice = isAdmin && !!selectedWorkspaceId;
+  const canAccessSettings = isAdmin && !!selectedWorkspaceId;
   const canInviteToWorkspace = isAdmin && !!selectedWorkspaceId;
 
   return (
@@ -51,6 +53,10 @@ export function AppSidebar({
         onHomeClick={navigateHome}
         canRegisterDevice={canRegisterDevice}
         onRegisterClick={() => setIsRegisterDialogOpen(true)}
+        canAccessSettings={canAccessSettings}
+        onSettingsClick={() =>
+          router.push(workspaceSettingsPath(selectedWorkspaceId!))
+        }
         canInviteToWorkspace={canInviteToWorkspace}
         onInviteClick={() => setIsInviteDialogOpen(true)}
         searchQuery={searchQuery}

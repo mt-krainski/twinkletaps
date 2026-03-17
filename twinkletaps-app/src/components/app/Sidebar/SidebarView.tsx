@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { Search, Home, Lightbulb, Plus, UserPlus } from "lucide-react";
+import { Search, Home, Lightbulb, Plus, UserPlus, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +41,8 @@ export interface SidebarViewProps {
   onHomeClick: () => void;
   canRegisterDevice: boolean;
   onRegisterClick: () => void;
+  canAccessSettings: boolean;
+  onSettingsClick: () => void;
   canInviteToWorkspace: boolean;
   onInviteClick: () => void;
   searchQuery: string;
@@ -59,6 +61,8 @@ export function SidebarView({
   onHomeClick,
   canRegisterDevice,
   onRegisterClick,
+  canAccessSettings,
+  onSettingsClick,
   canInviteToWorkspace,
   onInviteClick,
   searchQuery,
@@ -122,15 +126,25 @@ export function SidebarView({
 
           </SidebarContent>
 
-          {canInviteToWorkspace && (
+          {(canAccessSettings || canInviteToWorkspace) && (
             <SidebarFooter className="pb-4">
               <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton onClick={onInviteClick}>
-                    <UserPlus className="h-4 w-4" />
-                    <span>Invite to workspace</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                {canAccessSettings && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={onSettingsClick}>
+                      <Settings className="h-4 w-4" />
+                      <span>Workspace settings</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {canInviteToWorkspace && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={onInviteClick}>
+                      <UserPlus className="h-4 w-4" />
+                      <span>Invite to workspace</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
               </SidebarMenu>
             </SidebarFooter>
           )}
