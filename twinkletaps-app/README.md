@@ -27,6 +27,52 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the app.
 
+## MQTT / HiveMQ
+
+### Starting the broker
+
+```bash
+npm run hivemq:start   # starts HiveMQ in Docker
+npm run hivemq:logs    # tail broker logs
+npm run hivemq:stop    # stop the broker
+```
+
+### Environment variables
+
+The broker reads from the root `.env` file via `env_file`. Key variables:
+
+| Variable | Used by | Description |
+|---|---|---|
+| `TWINKLETAPS_AUTH_URL` | HiveMQ extension | URL the extension calls to verify credentials (e.g. `http://host.docker.internal:3000/api/mqtt/auth`) |
+| `TWINKLETAPS_AUTH_SECRET` | HiveMQ extension | Bearer token sent to the auth endpoint |
+| `MQTT_AUTH_SECRET` | Next.js app | Same secret — the app side validates it |
+| `MQTT_BROKER_URL` | Next.js app | Broker connection string (e.g. `mqtt://localhost:1883`) |
+| `MQTT_PUBLISHER_USERNAME` | Next.js app | Service account username for publishing to device topics |
+| `MQTT_PUBLISHER_PASSWORD` | Next.js app | Service account password |
+
+### Testing with mosquitto
+
+Install: `brew install mosquitto`
+
+Subscribe to a device topic:
+
+```bash
+mosquitto_sub -h localhost -p 1883 \
+  -u "dev_XXXXXXXXXXXX" -P "DEVICE_PASSWORD" \
+  -t "twinkletaps/devices/DEVICE_UUID"
+```
+
+Publish as the service account:
+
+```bash
+mosquitto_pub -h localhost -p 1883 \
+  -u "$MQTT_PUBLISHER_USERNAME" -P "$MQTT_PUBLISHER_PASSWORD" \
+  -t "twinkletaps/devices/DEVICE_UUID" \
+  -m '{"color": "#ff0000"}'
+```
+
+Device credentials are generated during device registration and shown once in the UI.
+
 ## Features
 
 - User authentication (login/signup)
