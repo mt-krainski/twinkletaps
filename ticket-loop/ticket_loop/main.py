@@ -143,11 +143,10 @@ def handle_plan_review(task: dict, *, skip_permissions: bool = False) -> None:
     print(f"  Resuming session {session_id}")
     run_claude_task(
         f"Task {task['key']} ({task['summary']}) is in the Plan Review column. "
+        "This is invoked through a script (ticket-loop). "
         "Read the latest comments on the Jira task to determine the human's intent. "
-        "If the human approved the plan (e.g. 'approved', 'looks good', 'lgtm'), "
-        "create the implementation Epic + Tasks from the plan in the task description "
-        "using the /plan skill's post-approval flow, then transition this planning "
-        "task to Done (transition ID 31). "
+        "If the human approved the plan, invoke the /plan skill's post-approval flow "
+        "to create implementation issues. "
         "If the human left change requests or questions, address the feedback, "
         "update the plan in the task description, and reassign back to "
         f"'{human_id}'. Keep the task in Plan Review. "
@@ -228,22 +227,15 @@ def handle_to_do(task: dict, *, skip_permissions: bool = False) -> None:
 
 def handle_planning(task: dict, *, skip_permissions: bool = False) -> None:
     """Handle a task in the Planning column — produce a plan for human review."""
-    human_id = os.environ["HUMAN_ATLASSIAN_ID"]
     session_id = str(uuid.uuid4())
     save_session(task["key"], session_id)
     print(f"  New session {session_id}")
     run_claude_task(
         f"Plan the implementation of Jira task {task['key']}: {task['summary']}. "
-        "Use the /plan skill to analyze the codebase and produce a plan. "
-        "This is invoked through a script (ticket-loop). Your only way to "
-        "communicate back to the user is via Jira. "
-        "After producing the plan: "
-        f"1. Write the plan to the task description using jira-utils update-issue. "
-        f"2. Reassign the task to '{human_id}'. "
-        "3. Transition the task to Plan Review (transition ID 4). "
-        "Do NOT create implementation tickets — that happens after human approval. "
-        "If you have questions, write your plan so far into the Jira ticket, ask "
-        "questions as a comment, and reassign the issue to the user.",
+        "This is invoked through a script (ticket-loop). "
+        "Your FIRST action MUST be to invoke the /plan skill. "
+        "The skill handles everything: codebase analysis, plan production, "
+        "Jira updates, and status transitions. Follow its instructions.",
         session_id=session_id,
         skip_permissions=skip_permissions,
     )
