@@ -52,10 +52,10 @@ jobs:
       - name: Start HiveMQ broker
         working-directory: hivemq-deployment
         env:
-          TWINKLETAPS_AUTH_URL: "http://host.docker.internal:3000/api/mqtt/auth"
+          TWINKLETAPS_AUTH_URL: "http://127.0.0.1:3000/api/mqtt/auth"
           TWINKLETAPS_AUTH_SECRET: "test-auth-secret"
         run: |
-          docker compose up -d --build
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build
           echo "Waiting for HiveMQ to be healthy..."
           RETRIES=30
           while [ $RETRIES -gt 0 ]; do
