@@ -25,7 +25,8 @@ Execute Jira tasks one at a time. Each issue moves through: `To Do` -> `In Progr
 ### Step 2: Start the Task
 
 1. Transition to `In Progress`: `jira-utils transition-issue --issue-key <KEY> --transition-id 21`
-2. Create branch: `task/<ISSUE_KEY>/<slug>`
+2. **Sync with main before branching:** checkout `main`, pull latest, then create the branch from there.
+3. Create branch: `task/<ISSUE_KEY>/<slug>`
 
 ### Step 3: Implement
 

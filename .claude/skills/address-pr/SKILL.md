@@ -17,6 +17,8 @@ Code review requires technical evaluation, not emotional performance. Verify fee
 
 Determine the PR number from the branch name or Jira issue.
 
+**Sync with base branch first:** checkout the PR's base branch (usually `main`), pull latest, then checkout the development branch and merge the base branch in. Resolve any conflicts before addressing review comments.
+
 ## Step 1: Fetch Comments and Reviews
 
 ```bash

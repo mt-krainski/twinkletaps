@@ -22,7 +22,7 @@
     "supl:migration:list": "supabase migration list",
     "supr:reset": "supabase db reset --linked",
     "supr:push": "supabase db push --linked",
-    "hivemq:start": "docker compose -f ../hivemq-deployment/docker-compose.yml up -d",
+    "hivemq:start": "docker compose -f ../hivemq-deployment/docker-compose.yml up -d --build",
     "hivemq:stop": "docker compose -f ../hivemq-deployment/docker-compose.yml down",
     "hivemq:logs": "docker compose -f ../hivemq-deployment/docker-compose.yml logs -f",
     "storybook": "storybook dev -p 6006",
