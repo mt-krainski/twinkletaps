@@ -2,6 +2,8 @@
 # PreToolUse hook: approve Bash commands that glob-based permissions can't match.
 # Handles multiline args, paths with glob metacharacters (parentheses, brackets), etc.
 
+set -f  # Disable glob expansion — paths may contain [], (), etc.
+
 COMMAND=$(jq -r '.tool_input.command' < /dev/stdin)
 
 # Patterns to allow (prefix matches via == "prefix"*)
@@ -11,6 +13,7 @@ ALLOWED_PREFIXES=(
   "agent-utils "
   "git rm "
   "chmod +x "
+  "npm run "
 )
 
 for prefix in "${ALLOWED_PREFIXES[@]}"; do
@@ -51,6 +54,9 @@ if [[ "$COMMAND" == "rm "* ]]; then
   for arg in $COMMAND; do
     [[ "$arg" == "rm" ]] && continue
     [[ "$arg" == -* ]] && continue
+    # Strip surrounding quotes (jq -r preserves literal quotes from command text)
+    arg="${arg#\"}" ; arg="${arg%\"}"
+    arg="${arg#\'}" ; arg="${arg%\'}"
     # Resolve to absolute path
     RESOLVED=$(realpath "$arg" 2>/dev/null)
     if [[ -z "$RESOLVED" || "$RESOLVED" != "$PROJECT_DIR"* || "$RESOLVED" == "$PROJECT_DIR" ]]; then
