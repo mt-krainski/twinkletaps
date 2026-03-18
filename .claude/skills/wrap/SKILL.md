@@ -76,6 +76,26 @@ npm run test:e2e
 
 Every claim in Step 7's PR description must be backed by command output.
 
+### Step 5b: UI Screenshot Review (Advisory)
+
+**Only runs when UI changes are detected.**
+
+1. Check if the diff contains `.tsx` files under `src/components/` or `src/app/`:
+   ```bash
+   git diff --name-only <merge-base>..HEAD -- '*.tsx'
+   ```
+   Filter for paths matching `src/components/` or `src/app/`. If none found, skip this step.
+
+2. Glob for screenshots in `test-results/screenshots/`:
+   If no screenshots exist, skip this step.
+
+3. Spawn a `visual-qa` subagent to review the screenshots:
+   - Provide paths to all screenshots found
+   - The subagent checks for structural breakage: layout overflow, collapsed containers, clipped content, blank screens
+   - This is **advisory only** — findings do NOT block the pipeline
+
+4. Report findings to the user. Do not fail the pipeline based on visual review results.
+
 ### Step 6: Commit & Push
 
 Invoke the `/commit` skill. Squash any fixup commits before the final commit.
