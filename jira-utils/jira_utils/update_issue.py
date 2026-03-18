@@ -17,13 +17,9 @@ def run_update_issue(
     fields: str | None = None,
     assignee: str | None = None,
     components: str | None = None,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> dict | None:
     """Update an issue's fields. Returns None (204) on success."""
-    if client is None:
-        client = JiraClient.from_env(env)
-
     payload: dict = {}
     if fields:
         payload["fields"] = json.loads(fields)
@@ -53,14 +49,24 @@ def main(
     components: str | None = typer.Option(
         None, "--components", help="Comma-separated component names"
     ),
+    base_url: str = typer.Option(..., envvar="JIRA_URL", help="Jira base URL"),
+    username: str = typer.Option(..., envvar="JIRA_USERNAME", help="Jira username"),
+    api_token: str = typer.Option(..., envvar="JIRA_API_TOKEN", help="Jira API token"),
     pretty: bool = typer.Option(False, "--pretty", help="Pretty-print JSON"),
 ) -> None:
     """Update a Jira issue."""
     from jira_utils._output import handle_error, output_json
 
     try:
+        client = JiraClient(
+            base_url=base_url.rstrip("/"), username=username, api_token=api_token
+        )
         result = run_update_issue(
-            issue_key, fields=fields, assignee=assignee, components=components
+            issue_key,
+            fields=fields,
+            assignee=assignee,
+            components=components,
+            client=client,
         )
         output_json(result, pretty=pretty)
     except Exception as exc:
