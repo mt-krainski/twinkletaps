@@ -5,6 +5,7 @@ import {
   updateWorkspace,
   updateWorkspaceMemberRole,
   removeWorkspaceMember,
+  WORKSPACE_ROLES,
   type WorkspaceRole,
 } from "@/lib/services/workspace";
 import { revalidatePath } from "next/cache";
@@ -42,6 +43,10 @@ export async function changeMemberRole(
   targetUserId: string,
   newRole: WorkspaceRole,
 ) {
+  if (!WORKSPACE_ROLES.includes(newRole)) {
+    return { error: `Invalid role: ${newRole}` };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

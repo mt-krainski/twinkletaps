@@ -20,6 +20,7 @@ const mockUpdateWorkspace = vi.fn();
 const mockUpdateWorkspaceMemberRole = vi.fn();
 const mockRemoveWorkspaceMember = vi.fn();
 vi.mock("@/lib/services/workspace", () => ({
+  WORKSPACE_ROLES: ["admin", "member", "guest"],
   updateWorkspace: (...args: unknown[]) => mockUpdateWorkspace(...args),
   updateWorkspaceMemberRole: (...args: unknown[]) =>
     mockUpdateWorkspaceMemberRole(...args),
@@ -115,6 +116,14 @@ describe("changeMemberRole", () => {
     const result = await changeMemberRole(workspaceId, "user-2", "admin");
 
     expect(result).toEqual({ error: "Only admins can manage members" });
+  });
+
+  it("returns error for invalid role", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await changeMemberRole(workspaceId, "user-2", "superadmin" as any);
+
+    expect(result).toEqual({ error: "Invalid role: superadmin" });
+    expect(mockUpdateWorkspaceMemberRole).not.toHaveBeenCalled();
   });
 });
 
