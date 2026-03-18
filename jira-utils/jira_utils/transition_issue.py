@@ -42,8 +42,12 @@ def main(
     from jira_utils._output import handle_error, output_json
 
     try:
-        client = JiraClient(base_url=base_url.rstrip("/"), username=username, api_token=api_token)
-        result = run_transition_issue(issue_key, transition_id, comment=comment, client=client)
+        client = JiraClient(
+            base_url=base_url.rstrip("/"), username=username, api_token=api_token
+        )
+        result = run_transition_issue(
+            issue_key, transition_id, comment=comment, client=client
+        )
         output_json(result, pretty=pretty)
     except Exception as exc:
         handle_error(exc)

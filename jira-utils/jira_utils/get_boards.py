@@ -41,7 +41,9 @@ def main(
     from jira_utils._output import handle_error, output_json
 
     try:
-        client = JiraClient(base_url=base_url.rstrip("/"), username=username, api_token=api_token)
+        client = JiraClient(
+            base_url=base_url.rstrip("/"), username=username, api_token=api_token
+        )
         result = run_get_boards(project=project, name=name, type=type, client=client)
         output_json(result, pretty=pretty)
     except Exception as exc:
