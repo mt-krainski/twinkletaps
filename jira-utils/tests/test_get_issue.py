@@ -27,7 +27,7 @@ class TestRunGetIssue:
             params={"fields": "summary,status"},
         )
 
-    def test_builds_client_from_env(self):
+    def test_uses_provided_client(self):
         client = MagicMock(spec=JiraClient)
         client.get.return_value = {"key": "GFD-1"}
 
