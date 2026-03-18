@@ -20,13 +20,9 @@ def run_create_issue(
     assignee: str | None = None,
     components: str | None = None,
     additional_fields: str | None = None,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> dict:
     """Create an issue. Returns the created issue dict."""
-    if client is None:
-        client = JiraClient.from_env(env)
-
     fields: dict = {
         "project": {"key": project},
         "summary": summary,
@@ -59,12 +55,18 @@ def main(
     additional_fields: str | None = typer.Option(
         None, "--additional-fields", help="Extra fields as JSON string"
     ),
+    base_url: str = typer.Option(..., envvar="JIRA_URL", help="Jira base URL"),
+    username: str = typer.Option(..., envvar="JIRA_USERNAME", help="Jira username"),
+    api_token: str = typer.Option(..., envvar="JIRA_API_TOKEN", help="Jira API token"),
     pretty: bool = typer.Option(False, "--pretty", help="Pretty-print JSON"),
 ) -> None:
     """Create a new Jira issue."""
     from jira_utils._output import handle_error, output_json
 
     try:
+        client = JiraClient(
+            base_url=base_url.rstrip("/"), username=username, api_token=api_token
+        )
         result = run_create_issue(
             project,
             summary,
@@ -73,6 +75,7 @@ def main(
             assignee=assignee,
             components=components,
             additional_fields=additional_fields,
+            client=client,
         )
         output_json(result, pretty=pretty)
     except Exception as exc:

@@ -25,25 +25,6 @@ class JiraClient:
     username: str
     api_token: str
 
-    @classmethod
-    def from_env(cls, env: dict[str, str] | None = None) -> JiraClient:
-        """Build a client from environment variables.
-
-        Args:
-            env: Optional dict to override os.environ lookup.
-        """
-        source = env if env is not None else os.environ
-        base_url = source.get("JIRA_URL", "").rstrip("/")
-        username = source.get("JIRA_USERNAME", "")
-        api_token = source.get("JIRA_API_TOKEN", "")
-        if not base_url:
-            raise ValueError("JIRA_URL is not set")
-        if not username:
-            raise ValueError("JIRA_USERNAME is not set")
-        if not api_token:
-            raise ValueError("JIRA_API_TOKEN is not set")
-        return cls(base_url=base_url, username=username, api_token=api_token)
-
     def _request(
         self,
         method: str,
@@ -94,3 +75,20 @@ class JiraClient:
         if not results:
             raise ValueError(f"No Jira user found matching '{name_or_id}'")
         return results[0]["accountId"]
+
+
+def load_config() -> dict[str, str]:
+    """Read Jira connection config from environment variables.
+
+    Returns a dict suitable for unpacking into ``JiraClient(**config)``.
+    """
+    base_url = os.environ.get("JIRA_URL", "").rstrip("/")
+    username = os.environ.get("JIRA_USERNAME", "")
+    api_token = os.environ.get("JIRA_API_TOKEN", "")
+    if not base_url:
+        raise ValueError("JIRA_URL is not set")
+    if not username:
+        raise ValueError("JIRA_USERNAME is not set")
+    if not api_token:
+        raise ValueError("JIRA_API_TOKEN is not set")
+    return {"base_url": base_url, "username": username, "api_token": api_token}

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-
 import typer
 
 from jira_utils.client import JiraClient
@@ -170,34 +168,24 @@ def _resolve_current_user(client: JiraClient) -> str:
 
 
 def run_fetch_task(
-    project: str | None = None,
+    project: str,
     assigned_to_user_name: str | None = None,
     *,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> dict:
     """Fetch the next task for a user from a Jira project.
 
     Args:
-        project: Jira project key. Falls back to JIRA_PROJECT_ID env var.
+        project: Jira project key.
         assigned_to_user_name: Jira display name to filter by. Falls back to
-            JIRA_AGENT_USERNAME env var, then to the authenticated user.
-        client: Optional JiraClient instance (built from env if omitted).
-        env: Optional env dict overriding os.environ for config resolution.
+            the authenticated user via /myself endpoint.
+        client: JiraClient instance.
 
     Returns a dict with board_state, selected_task, selected_column, reason.
     """
-    source = env if env is not None else os.environ
-    if client is None:
-        client = JiraClient.from_env(env)
-
-    if not project:
-        project = source.get("JIRA_PROJECT_ID", "")
     if not project:
         raise ValueError("Project is required: pass --project or set JIRA_PROJECT_ID")
 
-    if not assigned_to_user_name:
-        assigned_to_user_name = source.get("JIRA_AGENT_USERNAME", "")
     if not assigned_to_user_name:
         assigned_to_user_name = _resolve_current_user(client)
 
@@ -218,21 +206,27 @@ def run_fetch_task(
 @app.callback()
 def main(
     project: str | None = typer.Option(
-        None, "--project", help="Jira project key (or JIRA_PROJECT_ID env var)"
+        None, "--project", envvar="JIRA_PROJECT_ID", help="Jira project key"
     ),
     assigned_to_user_name: str | None = typer.Option(
         None,
         "--assigned-to-user-name",
-        help="Jira display name (or JIRA_AGENT_USERNAME env var; "
-        "defaults to authenticated user)",
+        envvar="JIRA_AGENT_USERNAME",
+        help="Jira display name (defaults to authenticated user)",
     ),
+    base_url: str = typer.Option(..., envvar="JIRA_URL", help="Jira base URL"),
+    username: str = typer.Option(..., envvar="JIRA_USERNAME", help="Jira username"),
+    api_token: str = typer.Option(..., envvar="JIRA_API_TOKEN", help="Jira API token"),
     pretty: bool = typer.Option(False, "--pretty", help="Pretty-print JSON"),
 ) -> None:
     """Fetch the next task for a user from a Jira project board."""
     from jira_utils._output import handle_error, output_json
 
     try:
-        result = run_fetch_task(project, assigned_to_user_name)
+        client = JiraClient(
+            base_url=base_url.rstrip("/"), username=username, api_token=api_token
+        )
+        result = run_fetch_task(project, assigned_to_user_name, client=client)
         output_json(result, pretty=pretty)
     except Exception as exc:
         handle_error(exc)
