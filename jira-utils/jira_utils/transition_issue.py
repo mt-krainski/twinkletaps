@@ -14,13 +14,9 @@ def run_transition_issue(
     transition_id: str,
     *,
     comment: str | None = None,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> dict | None:
     """Transition an issue. Returns None (204) on success."""
-    if client is None:
-        client = JiraClient.from_env(env)
-
     payload: dict = {"transition": {"id": transition_id}}
     if comment:
         payload["update"] = {"comment": [{"add": {"body": comment}}]}
@@ -37,13 +33,17 @@ def main(
     comment: str | None = typer.Option(
         None, "--comment", help="Comment to add during transition"
     ),
+    base_url: str = typer.Option(..., envvar="JIRA_URL", help="Jira base URL"),
+    username: str = typer.Option(..., envvar="JIRA_USERNAME", help="Jira username"),
+    api_token: str = typer.Option(..., envvar="JIRA_API_TOKEN", help="Jira API token"),
     pretty: bool = typer.Option(False, "--pretty", help="Pretty-print JSON"),
 ) -> None:
     """Transition a Jira issue to a new status."""
     from jira_utils._output import handle_error, output_json
 
     try:
-        result = run_transition_issue(issue_key, transition_id, comment=comment)
+        client = JiraClient(base_url=base_url.rstrip("/"), username=username, api_token=api_token)
+        result = run_transition_issue(issue_key, transition_id, comment=comment, client=client)
         output_json(result, pretty=pretty)
     except Exception as exc:
         handle_error(exc)

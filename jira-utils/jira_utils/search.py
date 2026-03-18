@@ -15,12 +15,9 @@ def run_search(
     fields: str | None = None,
     limit: int = 50,
     next_page_token: str | None = None,
-    client: JiraClient | None = None,
-    env: dict[str, str] | None = None,
+    client: JiraClient,
 ) -> dict:
     """Search issues by JQL. Returns the raw search result dict."""
-    if client is None:
-        client = JiraClient.from_env(env)
     body: dict = {"jql": jql, "maxResults": limit}
     if fields:
         body["fields"] = [f.strip() for f in fields.split(",")]
@@ -40,14 +37,18 @@ def main(
     next_page_token: str | None = typer.Option(
         None, "--next-page-token", help="Pagination token from previous result"
     ),
+    base_url: str = typer.Option(..., envvar="JIRA_URL", help="Jira base URL"),
+    username: str = typer.Option(..., envvar="JIRA_USERNAME", help="Jira username"),
+    api_token: str = typer.Option(..., envvar="JIRA_API_TOKEN", help="Jira API token"),
     pretty: bool = typer.Option(False, "--pretty", help="Pretty-print JSON"),
 ) -> None:
     """Search Jira issues using JQL."""
     from jira_utils._output import handle_error, output_json
 
     try:
+        client = JiraClient(base_url=base_url.rstrip("/"), username=username, api_token=api_token)
         result = run_search(
-            jql, fields=fields, limit=limit, next_page_token=next_page_token
+            jql, fields=fields, limit=limit, next_page_token=next_page_token, client=client
         )
         output_json(result, pretty=pretty)
     except Exception as exc:
