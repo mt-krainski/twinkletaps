@@ -48,6 +48,17 @@ def test_module_imports():
 # -- _run_loop handler dispatch --
 
 
+_FAKE_CONFIG = {"base_url": "u", "username": "u", "api_token": "t"}
+
+
+def _patch_load_config():
+    return patch("ticket_loop.main.load_config", return_value=_FAKE_CONFIG)
+
+
+def _patch_jira_client():
+    return patch("ticket_loop.main.JiraClient", return_value=MagicMock())
+
+
 def test_run_loop_dispatches_to_review(monkeypatch):
     """_run_loop dispatches to handle_review for review column."""
     monkeypatch.setenv("JIRA_AGENT_USERNAME", "Bot")
@@ -58,6 +69,8 @@ def test_run_loop_dispatches_to_review(monkeypatch):
     with (
         patch("ticket_loop.main.run_fetch_task", return_value=result),
         patch.dict(COLUMN_HANDLERS, {"review": mock_handler}),
+        _patch_load_config(),
+        _patch_jira_client(),
     ):
         _run_loop()
 
@@ -74,6 +87,8 @@ def test_run_loop_dispatches_to_todo(monkeypatch):
     with (
         patch("ticket_loop.main.run_fetch_task", return_value=result),
         patch.dict(COLUMN_HANDLERS, {"to_do": mock_handler}),
+        _patch_load_config(),
+        _patch_jira_client(),
     ):
         _run_loop()
 
@@ -90,6 +105,8 @@ def test_run_loop_dispatches_to_planning(monkeypatch):
     with (
         patch("ticket_loop.main.run_fetch_task", return_value=result),
         patch.dict(COLUMN_HANDLERS, {"planning": mock_handler}),
+        _patch_load_config(),
+        _patch_jira_client(),
     ):
         _run_loop()
 
@@ -105,6 +122,8 @@ def test_run_loop_no_task_available(monkeypatch):
     with (
         patch("ticket_loop.main.run_fetch_task", return_value=result),
         patch.dict(COLUMN_HANDLERS, {"review": mock_handler}),
+        _patch_load_config(),
+        _patch_jira_client(),
     ):
         _run_loop()
 
@@ -121,6 +140,8 @@ def test_run_loop_passes_skip_permissions(monkeypatch):
     with (
         patch("ticket_loop.main.run_fetch_task", return_value=result),
         patch.dict(COLUMN_HANDLERS, {"to_do": mock_handler}),
+        _patch_load_config(),
+        _patch_jira_client(),
     ):
         _run_loop(skip_permissions=True)
 
@@ -128,14 +149,21 @@ def test_run_loop_passes_skip_permissions(monkeypatch):
 
 
 def test_run_loop_calls_fetch_task_with_correct_args(monkeypatch):
-    """_run_loop passes project and agent name to run_fetch_task."""
+    """_run_loop passes project, agent name, and client to run_fetch_task."""
     monkeypatch.setenv("JIRA_AGENT_USERNAME", "Bot")
     result = _fetch_result()
+    mock_client = MagicMock()
 
-    with patch("ticket_loop.main.run_fetch_task", return_value=result) as mock_fetch:
+    with (
+        patch("ticket_loop.main.run_fetch_task", return_value=result) as mock_fetch,
+        _patch_load_config(),
+        patch("ticket_loop.main.JiraClient", return_value=mock_client),
+    ):
         _run_loop()
 
-    mock_fetch.assert_called_once_with(project="GFD", assigned_to_user_name="Bot")
+    mock_fetch.assert_called_once_with(
+        project="GFD", assigned_to_user_name="Bot", client=mock_client
+    )
 
 
 def test_run_loop_logs_board_state(monkeypatch, capsys):
@@ -147,7 +175,11 @@ def test_run_loop_logs_board_state(monkeypatch, capsys):
     }
     result = _fetch_result(board_state=board, reason="No eligible tasks found for Bot")
 
-    with patch("ticket_loop.main.run_fetch_task", return_value=result):
+    with (
+        patch("ticket_loop.main.run_fetch_task", return_value=result),
+        _patch_load_config(),
+        _patch_jira_client(),
+    ):
         _run_loop()
 
     output = capsys.readouterr().out
@@ -360,6 +392,8 @@ def test_run_loop_dispatches_to_plan_review(monkeypatch):
     with (
         patch("ticket_loop.main.run_fetch_task", return_value=result),
         patch.dict(COLUMN_HANDLERS, {"plan_review": mock_handler}),
+        _patch_load_config(),
+        _patch_jira_client(),
     ):
         _run_loop()
 
