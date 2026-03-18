@@ -13,6 +13,7 @@ dotenv.config({ path: path.resolve(__dirname, ".env"), quiet: true });
  */
 export default defineConfig({
   testDir: "./tests",
+  outputDir: "./test-results",
   testMatch: /.*\.spec\.[jt]sx?$/,
   /* Run tests in files in parallel */
   fullyParallel: true,
