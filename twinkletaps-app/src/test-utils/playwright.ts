@@ -103,11 +103,7 @@ export async function captureScreen(page: Page, name: string) {
   const testName = slugify(testInfo.title);
   const viewport = getViewportLabel(testInfo.project.name);
   const fileName = `${testName}--${name}--${viewport}.png`;
-  const screenshotDir = path.join(
-    testInfo.config.rootDir,
-    "test-results",
-    "screenshots",
-  );
+  const screenshotDir = path.join("test-results", "screenshots");
   fs.mkdirSync(screenshotDir, { recursive: true });
   await page.screenshot({
     path: path.join(screenshotDir, fileName),
