@@ -1,6 +1,7 @@
 import { prisma } from "../prisma";
 
-export type WorkspaceRole = "admin" | "member" | "guest";
+export const WORKSPACE_ROLES = ["admin", "member", "guest"] as const;
+export type WorkspaceRole = (typeof WORKSPACE_ROLES)[number];
 
 export async function createWorkspace(userId: string, name: string) {
   return prisma.$transaction(async (tx) => {
