@@ -50,6 +50,21 @@ Use these wrapper scripts instead of raw shell commands:
 - `agent-utils/scripts/run-with-tail.sh <lines> <cmd> [args...]` — run any allowed command and tail output (equivalent to `<cmd> 2>&1 | tail -n <lines>`)
 - `agent-utils/scripts/find-grep.sh <pattern> [directory] [lines]` — search source files for a pattern, return matching files (default directory: `src`, default lines: 20)
 
+## Mobile Responsiveness
+
+- **Breakpoint:** 768px (`md` in Tailwind). Below this is mobile.
+- **Tailwind strategy:** Mobile-first — write base styles for mobile, use `md:` for desktop overrides.
+- **Canonical mobile detection:** Use the `useIsMobile()` hook from `src/hooks/use-mobile.ts` in components.
+- **Sidebar:** On mobile, the sidebar is hidden by default. Use `SidebarTrigger` (renders a button with accessible name "Toggle Sidebar") to open it.
+- **Storybook:** Add mobile viewport stories for components that have responsive behavior. Target the View component.
+
+## E2E Screenshots and UI Review
+
+- **`captureScreen(page, name)`** — call from e2e tests to capture full-page screenshots at key UI states. Saves to `test-results/screenshots/[test-name]--[name]--[viewport].png`. Import from `src/test-utils/playwright`.
+- **`openSidebarIfMobile(page, isMobile)`** — call before interacting with sidebar content in mobile e2e tests. Import from `src/test-utils/playwright`.
+- **Convention:** Add `captureScreen` calls at meaningful UI states (after login, after navigation, after modal open) in e2e tests that exercise UI components.
+- **`/wrap` UI review:** Step 5b in the `/wrap` skill automatically detects TSX changes under `src/components/` or `src/app/`, globs screenshots, and spawns a `visual-qa` subagent to check for structural breakage. This is advisory — it does not block the pipeline.
+
 ## Core Development Principles
 
 These always apply. Each has a dedicated skill with the full procedure — load the skill when doing the activity.

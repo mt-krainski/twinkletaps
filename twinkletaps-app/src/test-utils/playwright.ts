@@ -1,4 +1,6 @@
-import { Page, expect } from "@playwright/test";
+import { Page, expect, test } from "@playwright/test";
+import * as fs from "fs";
+import * as path from "path";
 
 interface MailpitRecipient {
   Name: string;
@@ -76,4 +78,49 @@ export async function login(page: Page, userEmail: string) {
     .fill(verificationCode);
 
   await page.getByRole("button", { name: "Verify" }).click();
+}
+
+function slugify(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function getViewportLabel(projectName: string): string {
+  if (projectName.toLowerCase().startsWith("mobile")) {
+    return slugify(projectName);
+  }
+  return `desktop-${slugify(projectName)}`;
+}
+
+/**
+ * Captures a full-page screenshot and saves it to test-results/screenshots/
+ * with the naming convention: [test-name]--[name]--[viewport].png
+ */
+export async function captureScreen(page: Page, name: string) {
+  const testInfo = test.info();
+  const testName = slugify(testInfo.title);
+  const viewport = getViewportLabel(testInfo.project.name);
+  const fileName = `${testName}--${name}--${viewport}.png`;
+  const screenshotDir = path.join("test-results", "screenshots");
+  fs.mkdirSync(screenshotDir, { recursive: true });
+  await page.screenshot({
+    path: path.join(screenshotDir, fileName),
+    fullPage: true,
+  });
+}
+
+/**
+ * Clicks the SidebarTrigger button if on a mobile viewport.
+ * Use in e2e tests to open the sidebar before interacting with sidebar content.
+ * Caller is responsible for waiting on sidebar content visibility after the click.
+ */
+export async function openSidebarIfMobile(
+  page: Page,
+  isMobile: boolean,
+) {
+  if (isMobile) {
+    await page.getByRole("button", { name: "Toggle Sidebar" }).click();
+  }
 }

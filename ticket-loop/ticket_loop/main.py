@@ -22,6 +22,10 @@ PERMISSIONS_INSTRUCTION = (
     "Communicate the blocker via Jira: add a comment to the task explaining "
     "which operation was blocked and what permission is needed, then reassign "
     "the task to the user."
+    " IMPORTANT: Never leave the working directory dirty. "
+    "Before ending your session, either commit your changes "
+    "(preferred) or revert them. "
+    "The next agent session must start with a clean working tree."
 )
 
 
@@ -198,6 +202,8 @@ def handle_in_progress(task: dict, *, skip_permissions: bool = False) -> None:
     run_claude_task(
         f"Task {task['key']} ({task['summary']}) was found stuck in In Progress, "
         "likely due to a previous interruption or crash. "
+        "Check the latest comments on the Jira task for context on what happened "
+        "(e.g. blocker reports, permission issues, or human instructions). "
         "Check the current state of the branch and any open PRs for this task. "
         "Continue the implementation from where it left off. "
         "When done, use the /wrap skill to finalize. "
