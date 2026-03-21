@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { login } from "../src/test-utils/playwright";
+import { login, captureScreen } from "../src/test-utils/playwright";
 
 test.describe.configure({ retries: 2 });
 
@@ -23,6 +23,8 @@ test("visiting /w/{workspaceId} shows correct workspace", async ({ page }) => {
   await expect(
     page.getByText("Dashboard", { exact: true }),
   ).toBeVisible({ timeout: 10000 });
+
+  await captureScreen(page, "dashboard");
 });
 
 test("localStorage key is set after visiting workspace", async ({ page }) => {
