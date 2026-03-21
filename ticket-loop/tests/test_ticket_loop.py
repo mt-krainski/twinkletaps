@@ -14,7 +14,10 @@ from ticket_loop.main import (
     get_session,
     handle_in_progress,
     handle_plan_review,
+    handle_planning,
     handle_review,
+    handle_to_do,
+    phase_for_column,
     resume_session,
     save_session,
 )
@@ -196,8 +199,8 @@ def test_session_round_trip(tmp_path, monkeypatch):
     sessions_file = tmp_path / "sessions.jsonl"
     monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
 
-    save_session("GFD-42", "abc-123")
-    assert get_session("GFD-42") == "abc-123"
+    save_session("GFD-42", "abc-123", "implementation")
+    assert get_session("GFD-42", "implementation") == "abc-123"
 
 
 def test_session_returns_latest(tmp_path, monkeypatch):
@@ -205,9 +208,9 @@ def test_session_returns_latest(tmp_path, monkeypatch):
     sessions_file = tmp_path / "sessions.jsonl"
     monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
 
-    save_session("GFD-42", "old")
-    save_session("GFD-42", "new")
-    assert get_session("GFD-42") == "new"
+    save_session("GFD-42", "old", "implementation")
+    save_session("GFD-42", "new", "implementation")
+    assert get_session("GFD-42", "implementation") == "new"
 
 
 def test_session_missing_raises(tmp_path, monkeypatch):
@@ -216,7 +219,7 @@ def test_session_missing_raises(tmp_path, monkeypatch):
     monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
 
     with pytest.raises(KeyError):
-        get_session("GFD-999")
+        get_session("GFD-999", "implementation")
 
 
 def test_resume_session_calls_claude(tmp_path, monkeypatch):
@@ -224,7 +227,7 @@ def test_resume_session_calls_claude(tmp_path, monkeypatch):
     sessions_file = tmp_path / "sessions.jsonl"
     monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
 
-    save_session("GFD-42", "resume-sid")
+    save_session("GFD-42", "resume-sid", "implementation")
 
     with patch("ticket_loop.main.subprocess.run") as mock_run:
         resume_session("GFD-42")
@@ -298,8 +301,8 @@ def test_session_file_format(tmp_path, monkeypatch):
     sessions_file = tmp_path / "sessions.jsonl"
     monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
 
-    save_session("GFD-1", "sid-1")
-    save_session("GFD-2", "sid-2")
+    save_session("GFD-1", "sid-1", "implementation")
+    save_session("GFD-2", "sid-2", "planning")
 
     lines = sessions_file.read_text().strip().split("\n")
     assert len(lines) == 2
@@ -307,6 +310,7 @@ def test_session_file_format(tmp_path, monkeypatch):
         record = json.loads(line)
         assert "task_key" in record
         assert "session_id" in record
+        assert "phase" in record
 
 
 # -- handle_in_progress --
@@ -318,7 +322,7 @@ def test_handle_in_progress_resumes_session(tmp_path, monkeypatch):
     monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
     monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
 
-    save_session("GFD-50", "existing-sid")
+    save_session("GFD-50", "existing-sid", "implementation")
     task = {"key": "GFD-50", "summary": "Stuck task", "labels": []}
 
     with patch("ticket_loop.main.run_claude_task") as mock_claude:
@@ -364,7 +368,7 @@ def test_handle_in_progress_passes_skip_permissions(tmp_path, monkeypatch):
     monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
     monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
 
-    save_session("GFD-52", "perm-sid")
+    save_session("GFD-52", "perm-sid", "implementation")
     task = {"key": "GFD-52", "summary": "Task", "labels": []}
 
     with patch("ticket_loop.main.run_claude_task") as mock_claude:
@@ -406,7 +410,7 @@ def test_handle_plan_review_resumes_session(tmp_path, monkeypatch):
     monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
     monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
 
-    save_session("GFD-60", "plan-review-sid")
+    save_session("GFD-60", "plan-review-sid", "planning")
     task = {"key": "GFD-60", "summary": "Plan task", "labels": []}
 
     with patch("ticket_loop.main.run_claude_task") as mock_claude:
@@ -425,7 +429,7 @@ def test_handle_plan_review_passes_skip_permissions(tmp_path, monkeypatch):
     monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
     monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
 
-    save_session("GFD-61", "perm-sid")
+    save_session("GFD-61", "perm-sid", "planning")
     task = {"key": "GFD-61", "summary": "Plan task", "labels": []}
 
     with patch("ticket_loop.main.run_claude_task") as mock_claude:
@@ -443,7 +447,7 @@ def test_handle_review_does_not_branch_on_plan_label(tmp_path, monkeypatch):
     monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
     monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
 
-    save_session("GFD-70", "review-sid")
+    save_session("GFD-70", "review-sid", "implementation")
     task = {"key": "GFD-70", "summary": "Review task", "labels": ["plan"]}
 
     with patch("ticket_loop.main.run_claude_task") as mock_claude:
@@ -453,3 +457,174 @@ def test_handle_review_does_not_branch_on_plan_label(tmp_path, monkeypatch):
     prompt = mock_claude.call_args.args[0]
     assert "Review" in prompt
     assert "pull request" in prompt.lower() or "address-pr" in prompt.lower()
+
+
+# -- phase_for_column --
+
+
+@pytest.mark.parametrize("column", ["planning", "plan_review"])
+def test_phase_for_column_planning(column):
+    """Planning and plan_review columns map to 'planning' phase."""
+    assert phase_for_column(column) == "planning"
+
+
+@pytest.mark.parametrize("column", ["to_do", "in_progress", "review"])
+def test_phase_for_column_implementation(column):
+    """Other columns map to 'implementation' phase."""
+    assert phase_for_column(column) == "implementation"
+
+
+# -- session phase isolation --
+
+
+def test_session_phase_isolation(tmp_path, monkeypatch):
+    """Same task key with different phases stores and retrieves independently."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+
+    save_session("GFD-42", "plan-sid", "planning")
+    save_session("GFD-42", "impl-sid", "implementation")
+
+    assert get_session("GFD-42", "planning") == "plan-sid"
+    assert get_session("GFD-42", "implementation") == "impl-sid"
+
+
+def test_session_old_records_without_phase_not_matched(tmp_path, monkeypatch):
+    """Records without a phase field don't match any phase-filtered lookup."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+
+    # Write a legacy record without phase
+    record = {"task_key": "GFD-42", "session_id": "legacy-sid"}
+    with open(sessions_file, "a") as f:
+        f.write(json.dumps(record) + "\n")
+
+    with pytest.raises(KeyError):
+        get_session("GFD-42", "planning")
+    with pytest.raises(KeyError):
+        get_session("GFD-42", "implementation")
+
+
+# -- resume_session phase fallback --
+
+
+def test_resume_session_prefers_implementation(tmp_path, monkeypatch):
+    """When both phases exist, resume uses the implementation session."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+
+    save_session("GFD-42", "plan-sid", "planning")
+    save_session("GFD-42", "impl-sid", "implementation")
+
+    with patch("ticket_loop.main.subprocess.run") as mock_run:
+        resume_session("GFD-42")
+
+    cmd = mock_run.call_args.args[0]
+    assert "impl-sid" in cmd
+
+
+def test_resume_session_falls_back_to_planning(tmp_path, monkeypatch):
+    """When only a planning session exists, resume uses it."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+
+    save_session("GFD-42", "plan-sid", "planning")
+
+    with patch("ticket_loop.main.subprocess.run") as mock_run:
+        resume_session("GFD-42")
+
+    cmd = mock_run.call_args.args[0]
+    assert "plan-sid" in cmd
+
+
+def test_resume_session_raises_when_no_session(tmp_path, monkeypatch):
+    """When no sessions exist at all, KeyError is raised."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+
+    with pytest.raises(KeyError):
+        resume_session("GFD-999")
+
+
+# -- handler phase usage --
+
+
+def test_handle_planning_saves_planning_phase(tmp_path, monkeypatch):
+    """handle_planning saves the session with 'planning' phase."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+
+    task = {"key": "GFD-80", "summary": "Plan task"}
+
+    with patch("ticket_loop.main.run_claude_task"):
+        handle_planning(task)
+
+    # Read the saved record and check phase
+    record = json.loads(sessions_file.read_text().strip())
+    assert record["phase"] == "planning"
+    assert record["task_key"] == "GFD-80"
+
+
+def test_handle_to_do_saves_implementation_phase(tmp_path, monkeypatch):
+    """handle_to_do saves the session with 'implementation' phase."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+    monkeypatch.setenv("BASE_BRANCH", "main")
+
+    task = {"key": "GFD-81", "summary": "Implement task"}
+
+    with patch("ticket_loop.main.run_claude_task"):
+        handle_to_do(task)
+
+    record = json.loads(sessions_file.read_text().strip())
+    assert record["phase"] == "implementation"
+    assert record["task_key"] == "GFD-81"
+
+
+def test_handle_plan_review_looks_up_planning_phase(tmp_path, monkeypatch):
+    """handle_plan_review looks up session with 'planning' phase."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+    monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
+
+    save_session("GFD-82", "plan-sid", "planning")
+    # Also save an implementation session — should NOT be used
+    save_session("GFD-82", "impl-sid", "implementation")
+    task = {"key": "GFD-82", "summary": "Review plan"}
+
+    with patch("ticket_loop.main.run_claude_task") as mock_claude:
+        handle_plan_review(task)
+
+    assert mock_claude.call_args.kwargs["session_id"] == "plan-sid"
+
+
+def test_handle_review_looks_up_implementation_phase(tmp_path, monkeypatch):
+    """handle_review looks up session with 'implementation' phase."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+    monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
+
+    save_session("GFD-83", "plan-sid", "planning")
+    save_session("GFD-83", "impl-sid", "implementation")
+    task = {"key": "GFD-83", "summary": "Review impl"}
+
+    with patch("ticket_loop.main.run_claude_task") as mock_claude:
+        handle_review(task)
+
+    assert mock_claude.call_args.kwargs["session_id"] == "impl-sid"
+
+
+def test_handle_in_progress_looks_up_implementation_phase(tmp_path, monkeypatch):
+    """handle_in_progress looks up session with 'implementation' phase."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+    monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
+
+    save_session("GFD-84", "plan-sid", "planning")
+    save_session("GFD-84", "impl-sid", "implementation")
+    task = {"key": "GFD-84", "summary": "Continue impl"}
+
+    with patch("ticket_loop.main.run_claude_task") as mock_claude:
+        handle_in_progress(task)
+
+    assert mock_claude.call_args.kwargs["session_id"] == "impl-sid"
