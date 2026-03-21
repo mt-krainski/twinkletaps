@@ -26,8 +26,11 @@ test("mobile navbar: open sidebar and navigate", async ({ page, isMobile }) => {
   await expect(page.getByText("Home")).toBeVisible({ timeout: 5000 });
   await captureScreen(page, "sidebar-open");
 
-  // Navigate to Home
+  // Navigate to Home — wait for sidebar Sheet to close before capturing
   await page.getByText("Home").click();
+  await expect(
+    page.getByRole("button", { name: "Toggle Sidebar" }),
+  ).toBeVisible({ timeout: 5000 });
   await expect(page.getByText("Dashboard", { exact: true })).toBeVisible({
     timeout: 10000,
   });

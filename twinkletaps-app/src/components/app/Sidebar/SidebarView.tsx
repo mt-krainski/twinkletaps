@@ -129,6 +129,7 @@ function SidebarViewInner({
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+                  {/* Register/Invite open dialogs — don't close the sidebar so the dialog overlays naturally */}
                   {canRegisterDevice && (
                     <SidebarMenuItem>
                       <SidebarMenuButton onClick={onRegisterClick}>
