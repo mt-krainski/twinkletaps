@@ -9,8 +9,8 @@
 COMMAND=$(jq -r '.tool_input.command' < /dev/stdin)
 
 # Strip content inside single quotes to avoid false positives on string literals.
-# Handles the '\'' escape pattern used in bash single-quoted strings.
-STRIPPED=$(echo "$COMMAND" | sed "s/'[^']*'//g")
+# Collapse newlines first so multi-line quoted strings are handled correctly.
+STRIPPED=$(echo "$COMMAND" | tr '\n' ' ' | sed "s/'[^']*'//g")
 
 # Check for chaining operators in the stripped command
 FOUND=""
