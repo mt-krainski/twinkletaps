@@ -21,6 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import type { UserProfile } from "@/components/providers/user-profile-provider";
 import type { WorkspaceInfo } from "@/components/providers/workspace-provider";
 import { Logo } from "@/components/app/Logo";
@@ -59,14 +60,17 @@ export function NavbarView({
         )}
       >
         <div className="flex items-center gap-4">
-          <Logo />
+          <SidebarTrigger className="md:hidden" />
+          <Logo compact />
 
           {workspaces.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2">
                   <Building2 className="h-4 w-4" />
-                  <span className="truncate">{selectedWorkspace?.name}</span>
+                  <span className="max-w-[120px] truncate sm:max-w-none">
+                    {selectedWorkspace?.name}
+                  </span>
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
