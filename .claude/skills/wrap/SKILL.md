@@ -11,6 +11,8 @@ Automated pipeline: review -> fix -> lint -> test -> commit -> PR -> Jira -> CI 
 
 **Announce at start:** "Wrapping up — running review -> fix -> lint -> test -> commit -> PR -> Jira -> CI watch."
 
+**Resuming after interruption:** If you were previously interrupted during `/wrap` (e.g. session crash, context overflow), start the entire pipeline from Step 1. Do not attempt to resume from where you left off — re-running all steps is safer and ensures nothing is skipped.
+
 ## Pipeline
 
 ### Step 1: Determine Context

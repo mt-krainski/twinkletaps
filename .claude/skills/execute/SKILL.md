@@ -38,7 +38,7 @@ Follow the issue's Implementation Plan:
    c. Write minimal production code to make the test pass
    d. Run the test again — confirm GREEN
 3. Keep changes within ~200-300 LOC; if scope expands, stop and create follow-up issue
-4. Commit frequently using naming conventions from `/workflow`.
+4. **Commit often.** Don't let work accumulate uncommitted. After completing a logical unit (e.g. a passing test + its implementation, a new component, a config change), commit it. This protects against work loss if the session is interrupted. WIP commits are fine — they'll be squashed at merge time.
 
 See `/tdd` for the full red-green-refactor procedure.
 
