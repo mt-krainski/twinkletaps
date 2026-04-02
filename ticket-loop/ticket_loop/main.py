@@ -2,7 +2,9 @@
 
 import json
 import os
+import signal
 import subprocess
+import threading
 import uuid
 from pathlib import Path
 from typing import Annotated, Any
@@ -11,6 +13,8 @@ import typer
 from dotenv import load_dotenv
 from jira_utils.client import JiraClient, load_config
 from jira_utils.fetch_task import run_fetch_task
+
+from ticket_loop.backoff import BackoffTimer
 
 PACKAGE_ROOT = Path(__file__).resolve().parent.parent
 REPO_ROOT = PACKAGE_ROOT.parent
@@ -300,6 +304,37 @@ def _run_loop(*, skip_permissions: bool = False) -> bool:
     handler = COLUMN_HANDLERS[column]
     handler(task, skip_permissions=skip_permissions)
     return True
+
+
+def _run_continuous(*, skip_permissions: bool = False) -> None:
+    """Run _run_loop in a loop with exponential backoff on idle."""
+    shutdown = threading.Event()
+
+    def _handle_signal(signum: int, _frame: Any) -> None:
+        print(f"\nReceived signal {signum}, shutting down...")
+        shutdown.set()
+
+    signal.signal(signal.SIGINT, _handle_signal)
+    signal.signal(signal.SIGTERM, _handle_signal)
+
+    timer = BackoffTimer()
+    print("Continuous mode started. Press Ctrl+C to stop.")
+
+    while not shutdown.is_set():
+        try:
+            found_work = _run_loop(skip_permissions=skip_permissions)
+        except Exception as exc:
+            print(f"Error during loop iteration: {exc}")
+            found_work = False
+
+        if found_work:
+            timer.reset()
+        else:
+            print(f"No work found. Next check in {timer.delay:.0f}s...")
+            shutdown.wait(timer.delay)
+            timer.step()
+
+    print("Shut down complete.")
 
 
 app = typer.Typer()
