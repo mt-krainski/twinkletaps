@@ -437,6 +437,45 @@ def test_handle_plan_review_passes_skip_permissions(tmp_path, monkeypatch):
 # -- handle_review no longer checks plan label --
 
 
+# -- _run_loop return value --
+
+
+def test_run_loop_returns_true_on_task_found(monkeypatch):
+    """_run_loop returns True when a task is dispatched."""
+    monkeypatch.setenv("JIRA_AGENT_USERNAME", "Bot")
+    task = {"key": "GFD-10", "summary": "Do thing", "labels": []}
+    result = _fetch_result(selected_task=task, selected_column="to_do")
+    mock_handler = MagicMock()
+
+    with (
+        patch("ticket_loop.main.run_fetch_task", return_value=result),
+        patch.dict(COLUMN_HANDLERS, {"to_do": mock_handler}),
+        _patch_load_config(),
+        _patch_jira_client(),
+    ):
+        got = _run_loop()
+
+    assert got is True
+
+
+def test_run_loop_returns_false_on_no_task(monkeypatch):
+    """_run_loop returns False when no task is available."""
+    monkeypatch.setenv("JIRA_AGENT_USERNAME", "Bot")
+    result = _fetch_result(reason="No tasks")
+
+    with (
+        patch("ticket_loop.main.run_fetch_task", return_value=result),
+        _patch_load_config(),
+        _patch_jira_client(),
+    ):
+        got = _run_loop()
+
+    assert got is False
+
+
+# -- handle_review no longer checks plan label --
+
+
 def test_handle_review_does_not_branch_on_plan_label(tmp_path, monkeypatch):
     """handle_review always does implementation review, regardless of labels."""
     sessions_file = tmp_path / "sessions.jsonl"

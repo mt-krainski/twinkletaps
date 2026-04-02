@@ -267,8 +267,12 @@ def resume_session(issue_key: str, *, skip_permissions: bool = False) -> None:
     _run_with_session_retry(cmd, cwd=REPO_ROOT)
 
 
-def _run_loop(*, skip_permissions: bool = False) -> None:
-    """Fetch the board and process the next agent task."""
+def _run_loop(*, skip_permissions: bool = False) -> bool:
+    """Fetch the board and process the next agent task.
+
+    Returns:
+        True if a task was dispatched, False if no work was found.
+    """
     agent_name = os.environ["JIRA_AGENT_USERNAME"]
     print(f"Agent: {agent_name}")
 
@@ -287,7 +291,7 @@ def _run_loop(*, skip_permissions: bool = False) -> None:
     task = result["selected_task"]
     if task is None:
         print("No tasks assigned to agent.")
-        return
+        return False
 
     column = result["selected_column"]
     print(f"Selected: {task['key']} ({task['summary']}) from column '{column}'")
@@ -295,6 +299,7 @@ def _run_loop(*, skip_permissions: bool = False) -> None:
 
     handler = COLUMN_HANDLERS[column]
     handler(task, skip_permissions=skip_permissions)
+    return True
 
 
 app = typer.Typer()
