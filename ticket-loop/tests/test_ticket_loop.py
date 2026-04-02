@@ -2,7 +2,6 @@
 
 import json
 import subprocess
-import threading
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -436,9 +435,6 @@ def test_handle_plan_review_passes_skip_permissions(tmp_path, monkeypatch):
     assert mock_claude.call_args.kwargs["skip_permissions"] is True
 
 
-# -- handle_review no longer checks plan label --
-
-
 # -- _run_loop return value --
 
 
@@ -501,37 +497,18 @@ def test_handle_review_does_not_branch_on_plan_label(tmp_path, monkeypatch):
 
 def test_run_continuous_resets_backoff_on_work():
     """Backoff timer resets when _run_loop finds work."""
-    call_count = 0
-
-    def _run_loop_side_effect(**kwargs):
-        nonlocal call_count
-        call_count += 1
-        if call_count >= 2:
-            # Stop after second iteration
-            shutdown_events[0].set()
-        return True
-
-    shutdown_events: list[threading.Event] = []
-
-    def _capture_shutdown(original_init):
-        def patched_init(self, *args, **kwargs):
-            original_init(self, *args, **kwargs)
-
-        return patched_init
-
     mock_timer = MagicMock()
     mock_timer.delay = 60
 
     with (
-        patch("ticket_loop.main._run_loop", side_effect=_run_loop_side_effect),
+        patch("ticket_loop.main._run_loop", return_value=True),
         patch("ticket_loop.main.BackoffTimer", return_value=mock_timer),
         patch("ticket_loop.main.threading.Event") as mock_event_cls,
+        patch("ticket_loop.main.signal.signal"),
     ):
         shutdown_event = MagicMock()
-        # First call: not set (loop runs), second call: not set, third: set (exit)
         shutdown_event.is_set.side_effect = [False, False, True]
         mock_event_cls.return_value = shutdown_event
-        shutdown_events.append(shutdown_event)
 
         _run_continuous()
 
@@ -547,6 +524,7 @@ def test_run_continuous_backs_off_on_idle():
         patch("ticket_loop.main._run_loop", return_value=False),
         patch("ticket_loop.main.BackoffTimer", return_value=mock_timer),
         patch("ticket_loop.main.threading.Event") as mock_event_cls,
+        patch("ticket_loop.main.signal.signal"),
     ):
         shutdown_event = MagicMock()
         shutdown_event.is_set.side_effect = [False, True]
@@ -562,22 +540,22 @@ def test_run_continuous_backs_off_on_idle():
 def test_run_continuous_stops_on_shutdown_event():
     """Loop exits when shutdown event is set."""
     with (
-        patch("ticket_loop.main._run_loop", return_value=False),
+        patch("ticket_loop.main._run_loop") as mock_run_loop,
         patch("ticket_loop.main.BackoffTimer") as mock_timer_cls,
         patch("ticket_loop.main.threading.Event") as mock_event_cls,
+        patch("ticket_loop.main.signal.signal"),
     ):
         mock_timer = MagicMock()
         mock_timer.delay = 60
         mock_timer_cls.return_value = mock_timer
 
         shutdown_event = MagicMock()
-        # Immediately set — loop should not execute body
         shutdown_event.is_set.return_value = True
         mock_event_cls.return_value = shutdown_event
 
         _run_continuous()
 
-    # _run_loop should never be called since shutdown is already set
+    mock_run_loop.assert_not_called()
     mock_timer.reset.assert_not_called()
     mock_timer.step.assert_not_called()
 
@@ -594,6 +572,7 @@ def test_run_continuous_catches_exceptions():
         ),
         patch("ticket_loop.main.BackoffTimer", return_value=mock_timer),
         patch("ticket_loop.main.threading.Event") as mock_event_cls,
+        patch("ticket_loop.main.signal.signal"),
     ):
         shutdown_event = MagicMock()
         shutdown_event.is_set.side_effect = [False, True]
@@ -610,7 +589,7 @@ def test_run_continuous_catches_exceptions():
 # -- --continuous flag wiring --
 
 
-def test_continuous_flag_routes_to_run_continuous(monkeypatch):
+def test_continuous_flag_routes_to_run_continuous():
     """--continuous flag calls _run_continuous instead of _run_loop."""
     from typer.testing import CliRunner
 
@@ -625,7 +604,7 @@ def test_continuous_flag_routes_to_run_continuous(monkeypatch):
     assert result.exit_code == 0
 
 
-def test_continuous_flag_with_skip_permissions(monkeypatch):
+def test_continuous_flag_with_skip_permissions():
     """--continuous --dangerously-skip-permissions forwards both flags."""
     from typer.testing import CliRunner
 
