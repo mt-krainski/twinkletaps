@@ -605,3 +605,36 @@ def test_run_continuous_catches_exceptions():
     shutdown_event.wait.assert_called_once_with(60)
     mock_timer.step.assert_called_once()
     mock_timer.reset.assert_not_called()
+
+
+# -- --continuous flag wiring --
+
+
+def test_continuous_flag_routes_to_run_continuous(monkeypatch):
+    """--continuous flag calls _run_continuous instead of _run_loop."""
+    from typer.testing import CliRunner
+
+    from ticket_loop.main import app
+
+    runner = CliRunner()
+
+    with patch("ticket_loop.main._run_continuous") as mock_cont:
+        result = runner.invoke(app, ["--continuous"])
+
+    mock_cont.assert_called_once_with(skip_permissions=False)
+    assert result.exit_code == 0
+
+
+def test_continuous_flag_with_skip_permissions(monkeypatch):
+    """--continuous --dangerously-skip-permissions forwards both flags."""
+    from typer.testing import CliRunner
+
+    from ticket_loop.main import app
+
+    runner = CliRunner()
+
+    with patch("ticket_loop.main._run_continuous") as mock_cont:
+        result = runner.invoke(app, ["--continuous", "--dangerously-skip-permissions"])
+
+    mock_cont.assert_called_once_with(skip_permissions=True)
+    assert result.exit_code == 0

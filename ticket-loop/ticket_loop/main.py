@@ -346,6 +346,14 @@ def main(
         str | None,
         typer.Option(help="Resume the Claude session for a Jira issue (e.g. GFD-42)."),
     ] = None,
+    continuous: Annotated[
+        bool,
+        typer.Option(
+            "--continuous",
+            "-c",
+            help="Run continuously with exponential backoff on idle.",
+        ),
+    ] = False,
     dangerously_skip_permissions: Annotated[
         bool,
         typer.Option(
@@ -360,6 +368,9 @@ def main(
     if resume is not None:
         print(f"Resume mode: {resume}")
         resume_session(resume, skip_permissions=dangerously_skip_permissions)
+    elif continuous:
+        print("Running ticket loop in continuous mode...")
+        _run_continuous(skip_permissions=dangerously_skip_permissions)
     else:
         print("Running ticket loop...")
         _run_loop(skip_permissions=dangerously_skip_permissions)
