@@ -156,6 +156,7 @@ function SidebarViewInner({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
+              {/* Invite opens a dialog — don't close sidebar (same as Register Device above) */}
               {canInviteToWorkspace && (
                 <SidebarMenuItem>
                   <SidebarMenuButton onClick={onInviteClick}>

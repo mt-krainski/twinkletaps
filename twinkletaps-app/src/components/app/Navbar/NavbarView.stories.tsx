@@ -203,38 +203,49 @@ export const WithoutWorkspaces: Story = {
   },
 };
 
-export const MobileViewport: Story = {
+const mobileNavbarPlay = async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  const canvas = within(canvasElement);
+
+  // SidebarTrigger (hamburger) should be in the DOM
+  const sidebarTrigger = canvas.getByRole("button", {
+    name: "Toggle Sidebar",
+  });
+  await expect(sidebarTrigger).toBeInTheDocument();
+
+  // Logo should still be present
+  await expect(canvas.getByTestId("logo")).toBeInTheDocument();
+};
+
+const mobileNavbarRender = (args: NavbarViewProps) => (
+  <div className="h-16 w-full">
+    <NavbarView
+      profile={args.profile}
+      workspaces={args.workspaces}
+      selectedWorkspace={args.selectedWorkspace}
+      switchWorkspace={args.switchWorkspace}
+      isSigningOut={args.isSigningOut}
+      signOut={args.signOut}
+      navigateToAccount={args.navigateToAccount}
+      navigateToSettings={args.navigateToSettings}
+      onCreateWorkspace={args.onCreateWorkspace}
+    />
+  </div>
+);
+
+export const MobileSmall: Story = {
   args: defaultArgs,
-  parameters: {
-    viewport: {
-      defaultViewport: "mobile1",
-    },
+  globals: {
+    viewport: { value: "mobile1", isRotated: false },
   },
-  render: (args) => (
-    <div className="h-16 w-full">
-      <NavbarView
-        profile={args.profile}
-        workspaces={args.workspaces}
-        selectedWorkspace={args.selectedWorkspace}
-        switchWorkspace={args.switchWorkspace}
-        isSigningOut={args.isSigningOut}
-        signOut={args.signOut}
-        navigateToAccount={args.navigateToAccount}
-        navigateToSettings={args.navigateToSettings}
-        onCreateWorkspace={args.onCreateWorkspace}
-      />
-    </div>
-  ),
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
+  render: mobileNavbarRender,
+  play: mobileNavbarPlay,
+};
 
-    // SidebarTrigger (hamburger) should be in the DOM
-    const sidebarTrigger = canvas.getByRole("button", {
-      name: "Toggle Sidebar",
-    });
-    await expect(sidebarTrigger).toBeInTheDocument();
-
-    // Logo should still be present
-    await expect(canvas.getByTestId("logo")).toBeInTheDocument();
+export const MobileLarge: Story = {
+  args: defaultArgs,
+  globals: {
+    viewport: { value: "mobile2", isRotated: false },
   },
+  render: mobileNavbarRender,
+  play: mobileNavbarPlay,
 };

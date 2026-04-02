@@ -6,6 +6,7 @@ import {
   type SidebarViewProps,
   type SearchResult,
 } from "./SidebarView";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { expect, fn, within } from "storybook/test";
 import { mockDevices } from "@/test-utils/storybook";
 
@@ -244,4 +245,79 @@ export const WithoutDevices: Story = {
     await userEvent.type(searchInput, "test query");
     await expect(args.onSearch).toHaveBeenCalledWith("test query");
   },
+};
+
+// Mobile stories — sidebar renders as a Sheet overlay, SidebarTrigger opens it
+
+function MobileSidebarWrapper(props: SidebarViewProps) {
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  return (
+    <SidebarView
+      {...props}
+      isSearchModalOpen={isSearchModalOpen}
+      onSearchModalOpenChange={setIsSearchModalOpen}
+      searchQuery={searchQuery}
+      onSearchQueryChange={setSearchQuery}
+    >
+      <div className="flex-1 p-4">
+        <SidebarTrigger />
+        <p className="mt-4 text-sm text-muted-foreground">Main content area</p>
+      </div>
+    </SidebarView>
+  );
+}
+
+const mobileArgs: SidebarViewProps = {
+  ...defaultArgs,
+  onHomeClick: fn(),
+  onDeviceClick: fn(),
+  onSettingsClick: fn(),
+};
+
+const mobileSidebarPlay = async ({
+  canvasElement,
+  args,
+  userEvent,
+}: {
+  canvasElement: HTMLElement;
+  args: SidebarViewStoryArgs;
+  userEvent: Parameters<NonNullable<Story["play"]>>[0]["userEvent"];
+}) => {
+  const canvas = within(canvasElement);
+
+  // SidebarTrigger should be visible at mobile viewport
+  const trigger = canvas.getByRole("button", { name: "Toggle Sidebar" });
+  await expect(trigger).toBeInTheDocument();
+
+  // Open the sidebar Sheet
+  await userEvent.click(trigger);
+
+  // Sidebar items should be visible inside the Sheet
+  const sheet = await within(document.body).findByRole("dialog");
+  const sheetContent = within(sheet);
+  await expect(sheetContent.getByText("Home")).toBeInTheDocument();
+  await expect(sheetContent.getByText("Devices")).toBeInTheDocument();
+
+  // Click Home — should trigger callback and close sidebar
+  await userEvent.click(sheetContent.getByText("Home"));
+  await expect(args.onHomeClick).toHaveBeenCalled();
+};
+
+export const MobileSmall: Story = {
+  args: mobileArgs,
+  globals: {
+    viewport: { value: "mobile1", isRotated: false },
+  },
+  render: (args) => <MobileSidebarWrapper {...args} />,
+  play: mobileSidebarPlay,
+};
+
+export const MobileLarge: Story = {
+  args: mobileArgs,
+  globals: {
+    viewport: { value: "mobile2", isRotated: false },
+  },
+  render: (args) => <MobileSidebarWrapper {...args} />,
+  play: mobileSidebarPlay,
 };
