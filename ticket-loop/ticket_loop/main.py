@@ -2,7 +2,9 @@
 
 import json
 import os
+import signal
 import subprocess
+import threading
 import uuid
 from enum import Enum
 from pathlib import Path
@@ -12,6 +14,8 @@ import typer
 from dotenv import load_dotenv
 from jira_utils.client import JiraClient, load_config
 from jira_utils.fetch_task import run_fetch_task
+
+from ticket_loop.backoff import BackoffTimer
 
 PACKAGE_ROOT = Path(__file__).resolve().parent.parent
 REPO_ROOT = PACKAGE_ROOT.parent
@@ -307,8 +311,12 @@ def resume_session(issue_key: str, *, skip_permissions: bool = False) -> None:
     _run_with_session_retry(cmd, cwd=REPO_ROOT)
 
 
-def _run_loop(*, skip_permissions: bool = False) -> None:
-    """Fetch the board and process the next agent task."""
+def _run_loop(*, skip_permissions: bool = False) -> bool:
+    """Fetch the board and process the next agent task.
+
+    Returns:
+        True if a task was dispatched, False if no work was found.
+    """
     agent_name = os.environ["JIRA_AGENT_USERNAME"]
     print(f"Agent: {agent_name}")
 
@@ -327,7 +335,7 @@ def _run_loop(*, skip_permissions: bool = False) -> None:
     task = result["selected_task"]
     if task is None:
         print("No tasks assigned to agent.")
-        return
+        return False
 
     column = result["selected_column"]
     print(f"Selected: {task['key']} ({task['summary']}) from column '{column}'")
@@ -335,6 +343,38 @@ def _run_loop(*, skip_permissions: bool = False) -> None:
 
     handler = COLUMN_HANDLERS[column]
     handler(task, skip_permissions=skip_permissions)
+    return True
+
+
+def _run_continuous(*, skip_permissions: bool = False) -> None:
+    """Run _run_loop in a loop with exponential backoff on idle."""
+    shutdown = threading.Event()
+
+    def _handle_signal(signum: int, _frame: Any) -> None:
+        print(f"\nReceived signal {signum}, shutting down...")
+        shutdown.set()
+
+    signal.signal(signal.SIGINT, _handle_signal)
+    signal.signal(signal.SIGTERM, _handle_signal)
+
+    timer = BackoffTimer()
+    print("Continuous mode started. Press Ctrl+C to stop.")
+
+    while not shutdown.is_set():
+        try:
+            found_work = _run_loop(skip_permissions=skip_permissions)
+        except Exception as exc:
+            print(f"Error during loop iteration: {exc}")
+            found_work = False
+
+        if found_work:
+            timer.reset()
+        else:
+            print(f"No work found. Next check in {timer.delay:.0f}s...")
+            shutdown.wait(timer.delay)
+            timer.step()
+
+    print("Shut down complete.")
 
 
 app = typer.Typer()
@@ -346,6 +386,14 @@ def main(
         str | None,
         typer.Option(help="Resume the Claude session for a Jira issue (e.g. GFD-42)."),
     ] = None,
+    continuous: Annotated[
+        bool,
+        typer.Option(
+            "--continuous",
+            "-c",
+            help="Run continuously with exponential backoff on idle.",
+        ),
+    ] = False,
     dangerously_skip_permissions: Annotated[
         bool,
         typer.Option(
@@ -360,6 +408,9 @@ def main(
     if resume is not None:
         print(f"Resume mode: {resume}")
         resume_session(resume, skip_permissions=dangerously_skip_permissions)
+    elif continuous:
+        print("Running ticket loop in continuous mode...")
+        _run_continuous(skip_permissions=dangerously_skip_permissions)
     else:
         print("Running ticket loop...")
         _run_loop(skip_permissions=dangerously_skip_permissions)

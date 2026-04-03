@@ -9,6 +9,7 @@ import pytest
 from ticket_loop.main import (
     COLUMN_HANDLERS,
     Phase,
+    _run_continuous,
     _run_loop,
     _run_with_session_retry,
     _swap_session_to_resume,
@@ -439,6 +440,42 @@ def test_handle_plan_review_passes_skip_permissions(tmp_path, monkeypatch):
     assert mock_claude.call_args.kwargs["skip_permissions"] is True
 
 
+# -- _run_loop return value --
+
+
+def test_run_loop_returns_true_on_task_found(monkeypatch):
+    """_run_loop returns True when a task is dispatched."""
+    monkeypatch.setenv("JIRA_AGENT_USERNAME", "Bot")
+    task = {"key": "GFD-10", "summary": "Do thing", "labels": []}
+    result = _fetch_result(selected_task=task, selected_column="to_do")
+    mock_handler = MagicMock()
+
+    with (
+        patch("ticket_loop.main.run_fetch_task", return_value=result),
+        patch.dict(COLUMN_HANDLERS, {"to_do": mock_handler}),
+        _patch_load_config(),
+        _patch_jira_client(),
+    ):
+        got = _run_loop()
+
+    assert got is True
+
+
+def test_run_loop_returns_false_on_no_task(monkeypatch):
+    """_run_loop returns False when no task is available."""
+    monkeypatch.setenv("JIRA_AGENT_USERNAME", "Bot")
+    result = _fetch_result(reason="No tasks")
+
+    with (
+        patch("ticket_loop.main.run_fetch_task", return_value=result),
+        _patch_load_config(),
+        _patch_jira_client(),
+    ):
+        got = _run_loop()
+
+    assert got is False
+
+
 # -- handle_review no longer checks plan label --
 
 
@@ -458,6 +495,133 @@ def test_handle_review_does_not_branch_on_plan_label(tmp_path, monkeypatch):
     prompt = mock_claude.call_args.args[0]
     assert "Review" in prompt
     assert "pull request" in prompt.lower() or "address-pr" in prompt.lower()
+
+
+# -- _run_continuous --
+
+
+def test_run_continuous_resets_backoff_on_work():
+    """Backoff timer resets when _run_loop finds work."""
+    mock_timer = MagicMock()
+    mock_timer.delay = 60
+
+    with (
+        patch("ticket_loop.main._run_loop", return_value=True),
+        patch("ticket_loop.main.BackoffTimer", return_value=mock_timer),
+        patch("ticket_loop.main.threading.Event") as mock_event_cls,
+        patch("ticket_loop.main.signal.signal"),
+    ):
+        shutdown_event = MagicMock()
+        shutdown_event.is_set.side_effect = [False, False, True]
+        mock_event_cls.return_value = shutdown_event
+
+        _run_continuous()
+
+    assert mock_timer.reset.call_count == 2
+
+
+def test_run_continuous_backs_off_on_idle():
+    """When no work found, waits for delay and steps the timer."""
+    mock_timer = MagicMock()
+    mock_timer.delay = 60
+
+    with (
+        patch("ticket_loop.main._run_loop", return_value=False),
+        patch("ticket_loop.main.BackoffTimer", return_value=mock_timer),
+        patch("ticket_loop.main.threading.Event") as mock_event_cls,
+        patch("ticket_loop.main.signal.signal"),
+    ):
+        shutdown_event = MagicMock()
+        shutdown_event.is_set.side_effect = [False, True]
+        mock_event_cls.return_value = shutdown_event
+
+        _run_continuous()
+
+    shutdown_event.wait.assert_called_once_with(60)
+    mock_timer.step.assert_called_once()
+    mock_timer.reset.assert_not_called()
+
+
+def test_run_continuous_stops_on_shutdown_event():
+    """Loop exits when shutdown event is set."""
+    with (
+        patch("ticket_loop.main._run_loop") as mock_run_loop,
+        patch("ticket_loop.main.BackoffTimer") as mock_timer_cls,
+        patch("ticket_loop.main.threading.Event") as mock_event_cls,
+        patch("ticket_loop.main.signal.signal"),
+    ):
+        mock_timer = MagicMock()
+        mock_timer.delay = 60
+        mock_timer_cls.return_value = mock_timer
+
+        shutdown_event = MagicMock()
+        shutdown_event.is_set.return_value = True
+        mock_event_cls.return_value = shutdown_event
+
+        _run_continuous()
+
+    mock_run_loop.assert_not_called()
+    mock_timer.reset.assert_not_called()
+    mock_timer.step.assert_not_called()
+
+
+def test_run_continuous_catches_exceptions():
+    """Exceptions from _run_loop are caught; loop treats them as idle."""
+    mock_timer = MagicMock()
+    mock_timer.delay = 60
+
+    with (
+        patch(
+            "ticket_loop.main._run_loop",
+            side_effect=RuntimeError("network error"),
+        ),
+        patch("ticket_loop.main.BackoffTimer", return_value=mock_timer),
+        patch("ticket_loop.main.threading.Event") as mock_event_cls,
+        patch("ticket_loop.main.signal.signal"),
+    ):
+        shutdown_event = MagicMock()
+        shutdown_event.is_set.side_effect = [False, True]
+        mock_event_cls.return_value = shutdown_event
+
+        _run_continuous()
+
+    # Should back off (not reset) after exception
+    shutdown_event.wait.assert_called_once_with(60)
+    mock_timer.step.assert_called_once()
+    mock_timer.reset.assert_not_called()
+
+
+# -- --continuous flag wiring --
+
+
+def test_continuous_flag_routes_to_run_continuous():
+    """--continuous flag calls _run_continuous instead of _run_loop."""
+    from typer.testing import CliRunner
+
+    from ticket_loop.main import app
+
+    runner = CliRunner()
+
+    with patch("ticket_loop.main._run_continuous") as mock_cont:
+        result = runner.invoke(app, ["--continuous"])
+
+    mock_cont.assert_called_once_with(skip_permissions=False)
+    assert result.exit_code == 0
+
+
+def test_continuous_flag_with_skip_permissions():
+    """--continuous --dangerously-skip-permissions forwards both flags."""
+    from typer.testing import CliRunner
+
+    from ticket_loop.main import app
+
+    runner = CliRunner()
+
+    with patch("ticket_loop.main._run_continuous") as mock_cont:
+        result = runner.invoke(app, ["--continuous", "--dangerously-skip-permissions"])
+
+    mock_cont.assert_called_once_with(skip_permissions=True)
+    assert result.exit_code == 0
 
 
 # -- phase_for_column --
