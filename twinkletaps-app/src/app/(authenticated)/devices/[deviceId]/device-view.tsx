@@ -58,7 +58,7 @@ export function DeviceView({
   const isAdmin = workspaceRole === "admin";
 
   return (
-    <div className="flex flex-col gap-8 p-6">
+    <div className="flex flex-col gap-4 md:gap-8 p-3 md:p-6">
       <h1 className="text-2xl font-semibold">{deviceName}</h1>
 
       <TapRecorder
