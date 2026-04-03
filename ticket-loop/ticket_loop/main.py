@@ -6,6 +6,7 @@ import signal
 import subprocess
 import threading
 import uuid
+from enum import Enum
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -19,6 +20,21 @@ from ticket_loop.backoff import BackoffTimer
 PACKAGE_ROOT = Path(__file__).resolve().parent.parent
 REPO_ROOT = PACKAGE_ROOT.parent
 SESSIONS_FILE = PACKAGE_ROOT / "sessions.jsonl"
+
+PLANNING_COLUMNS = {"planning", "plan_review"}
+
+
+class Phase(str, Enum):
+    """Session phase — distinguishes planning from implementation sessions."""
+
+    PLANNING = "planning"
+    IMPLEMENTATION = "implementation"
+
+
+def phase_for_column(column: str) -> Phase:
+    """Map a board column to its session phase."""
+    return Phase.PLANNING if column in PLANNING_COLUMNS else Phase.IMPLEMENTATION
+
 
 PERMISSIONS_INSTRUCTION = (
     " If any tool use or command is denied due to permission settings, "
@@ -97,29 +113,32 @@ def run_claude_task(
     _run_with_session_retry(cmd, cwd=REPO_ROOT)
 
 
-def save_session(task_key: str, session_id: str) -> None:
+def save_session(task_key: str, session_id: str, phase: Phase) -> None:
     """Append a task_key → session_id mapping to the sessions file."""
-    record = {"task_key": task_key, "session_id": session_id}
+    record = {"task_key": task_key, "session_id": session_id, "phase": phase.value}
     with open(SESSIONS_FILE, "a") as f:
         f.write(json.dumps(record) + "\n")
 
 
-def get_session(task_key: str) -> str:
-    """Look up the session_id for a task_key.
+def get_session(task_key: str, phase: Phase | None) -> str:
+    """Look up the session_id for a task_key and phase.
 
-    Returns the most recent session_id recorded for the given key.
+    Returns the most recent session_id recorded for the given key and phase.
+    When phase is a Phase enum value, only records with that phase match.
+    When phase is None, only legacy records without a phase field match.
 
     Raises:
-        KeyError: If no session exists for the task_key.
+        KeyError: If no session exists for the task_key and phase.
     """
     if not SESSIONS_FILE.exists():
         raise KeyError(f"No session found for {task_key} (sessions file missing)")
 
+    phase_value = phase.value if phase is not None else None
     session_id = None
     with open(SESSIONS_FILE) as f:
         for line in f:
             record = json.loads(line)
-            if record["task_key"] == task_key:
+            if record["task_key"] == task_key and record.get("phase") == phase_value:
                 session_id = record["session_id"]
 
     if session_id is None:
@@ -129,7 +148,10 @@ def get_session(task_key: str) -> str:
 
 def handle_review(task: dict, *, skip_permissions: bool = False) -> None:
     """Handle a task in the Review column — implementation reviews only."""
-    session_id = get_session(task["key"])
+    try:
+        session_id = get_session(task["key"], Phase.IMPLEMENTATION)
+    except KeyError:
+        session_id = get_session(task["key"], None)
     human_id = os.environ["HUMAN_ATLASSIAN_ID"]
     print(f"  Resuming session {session_id}")
     run_claude_task(
@@ -147,7 +169,10 @@ def handle_review(task: dict, *, skip_permissions: bool = False) -> None:
 
 def handle_plan_review(task: dict, *, skip_permissions: bool = False) -> None:
     """Handle a task in the Plan Review column."""
-    session_id = get_session(task["key"])
+    try:
+        session_id = get_session(task["key"], Phase.PLANNING)
+    except KeyError:
+        session_id = get_session(task["key"], None)
     human_id = os.environ["HUMAN_ATLASSIAN_ID"]
     print(f"  Resuming session {session_id}")
     run_claude_task(
@@ -177,8 +202,14 @@ def handle_in_progress(task: dict, *, skip_permissions: bool = False) -> None:
     """
     human_id = os.environ["HUMAN_ATLASSIAN_ID"]
     try:
-        session_id = get_session(task["key"])
+        session_id = get_session(task["key"], Phase.IMPLEMENTATION)
     except KeyError:
+        try:
+            session_id = get_session(task["key"], None)
+        except KeyError:
+            session_id = None
+
+    if session_id is None:
         print(f"  No session found for {task['key']} — reassigning to human")
         comment_cmd = [  # noqa: S607
             "jira-utils",
@@ -222,7 +253,7 @@ def handle_to_do(task: dict, *, skip_permissions: bool = False) -> None:
     """Handle a task in the To Do column — implement it."""
     base_branch = os.environ["BASE_BRANCH"]
     session_id = str(uuid.uuid4())
-    save_session(task["key"], session_id)
+    save_session(task["key"], session_id, Phase.IMPLEMENTATION)
     print(f"  New session {session_id}")
     run_claude_task(
         f"Implement Jira task {task['key']}: {task['summary']}. "
@@ -239,7 +270,7 @@ def handle_to_do(task: dict, *, skip_permissions: bool = False) -> None:
 def handle_planning(task: dict, *, skip_permissions: bool = False) -> None:
     """Handle a task in the Planning column — produce a plan for human review."""
     session_id = str(uuid.uuid4())
-    save_session(task["key"], session_id)
+    save_session(task["key"], session_id, Phase.PLANNING)
     print(f"  New session {session_id}")
     run_claude_task(
         f"Plan the implementation of Jira task {task['key']}: {task['summary']}. "
@@ -262,8 +293,17 @@ COLUMN_HANDLERS = {
 
 
 def resume_session(issue_key: str, *, skip_permissions: bool = False) -> None:
-    """Drop into an interactive Claude session for a previously started issue."""
-    session_id = get_session(issue_key)
+    """Drop into an interactive Claude session for a previously started issue.
+
+    Tries implementation phase first, then planning, then legacy (no phase).
+    """
+    try:
+        session_id = get_session(issue_key, Phase.IMPLEMENTATION)
+    except KeyError:
+        try:
+            session_id = get_session(issue_key, Phase.PLANNING)
+        except KeyError:
+            session_id = get_session(issue_key, None)
     print(f"  Resuming session {session_id} for {issue_key}")
     cmd = ["claude", "--session-id", session_id, "--verbose"]
     if skip_permissions:

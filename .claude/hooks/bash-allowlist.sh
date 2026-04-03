@@ -14,6 +14,7 @@ ALLOWED_PREFIXES=(
   "git rm "
   "chmod +x "
   "npm run "
+  "git merge "
 )
 
 for prefix in "${ALLOWED_PREFIXES[@]}"; do
