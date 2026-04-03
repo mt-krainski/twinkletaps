@@ -131,7 +131,7 @@ export function TapRecorder({
         aria-label="Record tap sequence"
       >
         {cooldown ? (
-          <Loader2 className="h-16 w-16 animate-spin" />
+          <Loader2 className="h-12 w-12 md:h-16 md:w-16 animate-spin" />
         ) : (
           <Lightbulb className="h-[70px] w-[70px] md:h-[100px] md:w-[100px]" />
         )}
