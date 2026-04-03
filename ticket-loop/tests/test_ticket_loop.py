@@ -646,6 +646,64 @@ def test_handle_review_looks_up_implementation_phase(tmp_path, monkeypatch):
     assert mock_claude.call_args.kwargs["session_id"] == "impl-sid"
 
 
+# -- legacy session fallback in handlers --
+
+
+def test_handle_review_falls_back_to_legacy_session(tmp_path, monkeypatch):
+    """handle_review falls back to legacy session."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+    monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
+
+    # Write a legacy record without phase
+    record = {"task_key": "GFD-106", "session_id": "legacy-sid"}
+    with open(sessions_file, "a") as f:
+        f.write(json.dumps(record) + "\n")
+
+    task = {"key": "GFD-106", "summary": "Review legacy"}
+
+    with patch("ticket_loop.main.run_claude_task") as mock_claude:
+        handle_review(task)
+
+    assert mock_claude.call_args.kwargs["session_id"] == "legacy-sid"
+
+
+def test_handle_in_progress_falls_back_to_legacy_session(tmp_path, monkeypatch):
+    """handle_in_progress falls back to legacy session."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+    monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
+
+    record = {"task_key": "GFD-107", "session_id": "legacy-sid"}
+    with open(sessions_file, "a") as f:
+        f.write(json.dumps(record) + "\n")
+
+    task = {"key": "GFD-107", "summary": "Continue legacy"}
+
+    with patch("ticket_loop.main.run_claude_task") as mock_claude:
+        handle_in_progress(task)
+
+    assert mock_claude.call_args.kwargs["session_id"] == "legacy-sid"
+
+
+def test_handle_plan_review_falls_back_to_legacy_session(tmp_path, monkeypatch):
+    """handle_plan_review falls back to legacy session."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+    monkeypatch.setenv("HUMAN_ATLASSIAN_ID", "human-123")
+
+    record = {"task_key": "GFD-108", "session_id": "legacy-sid"}
+    with open(sessions_file, "a") as f:
+        f.write(json.dumps(record) + "\n")
+
+    task = {"key": "GFD-108", "summary": "Review plan legacy"}
+
+    with patch("ticket_loop.main.run_claude_task") as mock_claude:
+        handle_plan_review(task)
+
+    assert mock_claude.call_args.kwargs["session_id"] == "legacy-sid"
+
+
 def test_handle_in_progress_looks_up_implementation_phase(tmp_path, monkeypatch):
     """handle_in_progress looks up session with 'implementation' phase."""
     sessions_file = tmp_path / "sessions.jsonl"

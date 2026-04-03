@@ -144,7 +144,10 @@ def get_session(task_key: str, phase: Phase | None) -> str:
 
 def handle_review(task: dict, *, skip_permissions: bool = False) -> None:
     """Handle a task in the Review column — implementation reviews only."""
-    session_id = get_session(task["key"], Phase.IMPLEMENTATION)
+    try:
+        session_id = get_session(task["key"], Phase.IMPLEMENTATION)
+    except KeyError:
+        session_id = get_session(task["key"], None)
     human_id = os.environ["HUMAN_ATLASSIAN_ID"]
     print(f"  Resuming session {session_id}")
     run_claude_task(
@@ -162,7 +165,10 @@ def handle_review(task: dict, *, skip_permissions: bool = False) -> None:
 
 def handle_plan_review(task: dict, *, skip_permissions: bool = False) -> None:
     """Handle a task in the Plan Review column."""
-    session_id = get_session(task["key"], Phase.PLANNING)
+    try:
+        session_id = get_session(task["key"], Phase.PLANNING)
+    except KeyError:
+        session_id = get_session(task["key"], None)
     human_id = os.environ["HUMAN_ATLASSIAN_ID"]
     print(f"  Resuming session {session_id}")
     run_claude_task(
@@ -194,6 +200,12 @@ def handle_in_progress(task: dict, *, skip_permissions: bool = False) -> None:
     try:
         session_id = get_session(task["key"], Phase.IMPLEMENTATION)
     except KeyError:
+        try:
+            session_id = get_session(task["key"], None)
+        except KeyError:
+            session_id = None
+
+    if session_id is None:
         print(f"  No session found for {task['key']} — reassigning to human")
         comment_cmd = [  # noqa: S607
             "jira-utils",
