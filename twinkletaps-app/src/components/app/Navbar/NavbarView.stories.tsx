@@ -3,6 +3,7 @@ import { NavbarView, type NavbarViewProps } from "./NavbarView";
 import { expect, fn, within } from "storybook/test";
 import { withDropdown } from "@/test-utils/storybook";
 import { mockProfile, mockWorkspaces } from "@/test-utils/storybook";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 type NavbarViewStoryArgs = NavbarViewProps & {
   onAccountClick: () => void;
@@ -14,6 +15,13 @@ type NavbarViewStoryArgs = NavbarViewProps & {
 const meta: Meta<NavbarViewStoryArgs> = {
   title: "Components/Navbar",
   component: NavbarView,
+  decorators: [
+    (Story) => (
+      <SidebarProvider>
+        <Story />
+      </SidebarProvider>
+    ),
+  ],
   parameters: {
     layout: "fullscreen",
   },
@@ -193,4 +201,51 @@ export const WithoutWorkspaces: Story = {
     ).not.toBeInTheDocument();
     await expect(canvas.getByTestId("logo")).toBeInTheDocument();
   },
+};
+
+const mobileNavbarPlay = async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+  const canvas = within(canvasElement);
+
+  // SidebarTrigger (hamburger) should be in the DOM
+  const sidebarTrigger = canvas.getByRole("button", {
+    name: "Toggle Sidebar",
+  });
+  await expect(sidebarTrigger).toBeInTheDocument();
+
+  // Logo should still be present
+  await expect(canvas.getByTestId("logo")).toBeInTheDocument();
+};
+
+const mobileNavbarRender = (args: NavbarViewProps) => (
+  <div className="h-16 w-full">
+    <NavbarView
+      profile={args.profile}
+      workspaces={args.workspaces}
+      selectedWorkspace={args.selectedWorkspace}
+      switchWorkspace={args.switchWorkspace}
+      isSigningOut={args.isSigningOut}
+      signOut={args.signOut}
+      navigateToAccount={args.navigateToAccount}
+      navigateToSettings={args.navigateToSettings}
+      onCreateWorkspace={args.onCreateWorkspace}
+    />
+  </div>
+);
+
+export const MobileSmall: Story = {
+  args: defaultArgs,
+  globals: {
+    viewport: { value: "mobile1", isRotated: false },
+  },
+  render: mobileNavbarRender,
+  play: mobileNavbarPlay,
+};
+
+export const MobileLarge: Story = {
+  args: defaultArgs,
+  globals: {
+    viewport: { value: "mobile2", isRotated: false },
+  },
+  render: mobileNavbarRender,
+  play: mobileNavbarPlay,
 };
