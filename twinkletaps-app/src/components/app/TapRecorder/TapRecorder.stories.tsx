@@ -96,6 +96,28 @@ export const WithSequenceDisplay: Story = {
   },
 };
 
+export const Mobile: Story = {
+  args: {
+    onTapComplete: fn(),
+  },
+  globals: {
+    viewport: { value: "mobile1", isRotated: false },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole("button", {
+      name: "Record tap sequence",
+    });
+    await expect(button).toBeInTheDocument();
+
+    const rect = button.getBoundingClientRect();
+    expect(rect.width).toBe(140);
+    expect(rect.height).toBe(140);
+
+    await expect(canvas.getByLabelText("Tap sequence")).toBeInTheDocument();
+  },
+};
+
 // Long-press on touch (or right-click) would open the system context menu and block
 // hold-to-record. We prevent that via onContextMenu preventDefault; this story
 // asserts the event is suppressed so the component stays usable.
