@@ -44,12 +44,12 @@ test("mobile content: dashboard, device view, and tap recorder", async ({
   });
   await page.getByRole("button", { name: "Done" }).click();
 
-  // ── Navigate to device ─────────────────────────────────────────────
-  const deviceCard = page
-    .getByRole("main")
-    .getByRole("button", { name: deviceName });
-  await expect(deviceCard).toBeVisible({ timeout: 10000 });
-  await deviceCard.click();
+  // ── Navigate to device via sidebar ─────────────────────────────────
+  // Sidebar Sheet is still open after dialog closes. Click the device
+  // in the sidebar — withMobileClose closes the Sheet and navigates.
+  const sidebarDevice = page.getByRole("button", { name: deviceName });
+  await expect(sidebarDevice).toBeVisible({ timeout: 10000 });
+  await sidebarDevice.click();
 
   await expect(page).toHaveURL(/\/w\/[^/]+\/d\/[^/]+$/, { timeout: 10000 });
   await expect(
