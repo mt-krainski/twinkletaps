@@ -324,13 +324,16 @@ class SessionTailer:
 # -- Default paths --
 
 PACKAGE_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = PACKAGE_ROOT.parent
 _SESSIONS_FILE = PACKAGE_ROOT / "sessions.jsonl"
-_CLAUDE_PROJECT_DIR = (
-    Path.home()
-    / ".claude"
-    / "projects"
-    / "-Users-{user}-Projects-twinkletaps".format(user=Path.home().name)
-)
+
+
+def _claude_project_dir() -> Path:
+    """Derive the Claude project directory for this repo."""
+    # Claude encodes project paths by replacing / with -
+    encoded = str(REPO_ROOT).replace("/", "-")
+    return Path.home() / ".claude" / "projects" / encoded
+
 
 _POLL_INTERVAL = 0.5  # seconds
 
@@ -371,7 +374,7 @@ def run_watch(
         jsonl_path = resolve_session_jsonl_path(
             task_key,
             sessions_file=_SESSIONS_FILE,
-            claude_project_dir=_CLAUDE_PROJECT_DIR,
+            claude_project_dir=_claude_project_dir(),
         )
     except KeyError as exc:
         print(f"Error: {exc}")
