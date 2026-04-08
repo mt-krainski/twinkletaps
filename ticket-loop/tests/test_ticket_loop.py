@@ -20,6 +20,7 @@ from ticket_loop.main import (
     handle_review,
     handle_to_do,
     phase_for_column,
+    resolve_session,
     resume_session,
     save_session,
 )
@@ -682,6 +683,43 @@ def test_session_old_records_matched_by_none_phase(tmp_path, monkeypatch):
         f.write(json.dumps(record) + "\n")
 
     assert get_session("GFD-42", None) == "legacy-sid"
+
+
+# -- resolve_session multi-phase lookup --
+
+
+def test_resolve_session_returns_first_match(tmp_path, monkeypatch):
+    """resolve_session returns the first matching phase in order."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+
+    save_session("GFD-42", "plan-sid", Phase.PLANNING)
+    save_session("GFD-42", "impl-sid", Phase.IMPLEMENTATION)
+
+    result = resolve_session("GFD-42", [Phase.IMPLEMENTATION, Phase.PLANNING, None])
+    assert result == "impl-sid"
+
+
+def test_resolve_session_skips_missing_phases(tmp_path, monkeypatch):
+    """resolve_session skips phases with no session and returns the next."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+
+    save_session("GFD-42", "plan-sid", Phase.PLANNING)
+
+    result = resolve_session("GFD-42", [Phase.IMPLEMENTATION, Phase.PLANNING])
+    assert result == "plan-sid"
+
+
+def test_resolve_session_raises_when_none_match(tmp_path, monkeypatch):
+    """resolve_session raises KeyError when no phase matches."""
+    sessions_file = tmp_path / "sessions.jsonl"
+    monkeypatch.setattr("ticket_loop.main.SESSIONS_FILE", sessions_file)
+
+    save_session("GFD-42", "plan-sid", Phase.PLANNING)
+
+    with pytest.raises(KeyError):
+        resolve_session("GFD-42", [Phase.IMPLEMENTATION, None])
 
 
 # -- resume_session phase fallback --

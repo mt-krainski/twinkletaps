@@ -1,6 +1,7 @@
 """Tests for the ticket-loop watch command."""
 
 import json
+from unittest.mock import patch
 
 import pytest
 
@@ -35,112 +36,22 @@ class TestResolveTaskKeyFromBranch:
 
 
 class TestResolveSessionJsonlPath:
-    """Resolve task key + sessions file → JSONL path."""
+    """Resolve task key → JSONL path via resolve_session."""
 
-    def test_finds_latest_session(self, tmp_path):
-        """Return the JSONL path for the latest matching session."""
-        sessions_file = tmp_path / "sessions.jsonl"
-        sessions_file.write_text(
-            json.dumps(
-                {
-                    "task_key": "GFD-10",
-                    "session_id": "old-id",
-                    "phase": "implementation",
-                }
-            )
-            + "\n"
-            + json.dumps(
-                {
-                    "task_key": "GFD-10",
-                    "session_id": "new-id",
-                    "phase": "implementation",
-                }
-            )
-            + "\n"
-        )
-        claude_dir = tmp_path / "claude-projects"
-        # Create the expected JSONL file
-        (claude_dir / "new-id.jsonl").parent.mkdir(parents=True, exist_ok=True)
-        (claude_dir / "new-id.jsonl").touch()
+    @patch("ticket_loop.main.resolve_session", return_value="abc-123")
+    def test_builds_jsonl_path(self, _mock, tmp_path):
+        """Combines session_id from resolve_session with claude_project_dir."""
+        path = resolve_session_jsonl_path("GFD-10", claude_project_dir=tmp_path)
+        assert path == tmp_path / "abc-123.jsonl"
 
-        path = resolve_session_jsonl_path(
-            "GFD-10", sessions_file=sessions_file, claude_project_dir=claude_dir
-        )
-        assert path == claude_dir / "new-id.jsonl"
-
-    def test_no_session_raises(self, tmp_path):
-        """Raise KeyError when no session matches."""
-        sessions_file = tmp_path / "sessions.jsonl"
-        sessions_file.write_text(
-            json.dumps({"task_key": "GFD-99", "session_id": "abc", "phase": "planning"})
-            + "\n"
-        )
-        claude_dir = tmp_path / "claude-projects"
-        claude_dir.mkdir()
-
+    @patch(
+        "ticket_loop.main.resolve_session",
+        side_effect=KeyError("No session found for GFD-1"),
+    )
+    def test_propagates_key_error(self, _mock, tmp_path):
+        """KeyError from resolve_session propagates."""
         with pytest.raises(KeyError):
-            resolve_session_jsonl_path(
-                "GFD-1", sessions_file=sessions_file, claude_project_dir=claude_dir
-            )
-
-    def test_prefers_implementation_over_planning(self, tmp_path):
-        """Implementation phase is preferred when both exist."""
-        sessions_file = tmp_path / "sessions.jsonl"
-        sessions_file.write_text(
-            json.dumps(
-                {"task_key": "GFD-5", "session_id": "plan-id", "phase": "planning"}
-            )
-            + "\n"
-            + json.dumps(
-                {
-                    "task_key": "GFD-5",
-                    "session_id": "impl-id",
-                    "phase": "implementation",
-                }
-            )
-            + "\n"
-        )
-        claude_dir = tmp_path / "claude-projects"
-        claude_dir.mkdir()
-        (claude_dir / "impl-id.jsonl").touch()
-
-        path = resolve_session_jsonl_path(
-            "GFD-5", sessions_file=sessions_file, claude_project_dir=claude_dir
-        )
-        assert path == claude_dir / "impl-id.jsonl"
-
-    def test_falls_back_to_planning(self, tmp_path):
-        """Fall back to planning session when no implementation session exists."""
-        sessions_file = tmp_path / "sessions.jsonl"
-        sessions_file.write_text(
-            json.dumps(
-                {"task_key": "GFD-5", "session_id": "plan-id", "phase": "planning"}
-            )
-            + "\n"
-        )
-        claude_dir = tmp_path / "claude-projects"
-        claude_dir.mkdir()
-        (claude_dir / "plan-id.jsonl").touch()
-
-        path = resolve_session_jsonl_path(
-            "GFD-5", sessions_file=sessions_file, claude_project_dir=claude_dir
-        )
-        assert path == claude_dir / "plan-id.jsonl"
-
-    def test_falls_back_to_legacy(self, tmp_path):
-        """Fall back to legacy (no phase) session."""
-        sessions_file = tmp_path / "sessions.jsonl"
-        sessions_file.write_text(
-            json.dumps({"task_key": "GFD-5", "session_id": "legacy-id"}) + "\n"
-        )
-        claude_dir = tmp_path / "claude-projects"
-        claude_dir.mkdir()
-        (claude_dir / "legacy-id.jsonl").touch()
-
-        path = resolve_session_jsonl_path(
-            "GFD-5", sessions_file=sessions_file, claude_project_dir=claude_dir
-        )
-        assert path == claude_dir / "legacy-id.jsonl"
+            resolve_session_jsonl_path("GFD-1", claude_project_dir=tmp_path)
 
 
 class TestParseJsonlLine:

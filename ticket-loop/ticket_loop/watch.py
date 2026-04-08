@@ -35,38 +35,20 @@ def resolve_task_key_from_branch(branch: str) -> str | None:
 def resolve_session_jsonl_path(
     task_key: str,
     *,
-    sessions_file: Path,
     claude_project_dir: Path,
 ) -> Path:
     """Resolve a task key to its Claude session JSONL file path.
 
-    Tries implementation phase first, then planning, then legacy (no phase).
+    Delegates to ``resolve_session`` for the session lookup
+    (implementation → planning → legacy), then builds the JSONL path.
 
     Raises:
         KeyError: If no session matches the task key.
     """
-    if not sessions_file.exists():
-        raise KeyError(f"Sessions file not found: {sessions_file}")
+    from ticket_loop.main import Phase, resolve_session
 
-    # Collect all sessions for this task, grouped by phase
-    by_phase: dict[str | None, str] = {}
-    with open(sessions_file) as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            record = json.loads(line)
-            if record["task_key"] == task_key:
-                phase = record.get("phase")
-                by_phase[phase] = record["session_id"]
-
-    # Prefer implementation → planning → legacy
-    for phase in ("implementation", "planning", None):
-        if phase in by_phase:
-            session_id = by_phase[phase]
-            return claude_project_dir / f"{session_id}.jsonl"
-
-    raise KeyError(f"No session found for {task_key}")
+    session_id = resolve_session(task_key, [Phase.IMPLEMENTATION, Phase.PLANNING, None])
+    return claude_project_dir / f"{session_id}.jsonl"
 
 
 def _extract_tool_description(tool_name: str, tool_input: dict[str, Any]) -> str:
@@ -338,13 +320,11 @@ class SessionTailer:
 
 # -- Default paths --
 
-PACKAGE_ROOT = Path(__file__).resolve().parent.parent
-REPO_ROOT = PACKAGE_ROOT.parent
-_SESSIONS_FILE = PACKAGE_ROOT / "sessions.jsonl"
-
 
 def _claude_project_dir() -> Path:
     """Derive the Claude project directory for this repo."""
+    from ticket_loop.main import REPO_ROOT
+
     # Claude encodes project paths by replacing / with -
     encoded = str(REPO_ROOT).replace("/", "-")
     return Path.home() / ".claude" / "projects" / encoded
@@ -388,7 +368,6 @@ def run_watch(
     try:
         jsonl_path = resolve_session_jsonl_path(
             task_key,
-            sessions_file=_SESSIONS_FILE,
             claude_project_dir=_claude_project_dir(),
         )
     except KeyError as exc:

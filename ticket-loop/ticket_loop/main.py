@@ -121,7 +121,7 @@ def save_session(task_key: str, session_id: str, phase: Phase) -> None:
 
 
 def get_session(task_key: str, phase: Phase | None) -> str:
-    """Look up the session_id for a task_key and phase.
+    """Look up the session_id for a task_key and exact phase.
 
     Returns the most recent session_id recorded for the given key and phase.
     When phase is a Phase enum value, only records with that phase match.
@@ -146,12 +146,26 @@ def get_session(task_key: str, phase: Phase | None) -> str:
     return session_id
 
 
+def resolve_session(task_key: str, phases: list[Phase | None]) -> str:
+    """Look up the session_id for a task_key, trying phases in order.
+
+    Tries each phase in the given order and returns the first match.
+    Use ``None`` in the list to match legacy records without a phase field.
+
+    Raises:
+        KeyError: If no session exists for any of the given phases.
+    """
+    for phase in phases:
+        try:
+            return get_session(task_key, phase)
+        except KeyError:
+            continue
+    raise KeyError(f"No session found for {task_key}")
+
+
 def handle_review(task: dict, *, skip_permissions: bool = False) -> None:
     """Handle a task in the Review column — implementation reviews only."""
-    try:
-        session_id = get_session(task["key"], Phase.IMPLEMENTATION)
-    except KeyError:
-        session_id = get_session(task["key"], None)
+    session_id = resolve_session(task["key"], [Phase.IMPLEMENTATION, None])
     human_id = os.environ["HUMAN_ATLASSIAN_ID"]
     print(f"  Resuming session {session_id}")
     run_claude_task(
@@ -169,10 +183,7 @@ def handle_review(task: dict, *, skip_permissions: bool = False) -> None:
 
 def handle_plan_review(task: dict, *, skip_permissions: bool = False) -> None:
     """Handle a task in the Plan Review column."""
-    try:
-        session_id = get_session(task["key"], Phase.PLANNING)
-    except KeyError:
-        session_id = get_session(task["key"], None)
+    session_id = resolve_session(task["key"], [Phase.PLANNING, None])
     human_id = os.environ["HUMAN_ATLASSIAN_ID"]
     print(f"  Resuming session {session_id}")
     run_claude_task(
@@ -202,12 +213,9 @@ def handle_in_progress(task: dict, *, skip_permissions: bool = False) -> None:
     """
     human_id = os.environ["HUMAN_ATLASSIAN_ID"]
     try:
-        session_id = get_session(task["key"], Phase.IMPLEMENTATION)
+        session_id = resolve_session(task["key"], [Phase.IMPLEMENTATION, None])
     except KeyError:
-        try:
-            session_id = get_session(task["key"], None)
-        except KeyError:
-            session_id = None
+        session_id = None
 
     if session_id is None:
         print(f"  No session found for {task['key']} — reassigning to human")
@@ -297,13 +305,9 @@ def resume_session(issue_key: str, *, skip_permissions: bool = False) -> None:
 
     Tries implementation phase first, then planning, then legacy (no phase).
     """
-    try:
-        session_id = get_session(issue_key, Phase.IMPLEMENTATION)
-    except KeyError:
-        try:
-            session_id = get_session(issue_key, Phase.PLANNING)
-        except KeyError:
-            session_id = get_session(issue_key, None)
+    session_id = resolve_session(
+        issue_key, [Phase.IMPLEMENTATION, Phase.PLANNING, None]
+    )
     print(f"  Resuming session {session_id} for {issue_key}")
     cmd = ["claude", "--session-id", session_id, "--verbose"]
     if skip_permissions:
