@@ -111,60 +111,82 @@ def _infer_tool_success(data: dict[str, Any], block: dict[str, Any]) -> bool:
     return not block.get("is_error", False)
 
 
-def parse_jsonl_line(line: str) -> dict[str, Any] | None:
-    """Parse a JSONL line into a display-friendly dict, or None to skip.
+def _truncate_tool_output(block: dict[str, Any], max_len: int = 120) -> str:
+    """Extract a truncated preview of tool result content for verbose mode."""
+    raw = block.get("content", "")
+    if isinstance(raw, list):
+        # Content can be a list of text blocks
+        parts = [b.get("text", "") for b in raw if isinstance(b, dict)]
+        raw = " ".join(parts)
+    text = str(raw).replace("\n", " ").strip()
+    if len(text) > max_len:
+        return text[: max_len - 3] + "..."
+    return text
 
-    Returns dicts with a "kind" field:
+
+def parse_jsonl_line(line: str) -> list[dict[str, Any]]:
+    """Parse a JSONL line into display-friendly dicts.
+
+    Returns a list of event dicts (may be empty). Each has a "kind" field:
       - kind="text": assistant text output (has "text", "timestamp")
       - kind="tool_use": tool call (has "tool_name", "description", "timestamp")
       - kind="tool_result": tool outcome (has "success", "timestamp")
     """
-    data = json.loads(line)
+    try:
+        data = json.loads(line)
+    except (json.JSONDecodeError, ValueError):
+        return []
 
     # Skip queue operations
     if data.get("type") == "queue-operation":
-        return None
+        return []
 
     # Skip meta messages (skill loading, system reminders)
     if data.get("isMeta"):
-        return None
+        return []
 
     timestamp = data.get("timestamp", "")
     message = data.get("message", {})
     content = message.get("content")
 
     if not isinstance(content, list):
-        return None
+        return []
 
+    events: list[dict[str, Any]] = []
     for block in content:
         block_type = block.get("type")
 
         if block_type == "text" and message.get("role") == "assistant":
             text = block.get("text", "").strip()
-            if not text:
-                return None
-            return {"kind": "text", "text": text, "timestamp": timestamp}
+            if text:
+                events.append({"kind": "text", "text": text, "timestamp": timestamp})
 
-        if block_type == "tool_use":
+        elif block_type == "tool_use":
             tool_name = block.get("name", "?")
             tool_input = block.get("input", {})
             description = _extract_tool_description(tool_name, tool_input)
-            return {
-                "kind": "tool_use",
-                "tool_name": tool_name,
-                "description": description,
-                "timestamp": timestamp,
-            }
+            events.append(
+                {
+                    "kind": "tool_use",
+                    "tool_name": tool_name,
+                    "description": description,
+                    "timestamp": timestamp,
+                }
+            )
 
-        if block_type == "tool_result":
+        elif block_type == "tool_result":
             success = _infer_tool_success(data, block)
-            return {
+            evt: dict[str, Any] = {
                 "kind": "tool_result",
                 "success": success,
                 "timestamp": timestamp,
             }
+            preview = _truncate_tool_output(block)
+            if preview:
+                evt["preview"] = preview
+            events.append(evt)
 
-    return None
+    return events
 
 
 _MAX_TEXT_LEN = 200
@@ -191,7 +213,7 @@ def _format_agent_prefix(agent_id: str | None) -> str:
     return f"[{short}] "
 
 
-def format_event(event: dict[str, Any]) -> str:
+def format_event(event: dict[str, Any], *, verbose: bool = False) -> str:
     """Format a parsed event into a single display line."""
     time_str = _format_time(event.get("timestamp", ""))
     prefix = _format_agent_prefix(event.get("agent_id"))
@@ -211,9 +233,11 @@ def format_event(event: dict[str, Any]) -> str:
         return f"{time_str}  {prefix}\u2699 {name}"
 
     if kind == "tool_result":
-        if event["success"]:
-            return f"{time_str}  {prefix}\u2713 ok"
-        return f"{time_str}  {prefix}\u2717 err"
+        status = "\u2713 ok" if event["success"] else "\u2717 err"
+        base = f"{time_str}  {prefix}{status}"
+        if verbose and event.get("preview"):
+            return f"{base} — {event['preview']}"
+        return base
 
     return f"{time_str}  {prefix}({kind})"
 
@@ -259,29 +283,25 @@ class SessionTailer:
         self._subagent_tails: dict[str, _FileTail] = {}
 
     @staticmethod
-    def _infer_subagent_dir(jsonl_path: Path) -> Path | None:
+    def _infer_subagent_dir(jsonl_path: Path) -> Path:
         """Derive the subagents directory from the session JSONL path."""
         # Session JSONL: <dir>/<session-id>.jsonl
         # Subagents:     <dir>/<session-id>/subagents/
         session_id = jsonl_path.stem
-        sub_dir = jsonl_path.parent / session_id / "subagents"
-        return sub_dir if sub_dir.is_dir() else sub_dir
+        return jsonl_path.parent / session_id / "subagents"
 
     def catchup_events(self) -> list[dict[str, Any]]:
         """Read the JSONL and return the last N meaningful events."""
         all_lines = self._main.read_all_lines()
         events: list[dict[str, Any]] = []
         for raw in all_lines:
-            evt = parse_jsonl_line(raw)
-            if evt is not None:
-                events.append(evt)
+            events.extend(parse_jsonl_line(raw))
 
         # Also read any existing subagent files
         self._discover_subagents()
         for tail in self._subagent_tails.values():
             for raw in tail.read_all_lines():
-                evt = parse_jsonl_line(raw)
-                if evt is not None:
+                for evt in parse_jsonl_line(raw):
                     evt["agent_id"] = tail.agent_id
                     events.append(evt)
 
@@ -295,14 +315,11 @@ class SessionTailer:
         events: list[dict[str, Any]] = []
 
         for raw in self._main.read_new_lines():
-            evt = parse_jsonl_line(raw)
-            if evt is not None:
-                events.append(evt)
+            events.extend(parse_jsonl_line(raw))
 
         for tail in self._subagent_tails.values():
             for raw in tail.read_new_lines():
-                evt = parse_jsonl_line(raw)
-                if evt is not None:
+                for evt in parse_jsonl_line(raw):
                     evt["agent_id"] = tail.agent_id
                     events.append(evt)
 
@@ -311,8 +328,6 @@ class SessionTailer:
 
     def _discover_subagents(self) -> None:
         """Scan for new subagent JSONL files."""
-        if self._subagent_dir is None:
-            return
         if not self._subagent_dir.is_dir():
             return
         for p in self._subagent_dir.glob("agent-*.jsonl"):
@@ -399,7 +414,7 @@ def run_watch(
     # Create tailer and show catch-up
     tailer = SessionTailer(jsonl_path, catchup=catchup)
     for evt in tailer.catchup_events():
-        print(format_event(evt))
+        print(format_event(evt, verbose=verbose))
 
     if catchup > 0:
         print("--- live ---")
@@ -407,7 +422,7 @@ def run_watch(
     # Poll loop
     while not shutdown.is_set():
         for evt in tailer.poll():
-            print(format_event(evt))
+            print(format_event(evt, verbose=verbose))
         shutdown.wait(_POLL_INTERVAL)
 
     print("\nStopped.")

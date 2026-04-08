@@ -158,11 +158,11 @@ class TestParseJsonlLine:
                 },
             }
         )
-        result = parse_jsonl_line(line)
-        assert result is not None
-        assert result["kind"] == "text"
-        assert result["text"] == "I'll start the task."
-        assert result["timestamp"] == "2026-04-03T14:46:49.575Z"
+        results = parse_jsonl_line(line)
+        assert len(results) == 1
+        assert results[0]["kind"] == "text"
+        assert results[0]["text"] == "I'll start the task."
+        assert results[0]["timestamp"] == "2026-04-03T14:46:49.575Z"
 
     def test_tool_use(self):
         """Extract tool call info."""
@@ -185,8 +185,9 @@ class TestParseJsonlLine:
                 },
             }
         )
-        result = parse_jsonl_line(line)
-        assert result is not None
+        results = parse_jsonl_line(line)
+        assert len(results) == 1
+        result = results[0]
         assert result["kind"] == "tool_use"
         assert result["tool_name"] == "Bash"
         assert result["description"] == "Check git status"
@@ -211,10 +212,10 @@ class TestParseJsonlLine:
                 "toolUseResult": {"success": True},
             }
         )
-        result = parse_jsonl_line(line)
-        assert result is not None
-        assert result["kind"] == "tool_result"
-        assert result["success"] is True
+        results = parse_jsonl_line(line)
+        assert len(results) == 1
+        assert results[0]["kind"] == "tool_result"
+        assert results[0]["success"] is True
 
     def test_tool_result_error(self):
         """Detect errored tool results."""
@@ -236,10 +237,10 @@ class TestParseJsonlLine:
                 "toolUseResult": {"success": False},
             }
         )
-        result = parse_jsonl_line(line)
-        assert result is not None
-        assert result["kind"] == "tool_result"
-        assert result["success"] is False
+        results = parse_jsonl_line(line)
+        assert len(results) == 1
+        assert results[0]["kind"] == "tool_result"
+        assert results[0]["success"] is False
 
     def test_tool_result_bash_format(self):
         """Bash tool results use stdout/stderr format, no explicit success."""
@@ -266,8 +267,8 @@ class TestParseJsonlLine:
                 },
             }
         )
-        result = parse_jsonl_line(line)
-        assert result["success"] is True
+        results = parse_jsonl_line(line)
+        assert results[0]["success"] is True
 
     def test_tool_result_agent_format(self):
         """Agent tool results use status field."""
@@ -292,8 +293,8 @@ class TestParseJsonlLine:
                 },
             }
         )
-        result = parse_jsonl_line(line)
-        assert result["success"] is True
+        results = parse_jsonl_line(line)
+        assert results[0]["success"] is True
 
     def test_tool_result_string_tool_use_result(self):
         """Handle cases where toolUseResult is a string."""
@@ -315,8 +316,8 @@ class TestParseJsonlLine:
                 "toolUseResult": "some string value",
             }
         )
-        result = parse_jsonl_line(line)
-        assert result["success"] is True
+        results = parse_jsonl_line(line)
+        assert results[0]["success"] is True
 
     def test_queue_operation_ignored(self):
         """Queue operations are not displayed."""
@@ -327,7 +328,7 @@ class TestParseJsonlLine:
                 "timestamp": "2026-04-03T14:46:46.218Z",
             }
         )
-        assert parse_jsonl_line(line) is None
+        assert parse_jsonl_line(line) == []
 
     def test_meta_message_ignored(self):
         """Meta/system messages (skill loading etc.) are not displayed."""
@@ -342,7 +343,7 @@ class TestParseJsonlLine:
                 },
             }
         )
-        assert parse_jsonl_line(line) is None
+        assert parse_jsonl_line(line) == []
 
     def test_empty_text_ignored(self):
         """Assistant messages with only whitespace text are skipped."""
@@ -356,7 +357,7 @@ class TestParseJsonlLine:
                 },
             }
         )
-        assert parse_jsonl_line(line) is None
+        assert parse_jsonl_line(line) == []
 
     def test_bash_tool_uses_description(self):
         """Bash tool calls prefer the description field for display."""
@@ -383,8 +384,8 @@ class TestParseJsonlLine:
                 },
             }
         )
-        result = parse_jsonl_line(line)
-        assert result["description"] == "Fetch GFD-89 Jira issue"
+        results = parse_jsonl_line(line)
+        assert results[0]["description"] == "Fetch GFD-89 Jira issue"
 
     def test_read_tool_shows_file_path(self):
         """Read tool calls show the file_path."""
@@ -404,8 +405,8 @@ class TestParseJsonlLine:
                 },
             }
         )
-        result = parse_jsonl_line(line)
-        assert result["description"] == "/src/components/App.tsx"
+        results = parse_jsonl_line(line)
+        assert results[0]["description"] == "/src/components/App.tsx"
 
     def test_edit_tool_shows_file_path(self):
         """Edit tool calls show the file_path."""
@@ -429,8 +430,8 @@ class TestParseJsonlLine:
                 },
             }
         )
-        result = parse_jsonl_line(line)
-        assert result["description"] == "/src/lib/utils.ts"
+        results = parse_jsonl_line(line)
+        assert results[0]["description"] == "/src/lib/utils.ts"
 
     def test_grep_tool_shows_pattern(self):
         """Grep tool calls show the search pattern."""
@@ -450,8 +451,60 @@ class TestParseJsonlLine:
                 },
             }
         )
-        result = parse_jsonl_line(line)
-        assert result["description"] == "useIsMobile"
+        results = parse_jsonl_line(line)
+        assert results[0]["description"] == "useIsMobile"
+
+    def test_multi_block_message(self):
+        """Messages with text + tool_use return multiple events."""
+        line = json.dumps(
+            {
+                "type": "assistant",
+                "timestamp": "2026-04-03T14:47:03.382Z",
+                "message": {
+                    "role": "assistant",
+                    "content": [
+                        {"type": "text", "text": "Let me check."},
+                        {
+                            "type": "tool_use",
+                            "name": "Bash",
+                            "input": {"command": "ls"},
+                        },
+                    ],
+                },
+            }
+        )
+        results = parse_jsonl_line(line)
+        assert len(results) == 2
+        assert results[0]["kind"] == "text"
+        assert results[1]["kind"] == "tool_use"
+
+    def test_malformed_json_returns_empty(self):
+        """Partial or invalid JSON returns empty list."""
+        assert parse_jsonl_line("{broken") == []
+        assert parse_jsonl_line("") == []
+
+    def test_tool_result_has_preview(self):
+        """Tool results include a preview of the output."""
+        line = json.dumps(
+            {
+                "type": "user",
+                "timestamp": "2026-04-03T14:47:00.000Z",
+                "message": {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": "toolu_x",
+                            "content": "Hello world output",
+                            "is_error": False,
+                        }
+                    ],
+                },
+                "toolUseResult": {"success": True},
+            }
+        )
+        results = parse_jsonl_line(line)
+        assert results[0]["preview"] == "Hello world output"
 
 
 def _has_time_prefix(s: str) -> bool:
@@ -529,6 +582,29 @@ class TestFormatEvent:
         result = format_event(event)
         assert "..." in result
         assert len(result) < 300
+
+    def test_verbose_tool_result_shows_preview(self):
+        """Verbose mode includes tool result preview."""
+        event = {
+            "kind": "tool_result",
+            "success": True,
+            "timestamp": "2026-04-03T14:46:56.630Z",
+            "preview": "branch main",
+        }
+        result = format_event(event, verbose=True)
+        assert "branch main" in result
+        assert "\u2713 ok" in result
+
+    def test_non_verbose_hides_preview(self):
+        """Default mode omits tool result preview."""
+        event = {
+            "kind": "tool_result",
+            "success": True,
+            "timestamp": "2026-04-03T14:46:56.630Z",
+            "preview": "branch main",
+        }
+        result = format_event(event, verbose=False)
+        assert "branch main" not in result
 
 
 def _write_jsonl(path, records):
