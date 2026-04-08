@@ -241,6 +241,83 @@ class TestParseJsonlLine:
         assert result["kind"] == "tool_result"
         assert result["success"] is False
 
+    def test_tool_result_bash_format(self):
+        """Bash tool results use stdout/stderr format, no explicit success."""
+        line = json.dumps(
+            {
+                "type": "user",
+                "timestamp": "2026-04-03T14:47:00.000Z",
+                "message": {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": "toolu_789",
+                            "content": "branch main",
+                            "is_error": False,
+                        }
+                    ],
+                },
+                "toolUseResult": {
+                    "stdout": "branch main",
+                    "stderr": "",
+                    "interrupted": False,
+                    "isImage": False,
+                },
+            }
+        )
+        result = parse_jsonl_line(line)
+        assert result["success"] is True
+
+    def test_tool_result_agent_format(self):
+        """Agent tool results use status field."""
+        line = json.dumps(
+            {
+                "type": "user",
+                "timestamp": "2026-04-03T14:47:00.000Z",
+                "message": {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": "toolu_abc",
+                            "content": [{"type": "text", "text": "result"}],
+                        }
+                    ],
+                },
+                "toolUseResult": {
+                    "status": "completed",
+                    "prompt": "do something",
+                    "agentId": "a123",
+                },
+            }
+        )
+        result = parse_jsonl_line(line)
+        assert result["success"] is True
+
+    def test_tool_result_string_tool_use_result(self):
+        """Handle cases where toolUseResult is a string."""
+        line = json.dumps(
+            {
+                "type": "user",
+                "timestamp": "2026-04-03T14:47:00.000Z",
+                "message": {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": "toolu_str",
+                            "content": "ok",
+                            "is_error": False,
+                        }
+                    ],
+                },
+                "toolUseResult": "some string value",
+            }
+        )
+        result = parse_jsonl_line(line)
+        assert result["success"] is True
+
     def test_queue_operation_ignored(self):
         """Queue operations are not displayed."""
         line = json.dumps(

@@ -2,6 +2,10 @@
 
 import json
 import re
+import signal
+import subprocess
+import sys
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -84,6 +88,29 @@ def _extract_tool_description(tool_name: str, tool_input: dict[str, Any]) -> str
     return ""
 
 
+def _infer_tool_success(data: dict[str, Any], block: dict[str, Any]) -> bool:
+    """Infer whether a tool result was successful.
+
+    The toolUseResult field varies by tool type — it can be a dict with
+    different keys, or absent entirely. We check multiple signals.
+    """
+    tur = data.get("toolUseResult")
+    if isinstance(tur, dict):
+        # Skill results: {"success": bool}
+        if "success" in tur:
+            return bool(tur["success"])
+        # Bash results: check for interrupted or error exit
+        if tur.get("interrupted"):
+            return False
+        # Agent results: {"status": "completed"|...}
+        if "status" in tur:
+            return tur["status"] == "completed"
+        # Bash with no explicit success — assume ok unless is_error
+        return not block.get("is_error", False)
+    # Fall back to the content block's is_error flag
+    return not block.get("is_error", False)
+
+
 def parse_jsonl_line(line: str) -> dict[str, Any] | None:
     """Parse a JSONL line into a display-friendly dict, or None to skip.
 
@@ -130,12 +157,7 @@ def parse_jsonl_line(line: str) -> dict[str, Any] | None:
             }
 
         if block_type == "tool_result":
-            # Check toolUseResult first (structured), fall back to is_error
-            tool_use_result = data.get("toolUseResult")
-            if tool_use_result is not None:
-                success = tool_use_result.get("success", True)
-            else:
-                success = not block.get("is_error", False)
+            success = _infer_tool_success(data, block)
             return {
                 "kind": "tool_result",
                 "success": success,
@@ -297,3 +319,92 @@ class SessionTailer:
             if p.name not in self._subagent_tails:
                 agent_id = p.stem  # e.g. "agent-a5c725bb8b43"
                 self._subagent_tails[p.name] = _FileTail(p, agent_id=agent_id)
+
+
+# -- Default paths --
+
+PACKAGE_ROOT = Path(__file__).resolve().parent.parent
+_SESSIONS_FILE = PACKAGE_ROOT / "sessions.jsonl"
+_CLAUDE_PROJECT_DIR = (
+    Path.home()
+    / ".claude"
+    / "projects"
+    / "-Users-{user}-Projects-twinkletaps".format(user=Path.home().name)
+)
+
+_POLL_INTERVAL = 0.5  # seconds
+
+
+def _get_current_branch() -> str:
+    """Get the current git branch name."""
+    result = subprocess.run(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],  # noqa: S603, S607
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return result.stdout.strip()
+
+
+def run_watch(
+    *,
+    task_key_override: str | None = None,
+    verbose: bool = False,
+    catchup: int = 10,
+) -> None:
+    """Main entry point for the watch command."""
+    # Resolve task key
+    if task_key_override:
+        task_key = task_key_override
+    else:
+        branch = _get_current_branch()
+        task_key = resolve_task_key_from_branch(branch)
+        if task_key is None:
+            print(
+                f"Could not extract task key from branch '{branch}'.\n"
+                "Use --task GFD-### to specify manually."
+            )
+            sys.exit(1)
+
+    # Resolve JSONL path
+    try:
+        jsonl_path = resolve_session_jsonl_path(
+            task_key,
+            sessions_file=_SESSIONS_FILE,
+            claude_project_dir=_CLAUDE_PROJECT_DIR,
+        )
+    except KeyError as exc:
+        print(f"Error: {exc}")
+        sys.exit(1)
+
+    if not jsonl_path.exists():
+        print(f"Session file not found: {jsonl_path}")
+        sys.exit(1)
+
+    print(f"Watching {task_key} — {jsonl_path.name}")
+    print("Press Ctrl+C to stop.\n")
+
+    # Set up graceful shutdown
+    shutdown = threading.Event()
+
+    def _handle_signal(signum: int, _frame: Any) -> None:
+        shutdown.set()
+
+    signal.signal(signal.SIGINT, _handle_signal)
+    signal.signal(signal.SIGTERM, _handle_signal)
+
+    # Create tailer and show catch-up
+    tailer = SessionTailer(jsonl_path, catchup=catchup)
+    for evt in tailer.catchup_events():
+        print(format_event(evt))
+
+    if catchup > 0:
+        print("--- live ---")
+
+    # Poll loop
+    while not shutdown.is_set():
+        for evt in tailer.poll():
+            print(format_event(evt))
+        shutdown.wait(_POLL_INTERVAL)
+
+    print("\nStopped.")

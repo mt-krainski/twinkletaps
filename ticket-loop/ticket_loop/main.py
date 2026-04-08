@@ -382,6 +382,7 @@ app = typer.Typer()
 
 @app.callback(invoke_without_command=True)
 def main(
+    ctx: typer.Context,
     resume: Annotated[
         str | None,
         typer.Option(help="Resume the Claude session for a Jira issue (e.g. GFD-42)."),
@@ -405,6 +406,8 @@ def main(
 ) -> None:
     """Run the ticket processing loop, or resume a specific issue session."""
     load_dotenv()
+    if ctx.invoked_subcommand is not None:
+        return
     if resume is not None:
         print(f"Resume mode: {resume}")
         resume_session(resume, skip_permissions=dangerously_skip_permissions)
@@ -414,6 +417,40 @@ def main(
     else:
         print("Running ticket loop...")
         _run_loop(skip_permissions=dangerously_skip_permissions)
+
+
+@app.command()
+def watch(
+    task: Annotated[
+        str | None,
+        typer.Option(
+            "--task",
+            "-t",
+            help="Jira task key to watch (e.g. GFD-42). "
+            "Defaults to the current git branch.",
+        ),
+    ] = None,
+    verbose: Annotated[
+        bool,
+        typer.Option(
+            "--verbose",
+            "-v",
+            help="Include truncated tool results in output.",
+        ),
+    ] = False,
+    catchup: Annotated[
+        int,
+        typer.Option(
+            "--catchup",
+            "-n",
+            help="Number of recent messages to show on startup.",
+        ),
+    ] = 10,
+) -> None:
+    """Watch the Claude Code session for a task in real-time."""
+    from ticket_loop.watch import run_watch
+
+    run_watch(task_key_override=task, verbose=verbose, catchup=catchup)
 
 
 if __name__ == "__main__":
