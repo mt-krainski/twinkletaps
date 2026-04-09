@@ -52,6 +52,18 @@ test("device invite: admin shares device, member accepts", async ({
 
   await page.getByRole("button", { name: "Done" }).click();
 
+  // On mobile, the sidebar Sheet stays open after the dialog closes — dismiss it
+  if (isMobile) {
+    await expect(
+      page.locator("[data-slot='dialog-content']"),
+    ).toBeHidden({ timeout: 5000 });
+    const vp = page.viewportSize()!;
+    await page.mouse.click(vp.width - 20, vp.height / 2);
+    await expect(
+      page.locator("[data-slot='sheet-overlay']"),
+    ).toBeHidden({ timeout: 5000 });
+  }
+
   // ── Admin: navigate to the device ────────────────────────────────
   // router.refresh() in onSuccess causes the page to reload with the new device
   // Click the device card in the main content area (has role="button")
