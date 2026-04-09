@@ -234,7 +234,7 @@ def test_resume_session_calls_claude(tmp_path, monkeypatch):
 
     save_session("GFD-42", "resume-sid", Phase.IMPLEMENTATION)
 
-    with patch("ticket_loop.main.subprocess.run") as mock_run:
+    with patch("ticket_loop.main._run_in_process_group") as mock_run:
         resume_session("GFD-42")
 
     cmd = mock_run.call_args.args[0]
@@ -270,7 +270,7 @@ def test_swap_session_to_resume():
 
 def test_run_with_session_retry_succeeds_first_try():
     """No retry when the first subprocess call succeeds."""
-    with patch("ticket_loop.main.subprocess.run") as mock_run:
+    with patch("ticket_loop.main._run_in_process_group") as mock_run:
         _run_with_session_retry(["claude", "--session-id", "new-sid"])
 
     assert mock_run.call_count == 1
@@ -281,7 +281,7 @@ def test_run_with_session_retry_retries_on_conflict():
     conflict = subprocess.CalledProcessError(
         1, "claude", stderr="Session ID abc is already in use."
     )
-    with patch("ticket_loop.main.subprocess.run") as mock_run:
+    with patch("ticket_loop.main._run_in_process_group") as mock_run:
         mock_run.side_effect = [conflict, None]
         _run_with_session_retry(["claude", "--session-id", "abc"])
 
@@ -296,7 +296,7 @@ def test_run_with_session_retry_propagates_other_errors():
     other_error = subprocess.CalledProcessError(
         1, "claude", stderr="Something else went wrong"
     )
-    with patch("ticket_loop.main.subprocess.run", side_effect=other_error):
+    with patch("ticket_loop.main._run_in_process_group", side_effect=other_error):
         with pytest.raises(subprocess.CalledProcessError):
             _run_with_session_retry(["claude", "--session-id", "abc"])
 
@@ -735,7 +735,7 @@ def test_resume_session_prefers_implementation(tmp_path, monkeypatch):
     save_session("GFD-42", "plan-sid", Phase.PLANNING)
     save_session("GFD-42", "impl-sid", Phase.IMPLEMENTATION)
 
-    with patch("ticket_loop.main.subprocess.run") as mock_run:
+    with patch("ticket_loop.main._run_in_process_group") as mock_run:
         resume_session("GFD-42")
 
     cmd = mock_run.call_args.args[0]
@@ -749,7 +749,7 @@ def test_resume_session_falls_back_to_planning(tmp_path, monkeypatch):
 
     save_session("GFD-42", "plan-sid", Phase.PLANNING)
 
-    with patch("ticket_loop.main.subprocess.run") as mock_run:
+    with patch("ticket_loop.main._run_in_process_group") as mock_run:
         resume_session("GFD-42")
 
     cmd = mock_run.call_args.args[0]
@@ -766,7 +766,7 @@ def test_resume_session_falls_back_to_legacy(tmp_path, monkeypatch):
     with open(sessions_file, "a") as f:
         f.write(json.dumps(record) + "\n")
 
-    with patch("ticket_loop.main.subprocess.run") as mock_run:
+    with patch("ticket_loop.main._run_in_process_group") as mock_run:
         resume_session("GFD-42")
 
     cmd = mock_run.call_args.args[0]

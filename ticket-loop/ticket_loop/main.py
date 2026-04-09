@@ -153,13 +153,13 @@ def _run_with_session_retry(
         first_kwargs.setdefault("text", True)
 
     try:
-        return subprocess.run(cmd, **first_kwargs, check=True)  # noqa: S603
+        return _run_in_process_group(cmd, **first_kwargs, check=True)
     except subprocess.CalledProcessError as exc:
         stderr_text = exc.stderr or ""
         if isinstance(stderr_text, bytes):
             stderr_text = stderr_text.decode(errors="replace")
         if SESSION_CONFLICT_MSG in stderr_text:
-            return subprocess.run(  # noqa: S603
+            return _run_in_process_group(
                 _swap_session_to_resume(cmd), **kwargs, check=True
             )
         raise
