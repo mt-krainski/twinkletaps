@@ -104,7 +104,7 @@ export function NavbarView({
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex items-center gap-2"
+                className="chromatic-ignore flex items-center gap-2"
               >
                 {profile.avatar ? (
                   <Image
