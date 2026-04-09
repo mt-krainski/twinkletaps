@@ -1,6 +1,6 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, takeSnapshot } from "@chromatic-com/playwright";
 import mqtt, { type MqttClient } from "mqtt";
-import { login } from "../src/test-utils/playwright";
+import { login, captureScreen } from "../src/test-utils/playwright";
 
 const BROKER_URL = process.env.MQTT_BROKER_URL ?? "mqtt://localhost:1883";
 
@@ -35,6 +35,9 @@ test.describe("MQTT authenticated flow", () => {
     await expect(page.getByText("Device registered")).toBeVisible({
       timeout: 10000,
     });
+
+    await captureScreen(page, "credentials-dialog");
+    await takeSnapshot(page, "credentials-dialog", test.info());
 
     const dialog = page.getByRole("dialog");
 
@@ -113,6 +116,9 @@ test.describe("MQTT authenticated flow", () => {
         page.getByRole("heading", { name: deviceName }),
       ).toBeVisible({ timeout: 10000 });
 
+      await captureScreen(page, "device-page");
+      await takeSnapshot(page, "device-page", test.info());
+
       // Simulate tap pattern: press-release-press-release to get at least one 1->0 transition
       // TapRecorder uses 250ms intervals for 12 steps = 3000ms total
       const tapButton = page.getByRole("button", {
@@ -137,6 +143,9 @@ test.describe("MQTT authenticated flow", () => {
       await expect(page.getByText(/^Sent: [01]{12}$/)).toBeVisible({
         timeout: 15000,
       });
+
+      await captureScreen(page, "tap-complete");
+      await takeSnapshot(page, "tap-complete", test.info());
 
       // ── 6. Verify MQTT message received ─────────────────────────────
       const msg = await receivedPromise;

@@ -80,6 +80,7 @@ export function WorkspaceSettingsView({
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={!isAdmin}
+              className="chromatic-ignore"
             />
           </div>
           {isAdmin && (
@@ -102,7 +103,7 @@ export function WorkspaceSettingsView({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="divide-y">
+          <div className="chromatic-ignore divide-y">
             {members.map((member) => (
               <MemberRow
                 key={member.userId}

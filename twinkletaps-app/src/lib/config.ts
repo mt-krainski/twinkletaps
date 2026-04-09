@@ -1,13 +1,9 @@
 export const config = {
   company: {
-    name: process.env.NEXT_PUBLIC_COMPANY_NAME || "Matt's Starter",
+    name: "TwinkleTaps",
     email: {
-      subject: `Your verification code for ${
-        process.env.NEXT_PUBLIC_COMPANY_NAME || "Matt's Starter"
-      }`,
-      teamName: `${
-        process.env.NEXT_PUBLIC_COMPANY_NAME || "Matt's Starter"
-      } Team`,
+      subject: "Your verification code for TwinkleTaps",
+      teamName: "TwinkleTaps Team",
     },
   },
   urls: {

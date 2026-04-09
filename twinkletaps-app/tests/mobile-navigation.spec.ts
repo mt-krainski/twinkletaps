@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, takeSnapshot } from "@chromatic-com/playwright";
 import {
   login,
   captureScreen,
@@ -21,12 +21,14 @@ test("mobile navbar: open sidebar and navigate", async ({ page, isMobile }) => {
 
   await page.waitForTimeout(1000);
   await captureScreen(page, "after-login");
+  await takeSnapshot(page, "after-login", test.info());
 
   // Open sidebar via hamburger button
   await openSidebarIfMobile(page, isMobile);
   await expect(page.getByText("Home")).toBeVisible({ timeout: 5000 });
   await page.waitForTimeout(1000);
   await captureScreen(page, "sidebar-open");
+  await takeSnapshot(page, "sidebar-open", test.info());
 
   // Navigate to Home — wait for sidebar Sheet to close before capturing
   await page.getByText("Home").click();
@@ -38,6 +40,7 @@ test("mobile navbar: open sidebar and navigate", async ({ page, isMobile }) => {
   });
   await page.waitForTimeout(1000);
   await captureScreen(page, "after-home");
+  await takeSnapshot(page, "after-home", test.info());
 
   // Re-open sidebar and navigate to a device (if available)
   await openSidebarIfMobile(page, isMobile);
@@ -45,5 +48,6 @@ test("mobile navbar: open sidebar and navigate", async ({ page, isMobile }) => {
   if (await devicesSection.isVisible({ timeout: 3000 }).catch(() => false)) {
     await page.waitForTimeout(1000);
     await captureScreen(page, "sidebar-devices");
+    await takeSnapshot(page, "sidebar-devices", test.info());
   }
 });

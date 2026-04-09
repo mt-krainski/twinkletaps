@@ -59,14 +59,14 @@ export function DeviceView({
 
   return (
     <div className="flex flex-col gap-8 p-6">
-      <h1 className="text-2xl font-semibold">{deviceName}</h1>
+      <h1 className="chromatic-ignore text-2xl font-semibold">{deviceName}</h1>
 
       <TapRecorder
         onTapComplete={handleTapComplete}
         disabled={sendStatus === "sending"}
       />
 
-      <div className="min-h-[2rem]">
+      <div className="chromatic-ignore min-h-[2rem]">
         {sendStatus === "sending" && (
           <p className="text-muted-foreground text-sm">Sending…</p>
         )}
@@ -91,7 +91,7 @@ export function DeviceView({
             <CardHeader>
               <CardTitle>Device settings</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2 font-mono text-sm">
+            <CardContent className="chromatic-ignore flex flex-col gap-2 font-mono text-sm">
               <div>
                 <span className="text-muted-foreground">UUID: </span>
                 <span className="break-all">{deviceUuid}</span>

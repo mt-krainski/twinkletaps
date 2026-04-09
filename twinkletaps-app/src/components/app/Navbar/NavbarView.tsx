@@ -68,7 +68,7 @@ export function NavbarView({
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2">
                   <Building2 className="h-4 w-4" />
-                  <span className="max-w-[120px] truncate sm:max-w-none">
+                  <span className="chromatic-ignore max-w-[120px] truncate sm:max-w-none">
                     {selectedWorkspace?.name}
                   </span>
                   <ChevronDown className="h-4 w-4" />
@@ -81,7 +81,7 @@ export function NavbarView({
                     checked={workspace.id === selectedWorkspace?.id}
                     onClick={() => switchWorkspace(workspace.id)}
                   >
-                    <span className="truncate">{workspace.name}</span>
+                    <span className="chromatic-ignore truncate">{workspace.name}</span>
                   </DropdownMenuCheckboxItem>
                 ))}
                 {onCreateWorkspace && (
@@ -117,13 +117,13 @@ export function NavbarView({
                 ) : (
                   <User className="h-5 w-5" />
                 )}
-                <span className="hidden sm:inline-block">{profile.name}</span>
+                <span className="chromatic-ignore hidden sm:inline-block">{profile.name}</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[200px]">
               <DropdownMenuLabel>
-                <div className="flex flex-col space-y-1">
+                <div className="chromatic-ignore flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
                     {profile.name}
                   </p>

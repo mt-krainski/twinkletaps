@@ -37,3 +37,4 @@ jobs:
     uses: ./.github/workflows/twinkletaps-app--e2e.yml
     with:
       cache-key: ${{ needs.install-dependencies.outputs.cache-key }}
+    secrets: inherit

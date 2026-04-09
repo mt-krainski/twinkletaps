@@ -1,9 +1,9 @@
-import { test, expect } from "@playwright/test";
-import { login } from "../src/test-utils/playwright";
+import { test, expect, takeSnapshot } from "@chromatic-com/playwright";
+import { login, captureScreen } from "../src/test-utils/playwright";
 
 test("has title", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle(process.env.NEXT_PUBLIC_COMPANY_NAME!);
+  await expect(page).toHaveTitle("TwinkleTaps");
 });
 
 test.describe.configure({ retries: 2 });
@@ -26,13 +26,22 @@ test("create account, logout, login", async ({ page }) => {
     page.getByRole("button", { name: "Update Profile" }),
   ).toBeEnabled({ timeout: 10000 });
 
+  await captureScreen(page, "account-page");
+  await takeSnapshot(page, "account-page", test.info());
+
   await page.getByRole("textbox", { name: "Full Name" }).fill(testUserName);
   await page.getByRole("button", { name: "Update Profile" }).click();
   await expect(page.getByText("Profile updated successfully!")).toBeVisible();
 
+  await captureScreen(page, "profile-updated");
+  await takeSnapshot(page, "profile-updated", test.info());
+
   await page.getByRole("button", { name: "Sign Out" }).click();
 
   await expect(page).toHaveURL("/auth");
+
+  await captureScreen(page, "auth-page");
+  await takeSnapshot(page, "auth-page", test.info());
 
   await login(page, testUserEmail);
 
@@ -45,4 +54,7 @@ test("create account, logout, login", async ({ page }) => {
   await expect(page.getByRole("textbox", { name: "Full Name" })).toHaveValue(
     testUserName,
   );
+
+  await captureScreen(page, "profile-persisted");
+  await takeSnapshot(page, "profile-persisted", test.info());
 });

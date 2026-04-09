@@ -45,13 +45,13 @@ export function DeviceCard({
       }}
     >
       <CardHeader className="pb-2">
-        <span className="font-medium truncate" title={name}>
+        <span className="chromatic-ignore font-medium truncate" title={name}>
           {name}
         </span>
       </CardHeader>
       {deviceUuid && (
         <CardContent className="pt-0">
-          <code className="text-xs text-muted-foreground font-mono">
+          <code className="chromatic-ignore text-xs text-muted-foreground font-mono">
             {truncateUuid(deviceUuid)}
           </code>
         </CardContent>

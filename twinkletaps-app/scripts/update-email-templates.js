@@ -7,7 +7,7 @@ const path = require("path");
 // Get environment variables
 const SUPABASE_ACCESS_TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
 const SUPABASE_PROJECT_REF = process.env.SUPABASE_PROJECT_REF;
-const COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME || "Matt's Starter";
+const COMPANY_NAME = "TwinkleTaps";
 
 if (!SUPABASE_ACCESS_TOKEN) {
   console.error(

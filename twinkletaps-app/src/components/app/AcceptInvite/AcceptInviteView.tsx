@@ -34,7 +34,7 @@ export function AcceptInviteView({
     <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle>You&apos;re invited!</CardTitle>
-        <CardDescription>
+        <CardDescription className="chromatic-ignore">
           {type === "device"
             ? `${inviterName} has invited you to control ${deviceName} in ${workspaceName}`
             : `${inviterName} has invited you to join ${workspaceName}`}

@@ -1,5 +1,5 @@
-import { test, expect } from "@playwright/test";
-import { login } from "../src/test-utils/playwright";
+import { test, expect, takeSnapshot } from "@chromatic-com/playwright";
+import { login, captureScreen } from "../src/test-utils/playwright";
 
 test.describe.configure({ retries: 2 });
 
@@ -22,6 +22,9 @@ test("workspace invite: user A creates link, user B accepts", async ({
   // After login, user is redirected to /w/<workspaceId>
   await expect(page).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
 
+  await captureScreen(page, "admin-workspace");
+  await takeSnapshot(page, "admin-workspace", test.info());
+
   // ── User A: open "Invite to workspace" from sidebar ───────────────
   await expect(
     page.getByRole("button", { name: "Invite to workspace" }),
@@ -38,6 +41,9 @@ test("workspace invite: user A creates link, user B accepts", async ({
     .textContent({ timeout: 10000 });
   expect(inviteUrl).toBeTruthy();
   expect(inviteUrl).toMatch(/\/invite\//);
+
+  await captureScreen(page, "invite-link-generated");
+  await takeSnapshot(page, "invite-link-generated", test.info());
 
   // Close dialog
   await page.getByRole("button", { name: "Done" }).click();
@@ -59,10 +65,17 @@ test("workspace invite: user A creates link, user B accepts", async ({
   await expect(memberPage.getByText("You're invited!")).toBeVisible({
     timeout: 10000,
   });
+
+  await captureScreen(memberPage, "invite-page");
+  await takeSnapshot(memberPage, "invite-page", test.info());
+
   await memberPage.getByRole("button", { name: "Accept Invitation" }).click();
 
   // After acceptance, redirected to "/" which then bounces to /w/{workspaceId}
   await expect(memberPage).toHaveURL(/\/w\/[^/]+/, { timeout: 15000 });
+
+  await captureScreen(memberPage, "after-acceptance");
+  await takeSnapshot(memberPage, "after-acceptance", test.info());
 
   // ── User B: verify membership in two workspaces ────────────────────
   // The layout is a Server Component — navigating to "/" re-fetches workspace
@@ -72,6 +85,10 @@ test("workspace invite: user A creates link, user B accepts", async ({
   await expect(memberPage.getByRole("menuitemcheckbox")).toHaveCount(2, {
     timeout: 10000,
   });
+
+  await captureScreen(memberPage, "workspace-switcher");
+  await takeSnapshot(memberPage, "workspace-switcher", test.info());
+
   await memberPage.keyboard.press("Escape");
 
   await memberContext.close();
