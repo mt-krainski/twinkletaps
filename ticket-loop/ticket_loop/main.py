@@ -65,6 +65,71 @@ def _claude_base_cmd(*, session_id: str, skip_permissions: bool = False) -> list
     return cmd
 
 
+_SHUTDOWN_GRACE_SECONDS = 5
+
+
+def _run_in_process_group(
+    cmd: list[str], *, check: bool = False, **kwargs: Any
+) -> subprocess.CompletedProcess[str]:
+    """Run cmd in its own process group with signal forwarding.
+
+    Opens the subprocess with ``start_new_session=True`` so it gets its own
+    process group.  Installs signal handlers that forward SIGTERM to the
+    child group on SIGINT/SIGTERM, with SIGKILL escalation after a grace
+    period.
+
+    Raises:
+        subprocess.CalledProcessError: If check=True and the process exits non-zero.
+        KeyboardInterrupt: If SIGINT was received during execution.
+        SystemExit: If SIGTERM was received during execution.
+    """
+    shutdown_signal: int | None = None
+    original_sigint = signal.getsignal(signal.SIGINT)
+    original_sigterm = signal.getsignal(signal.SIGTERM)
+
+    proc = subprocess.Popen(cmd, start_new_session=True, **kwargs)  # noqa: S603
+
+    def _escalate_to_sigkill(pgid: int) -> None:
+        """Send SIGKILL after grace period if child is still alive."""
+        try:
+            proc.wait(timeout=_SHUTDOWN_GRACE_SECONDS)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(pgid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+    def _forward_signal(signum: int, _frame: Any) -> None:
+        nonlocal shutdown_signal
+        shutdown_signal = signum
+        try:
+            pgid = os.getpgid(proc.pid)
+            os.killpg(pgid, signal.SIGTERM)
+        except ProcessLookupError:
+            return
+        threading.Thread(target=_escalate_to_sigkill, args=(pgid,), daemon=True).start()
+
+    try:
+        signal.signal(signal.SIGINT, _forward_signal)
+        signal.signal(signal.SIGTERM, _forward_signal)
+        stdout, stderr = proc.communicate()
+    finally:
+        signal.signal(signal.SIGINT, original_sigint)
+        signal.signal(signal.SIGTERM, original_sigterm)
+
+    if shutdown_signal == signal.SIGINT:
+        raise KeyboardInterrupt
+    if shutdown_signal == signal.SIGTERM:
+        raise SystemExit(1)
+
+    result = subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr)
+
+    if check and proc.returncode != 0:
+        raise subprocess.CalledProcessError(proc.returncode, cmd, stdout, stderr)
+
+    return result
+
+
 SESSION_CONFLICT_MSG = "is already in use"
 
 
@@ -88,13 +153,13 @@ def _run_with_session_retry(
         first_kwargs.setdefault("text", True)
 
     try:
-        return subprocess.run(cmd, **first_kwargs, check=True)  # noqa: S603
+        return _run_in_process_group(cmd, **first_kwargs, check=True)
     except subprocess.CalledProcessError as exc:
         stderr_text = exc.stderr or ""
         if isinstance(stderr_text, bytes):
             stderr_text = stderr_text.decode(errors="replace")
         if SESSION_CONFLICT_MSG in stderr_text:
-            return subprocess.run(  # noqa: S603
+            return _run_in_process_group(
                 _swap_session_to_resume(cmd), **kwargs, check=True
             )
         raise
