@@ -1,11 +1,13 @@
 """Tests for the ticket-loop watch command."""
 
 import json
+import subprocess
 from unittest.mock import patch
 
 import pytest
 
 from ticket_loop.watch import (
+    BranchTracker,
     SessionTailer,
     format_event,
     parse_jsonl_line,
@@ -494,6 +496,30 @@ class TestFormatEvent:
         assert "..." in result
         assert len(result) < 300
 
+    def test_multiline_text_separates_timestamp(self):
+        """Multi-line text puts the timestamp on its own line."""
+        event = {
+            "kind": "text",
+            "text": "Line one.\n- bullet two",
+            "timestamp": "2026-04-03T14:47:15.000Z",
+        }
+        result = format_event(event)
+        lines = result.split("\n")
+        assert _has_time_prefix(lines[0])
+        assert "Line one." not in lines[0]
+        assert "Line one." in lines[1]
+
+    def test_singleline_text_keeps_timestamp_inline(self):
+        """Single-line text stays on the same line as the timestamp."""
+        event = {
+            "kind": "text",
+            "text": "Just one line.",
+            "timestamp": "2026-04-03T14:47:15.000Z",
+        }
+        result = format_event(event)
+        assert "\n" not in result
+        assert "Just one line." in result
+
     def test_verbose_tool_result_shows_preview(self):
         """Verbose mode includes tool result preview."""
         event = {
@@ -663,3 +689,57 @@ class TestSessionTailer:
         assert len(events) == 1
         assert events[0]["text"] == "sub new"
         assert events[0].get("agent_id") == "agent-a5c725bb8b43"
+
+
+class TestBranchTracker:
+    """Track branch changes and resolve sessions."""
+
+    def test_reports_initial_branch(self):
+        """First call to check() returns the branch as changed."""
+        tracker = BranchTracker(get_branch=lambda: "task/GFD-42/slug")
+        result = tracker.check()
+        assert result is not None
+        assert result.task_key == "GFD-42"
+        assert result.branch == "task/GFD-42/slug"
+
+    def test_no_change_returns_none(self):
+        """Subsequent calls return None when branch hasn't changed."""
+        tracker = BranchTracker(get_branch=lambda: "task/GFD-42/slug")
+        tracker.check()
+        assert tracker.check() is None
+
+    def test_detects_branch_switch(self):
+        """Returns new info when branch changes."""
+        branches = iter(["task/GFD-42/slug", "task/GFD-42/slug", "task/GFD-99/other"])
+        tracker = BranchTracker(get_branch=lambda: next(branches))
+        tracker.check()  # initial
+        assert tracker.check() is None  # same
+        result = tracker.check()  # changed
+        assert result is not None
+        assert result.task_key == "GFD-99"
+
+    def test_non_task_branch_returns_no_task_key(self):
+        """Non-task branches (main, feature/*) have task_key=None."""
+        tracker = BranchTracker(get_branch=lambda: "main")
+        result = tracker.check()
+        assert result is not None
+        assert result.task_key is None
+        assert result.branch == "main"
+
+    def test_switch_to_non_task_branch(self):
+        """Switching from a task branch to main is detected."""
+        branches = iter(["task/GFD-42/slug", "main"])
+        tracker = BranchTracker(get_branch=lambda: next(branches))
+        tracker.check()  # initial
+        result = tracker.check()  # switch to main
+        assert result is not None
+        assert result.task_key is None
+
+    def test_git_failure_returns_none(self):
+        """If get_branch raises, check() returns None (no crash)."""
+
+        def failing_branch():
+            raise subprocess.CalledProcessError(1, "git")
+
+        tracker = BranchTracker(get_branch=failing_branch)
+        assert tracker.check() is None

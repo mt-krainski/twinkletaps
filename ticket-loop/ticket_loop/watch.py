@@ -6,14 +6,14 @@ import signal
 import subprocess
 import sys
 import threading
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-# Branch pattern: task/GFD-###/<optional-slug>
 _BRANCH_RE = re.compile(r"^task/(GFD-\d+)/")
 
-# Tool description extractors — keyed by tool name, returns a short summary
 _TOOL_DESCRIPTION_EXTRACTORS: dict[str, list[str]] = {
     "Bash": ["description", "command"],
     "Read": ["file_path"],
@@ -57,11 +57,9 @@ def _extract_tool_description(tool_name: str, tool_input: dict[str, Any]) -> str
     for key in keys:
         if key in tool_input and tool_input[key]:
             value = str(tool_input[key])
-            # Truncate long values
             if len(value) > 120:
                 return value[:117] + "..."
             return value
-    # Fallback: show first key's value
     for v in tool_input.values():
         s = str(v)
         if len(s) > 80:
@@ -119,11 +117,9 @@ def parse_jsonl_line(line: str) -> list[dict[str, Any]]:
     except (json.JSONDecodeError, ValueError):
         return []
 
-    # Skip queue operations
     if data.get("type") == "queue-operation":
         return []
 
-    # Skip meta messages (skill loading, system reminders)
     if data.get("isMeta"):
         return []
 
@@ -190,7 +186,6 @@ def _format_agent_prefix(agent_id: str | None) -> str:
     """Format a short agent prefix from an agent ID like 'agent-a5c725bb8b43'."""
     if not agent_id:
         return ""
-    # Extract first 4 hex chars after 'agent-'
     short = agent_id.replace("agent-", "")[:4]
     return f"[{short}] "
 
@@ -205,6 +200,9 @@ def format_event(event: dict[str, Any], *, verbose: bool = False) -> str:
         text = event["text"]
         if len(text) > _MAX_TEXT_LEN:
             text = text[: _MAX_TEXT_LEN - 3] + "..."
+        # Put timestamp on its own line so multi-line text isn't jammed
+        if "\n" in text:
+            return f"{time_str}  {prefix}\n{text}"
         return f"{time_str}  {prefix}{text}"
 
     if kind == "tool_use":
@@ -279,7 +277,6 @@ class SessionTailer:
         for raw in all_lines:
             events.extend(parse_jsonl_line(raw))
 
-        # Also read any existing subagent files
         self._discover_subagents()
         for tail in self._subagent_tails.values():
             for raw in tail.read_all_lines():
@@ -287,7 +284,6 @@ class SessionTailer:
                     evt["agent_id"] = tail.agent_id
                     events.append(evt)
 
-        # Sort by timestamp and return last N
         events.sort(key=lambda e: e.get("timestamp", ""))
         return events[-self._catchup_count :]
 
@@ -314,8 +310,39 @@ class SessionTailer:
             return
         for p in self._subagent_dir.glob("agent-*.jsonl"):
             if p.name not in self._subagent_tails:
-                agent_id = p.stem  # e.g. "agent-a5c725bb8b43"
+                agent_id = p.stem
                 self._subagent_tails[p.name] = _FileTail(p, agent_id=agent_id)
+
+
+@dataclass
+class BranchChange:
+    """Result of a detected branch change."""
+
+    branch: str
+    task_key: str | None
+
+
+class BranchTracker:
+    """Detect git branch changes by polling."""
+
+    def __init__(self, *, get_branch: Callable[[], str] | None = None) -> None:
+        """Create a tracker. Accepts an optional get_branch callable for testing."""
+        self._get_branch = get_branch or _get_current_branch
+        self._last_branch: str | None = None
+
+    def check(self) -> BranchChange | None:
+        """Check the current branch. Returns BranchChange if changed, None otherwise."""
+        try:
+            branch = self._get_branch()
+        except (subprocess.CalledProcessError, OSError):
+            return None
+
+        if branch == self._last_branch:
+            return None
+
+        self._last_branch = branch
+        task_key = resolve_task_key_from_branch(branch)
+        return BranchChange(branch=branch, task_key=task_key)
 
 
 # -- Default paths --
@@ -344,6 +371,34 @@ def _get_current_branch() -> str:
     return result.stdout.strip()
 
 
+def _try_resolve_session(task_key: str) -> Path | None:
+    """Try to resolve a session JSONL path, returning None on failure."""
+    try:
+        path = resolve_session_jsonl_path(
+            task_key, claude_project_dir=_claude_project_dir()
+        )
+    except KeyError:
+        return None
+    return path if path.exists() else None
+
+
+def _start_tailing(
+    task_key: str,
+    jsonl_path: Path,
+    *,
+    verbose: bool,
+    catchup: int,
+) -> SessionTailer:
+    """Print header, show catch-up, and return a new SessionTailer."""
+    print(f"\n=== Watching {task_key} — {jsonl_path.name} ===\n")
+    file_tailer = SessionTailer(jsonl_path, catchup=catchup)
+    for evt in file_tailer.catchup_events():
+        print(format_event(evt, verbose=verbose))
+    if catchup > 0:
+        print("--- live ---")
+    return file_tailer
+
+
 def run_watch(
     *,
     task_key_override: str | None = None,
@@ -351,37 +406,8 @@ def run_watch(
     catchup: int = 10,
 ) -> None:
     """Main entry point for the watch command."""
-    # Resolve task key
-    if task_key_override:
-        task_key = task_key_override
-    else:
-        branch = _get_current_branch()
-        task_key = resolve_task_key_from_branch(branch)
-        if task_key is None:
-            print(
-                f"Could not extract task key from branch '{branch}'.\n"
-                "Use --task GFD-### to specify manually."
-            )
-            sys.exit(1)
+    print("Press Ctrl+C to stop.")
 
-    # Resolve JSONL path
-    try:
-        jsonl_path = resolve_session_jsonl_path(
-            task_key,
-            claude_project_dir=_claude_project_dir(),
-        )
-    except KeyError as exc:
-        print(f"Error: {exc}")
-        sys.exit(1)
-
-    if not jsonl_path.exists():
-        print(f"Session file not found: {jsonl_path}")
-        sys.exit(1)
-
-    print(f"Watching {task_key} — {jsonl_path.name}")
-    print("Press Ctrl+C to stop.\n")
-
-    # Set up graceful shutdown
     shutdown = threading.Event()
 
     def _handle_signal(signum: int, _frame: Any) -> None:
@@ -390,18 +416,84 @@ def run_watch(
     signal.signal(signal.SIGINT, _handle_signal)
     signal.signal(signal.SIGTERM, _handle_signal)
 
-    # Create tailer and show catch-up
-    tailer = SessionTailer(jsonl_path, catchup=catchup)
-    for evt in tailer.catchup_events():
-        print(format_event(evt, verbose=verbose))
+    file_tailer: SessionTailer | None = None
+    current_task: str | None = None
+    # --task pins to a specific task; without it, we track the branch
+    branch_tracker = None if task_key_override else BranchTracker()
 
-    if catchup > 0:
-        print("--- live ---")
+    if task_key_override:
+        path = _try_resolve_session(task_key_override)
+        if path is None:
+            print(f"Error: no session found for {task_key_override}")
+            sys.exit(1)
+        current_task = task_key_override
+        file_tailer = _start_tailing(
+            current_task, path, verbose=verbose, catchup=catchup
+        )
 
-    # Poll loop
     while not shutdown.is_set():
-        for evt in tailer.poll():
-            print(format_event(evt, verbose=verbose))
+        file_tailer, current_task = _poll_once(
+            branch_tracker=branch_tracker,
+            file_tailer=file_tailer,
+            current_task=current_task,
+            verbose=verbose,
+            catchup=catchup,
+        )
         shutdown.wait(_POLL_INTERVAL)
 
     print("\nStopped.")
+
+
+def _handle_branch_change(
+    change: BranchChange,
+    current_task: str | None,
+    *,
+    verbose: bool,
+    catchup: int,
+) -> tuple[SessionTailer | None, str | None]:
+    """Handle a detected branch change. Returns (file_tailer, task_key)."""
+    if change.task_key is None:
+        if current_task is not None:
+            print(f"\n=== On {change.branch} (not a task branch) ===")
+        return None, None
+
+    path = _try_resolve_session(change.task_key)
+    if path is not None:
+        file_tailer = _start_tailing(
+            change.task_key, path, verbose=verbose, catchup=catchup
+        )
+        return file_tailer, change.task_key
+
+    print(f"\n=== {change.task_key} — waiting for session... ===")
+    return None, change.task_key
+
+
+def _poll_once(
+    *,
+    branch_tracker: BranchTracker | None,
+    file_tailer: SessionTailer | None,
+    current_task: str | None,
+    verbose: bool,
+    catchup: int,
+) -> tuple[SessionTailer | None, str | None]:
+    """Run one iteration of the poll loop. Returns (file_tailer, current_task)."""
+    if branch_tracker is not None:
+        change = branch_tracker.check()
+        if change is not None:
+            return _handle_branch_change(
+                change, current_task, verbose=verbose, catchup=catchup
+            )
+
+    # Session may not exist yet when the ticket-loop hasn't started the task
+    if file_tailer is None and current_task is not None:
+        path = _try_resolve_session(current_task)
+        if path is not None:
+            file_tailer = _start_tailing(
+                current_task, path, verbose=verbose, catchup=catchup
+            )
+
+    if file_tailer is not None:
+        for evt in file_tailer.poll():
+            print(format_event(evt, verbose=verbose))
+
+    return file_tailer, current_task
