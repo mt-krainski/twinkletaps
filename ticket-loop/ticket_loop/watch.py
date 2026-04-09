@@ -6,6 +6,7 @@ import signal
 import subprocess
 import sys
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -330,7 +331,7 @@ class BranchChange:
 class BranchTracker:
     """Detect git branch changes by polling."""
 
-    def __init__(self, *, get_branch: Any | None = None) -> None:
+    def __init__(self, *, get_branch: Callable[[], str] | None = None) -> None:
         """Create a tracker. Accepts an optional get_branch callable for testing."""
         self._get_branch = get_branch or _get_current_branch
         self._last_branch: str | None = None
@@ -426,7 +427,6 @@ def run_watch(
     tailer: SessionTailer | None = None
     current_task: str | None = None
     tracker = BranchTracker() if tracking else None
-    waiting_printed = False
 
     # Initial resolution
     if task_key_override:
@@ -448,29 +448,22 @@ def run_watch(
                         print(f"\n=== On {change.branch} (not a task branch) ===")
                     tailer = None
                     current_task = None
-                    waiting_printed = False
                 else:
+                    current_task = change.task_key
                     path = _try_resolve_session(change.task_key)
                     if path is not None:
-                        current_task = change.task_key
                         tailer = _start_tailing(
                             current_task,
                             path,
                             verbose=verbose,
                             catchup=catchup,
                         )
-                        waiting_printed = False
                     else:
-                        if current_task is not None:
-                            print(
-                                f"\n=== {change.task_key} — waiting for session... ==="
-                            )
-                        current_task = change.task_key
+                        print(f"\n=== {change.task_key} — waiting for session... ===")
                         tailer = None
-                        waiting_printed = False
 
         # If we have no tailer but have a task, keep trying to resolve
-        if tailer is None and current_task is not None:
+        elif tailer is None and current_task is not None:
             path = _try_resolve_session(current_task)
             if path is not None:
                 tailer = _start_tailing(
@@ -479,10 +472,6 @@ def run_watch(
                     verbose=verbose,
                     catchup=catchup,
                 )
-                waiting_printed = False
-            elif not waiting_printed:
-                print(f"Waiting for session on {current_task}...")
-                waiting_printed = True
 
         # Poll the active tailer
         if tailer is not None:
