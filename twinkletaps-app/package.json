@@ -87,7 +87,7 @@
     "license-checker": "^25.0.1",
     "markdown-to-jsx": "^7.7.13",
     "playwright": "^1.54.2",
-    "prisma": "^7.3.0",
+    "prisma": "^7.7.0",
     "storybook": "^10.2.16",
     "supabase": "^2.77.0",
     "tailwindcss": "^4",
