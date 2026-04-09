@@ -376,6 +376,34 @@ def _get_current_branch() -> str:
     return result.stdout.strip()
 
 
+def _try_resolve_session(task_key: str) -> Path | None:
+    """Try to resolve a session JSONL path, returning None on failure."""
+    try:
+        path = resolve_session_jsonl_path(
+            task_key, claude_project_dir=_claude_project_dir()
+        )
+    except KeyError:
+        return None
+    return path if path.exists() else None
+
+
+def _start_tailing(
+    task_key: str,
+    jsonl_path: Path,
+    *,
+    verbose: bool,
+    catchup: int,
+) -> SessionTailer:
+    """Print header, show catch-up, and return a new SessionTailer."""
+    print(f"\n=== Watching {task_key} — {jsonl_path.name} ===\n")
+    tailer = SessionTailer(jsonl_path, catchup=catchup)
+    for evt in tailer.catchup_events():
+        print(format_event(evt, verbose=verbose))
+    if catchup > 0:
+        print("--- live ---")
+    return tailer
+
+
 def run_watch(
     *,
     task_key_override: str | None = None,
@@ -383,35 +411,7 @@ def run_watch(
     catchup: int = 10,
 ) -> None:
     """Main entry point for the watch command."""
-    # Resolve task key
-    if task_key_override:
-        task_key = task_key_override
-    else:
-        branch = _get_current_branch()
-        task_key = resolve_task_key_from_branch(branch)
-        if task_key is None:
-            print(
-                f"Could not extract task key from branch '{branch}'.\n"
-                "Use --task GFD-### to specify manually."
-            )
-            sys.exit(1)
-
-    # Resolve JSONL path
-    try:
-        jsonl_path = resolve_session_jsonl_path(
-            task_key,
-            claude_project_dir=_claude_project_dir(),
-        )
-    except KeyError as exc:
-        print(f"Error: {exc}")
-        sys.exit(1)
-
-    if not jsonl_path.exists():
-        print(f"Session file not found: {jsonl_path}")
-        sys.exit(1)
-
-    print(f"Watching {task_key} — {jsonl_path.name}")
-    print("Press Ctrl+C to stop.\n")
+    print("Press Ctrl+C to stop.")
 
     # Set up graceful shutdown
     shutdown = threading.Event()
@@ -422,18 +422,73 @@ def run_watch(
     signal.signal(signal.SIGINT, _handle_signal)
     signal.signal(signal.SIGTERM, _handle_signal)
 
-    # Create tailer and show catch-up
-    tailer = SessionTailer(jsonl_path, catchup=catchup)
-    for evt in tailer.catchup_events():
-        print(format_event(evt, verbose=verbose))
+    tracking = task_key_override is None
+    tailer: SessionTailer | None = None
+    current_task: str | None = None
+    tracker = BranchTracker() if tracking else None
+    waiting_printed = False
 
-    if catchup > 0:
-        print("--- live ---")
+    # Initial resolution
+    if task_key_override:
+        path = _try_resolve_session(task_key_override)
+        if path is None:
+            print(f"Error: no session found for {task_key_override}")
+            sys.exit(1)
+        current_task = task_key_override
+        tailer = _start_tailing(current_task, path, verbose=verbose, catchup=catchup)
 
     # Poll loop
     while not shutdown.is_set():
-        for evt in tailer.poll():
-            print(format_event(evt, verbose=verbose))
+        # Check for branch changes (only in tracking mode)
+        if tracker is not None:
+            change = tracker.check()
+            if change is not None:
+                if change.task_key is None:
+                    if current_task is not None:
+                        print(f"\n=== On {change.branch} (not a task branch) ===")
+                    tailer = None
+                    current_task = None
+                    waiting_printed = False
+                else:
+                    path = _try_resolve_session(change.task_key)
+                    if path is not None:
+                        current_task = change.task_key
+                        tailer = _start_tailing(
+                            current_task,
+                            path,
+                            verbose=verbose,
+                            catchup=catchup,
+                        )
+                        waiting_printed = False
+                    else:
+                        if current_task is not None:
+                            print(
+                                f"\n=== {change.task_key} — waiting for session... ==="
+                            )
+                        current_task = change.task_key
+                        tailer = None
+                        waiting_printed = False
+
+        # If we have no tailer but have a task, keep trying to resolve
+        if tailer is None and current_task is not None:
+            path = _try_resolve_session(current_task)
+            if path is not None:
+                tailer = _start_tailing(
+                    current_task,
+                    path,
+                    verbose=verbose,
+                    catchup=catchup,
+                )
+                waiting_printed = False
+            elif not waiting_printed:
+                print(f"Waiting for session on {current_task}...")
+                waiting_printed = True
+
+        # Poll the active tailer
+        if tailer is not None:
+            for evt in tailer.poll():
+                print(format_event(evt, verbose=verbose))
+
         shutdown.wait(_POLL_INTERVAL)
 
     print("\nStopped.")
