@@ -3,7 +3,7 @@ import { login } from "../src/test-utils/playwright";
 
 test("has title", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle(process.env.NEXT_PUBLIC_COMPANY_NAME!);
+  await expect(page).toHaveTitle("TwinkleTaps");
 });
 
 test.describe.configure({ retries: 2 });

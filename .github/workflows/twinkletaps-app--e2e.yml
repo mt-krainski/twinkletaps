@@ -94,7 +94,6 @@ jobs:
           SUPABASE_INBUCKET_URL: ${{ env.SUPABASE_INBUCKET_URL }}
           DATABASE_URL: ${{ env.DATABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
-          NEXT_PUBLIC_COMPANY_NAME: Test Company
           MQTT_AUTH_SECRET: test-auth-secret
           MQTT_PUBLISHER_USERNAME: ci-publisher
           MQTT_PUBLISHER_PASSWORD: ci-publisher-pass
