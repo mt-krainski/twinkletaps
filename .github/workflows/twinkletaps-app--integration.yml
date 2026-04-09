@@ -78,7 +78,6 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
           DATABASE_URL: ${{ env.DATABASE_URL }}
-          NEXT_PUBLIC_COMPANY_NAME: Test Company
           MQTT_AUTH_SECRET: test-auth-secret
           MQTT_PUBLISHER_USERNAME: ci-publisher
           MQTT_PUBLISHER_PASSWORD: ci-publisher-pass
@@ -120,7 +119,6 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
           DATABASE_URL: ${{ env.DATABASE_URL }}
-          NEXT_PUBLIC_COMPANY_NAME: Test Company
           MQTT_BROKER_URL: mqtt://localhost:1883
           MQTT_PUBLISHER_USERNAME: ci-publisher
           MQTT_PUBLISHER_PASSWORD: ci-publisher-pass

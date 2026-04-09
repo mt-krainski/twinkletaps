@@ -22,6 +22,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -58,3 +60,10 @@ jobs:
           files: ./twinkletaps-app/coverage/lcov.info
           flags: unit-storybook
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Run Chromatic
+        uses: chromaui/action@latest
+        with:
+          workingDir: twinkletaps-app
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN_STORIES }}
+          exitZeroOnChanges: true

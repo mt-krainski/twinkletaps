@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, takeSnapshot } from "@chromatic-com/playwright";
 import { login, captureScreen } from "../src/test-utils/playwright";
 
 test.describe.configure({ retries: 2 });
@@ -10,6 +10,9 @@ test("login redirects / to /w/{workspaceId}", async ({ page }) => {
 
   // After login, the page should redirect to /w/<workspaceId>
   await expect(page).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
+
+  await captureScreen(page, "workspace-redirect");
+  await takeSnapshot(page, "workspace-redirect", test.info());
 });
 
 test("visiting /w/{workspaceId} shows correct workspace", async ({ page }) => {
@@ -25,6 +28,7 @@ test("visiting /w/{workspaceId} shows correct workspace", async ({ page }) => {
   ).toBeVisible({ timeout: 10000 });
 
   await captureScreen(page, "dashboard");
+  await takeSnapshot(page, "dashboard", test.info());
 });
 
 test("localStorage key is set after visiting workspace", async ({ page }) => {

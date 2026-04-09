@@ -125,7 +125,7 @@ function SidebarViewInner({
                         onClick={withMobileClose(() => onDeviceClick(device.id))}
                       >
                         <Lightbulb className="h-4 w-4" />
-                        <span>{device.name}</span>
+                        <span className="chromatic-ignore">{device.name}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}

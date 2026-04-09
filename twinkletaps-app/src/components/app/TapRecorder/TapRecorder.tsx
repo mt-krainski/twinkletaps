@@ -108,7 +108,7 @@ export function TapRecorder({
       <Button
         size="icon"
         disabled={isDisabled}
-        className="h-[140px] w-[140px] md:h-[200px] md:w-[200px] rounded-full"
+        className="h-[140px] w-[140px] md:h-[160px] md:w-[160px] rounded-full"
         onMouseDown={(e) => {
           e.preventDefault();
           handlePress();
@@ -133,7 +133,7 @@ export function TapRecorder({
         {cooldown ? (
           <Loader2 className="h-12 w-12 md:h-16 md:w-16 animate-spin" />
         ) : (
-          <Lightbulb className="h-[70px] w-[70px] md:h-[100px] md:w-[100px]" />
+          <Lightbulb className="h-[70px] w-[70px] md:h-[80px] md:w-[80px]" />
         )}
       </Button>
       <pre
