@@ -39,23 +39,30 @@ component_management:
 
 flags:
   unit-storybook:
+    carryforward: true
     paths:
       - twinkletaps-app/src/
   integration:
+    carryforward: true
     paths:
       - twinkletaps-app/src/
   hivemq-auth-extension:
+    carryforward: true
     paths:
       - hivemq-auth-extension/src/main/
   agent-utils:
+    carryforward: true
     paths:
       - agent-utils/agent_utils/
   cursor-retro:
+    carryforward: true
     paths:
       - cursor-retro/cursor_retro/
   jira-utils:
+    carryforward: true
     paths:
       - jira-utils/jira_utils/
   ticket-loop:
+    carryforward: true
     paths:
       - ticket-loop/ticket_loop/
