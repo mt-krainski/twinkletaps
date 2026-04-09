@@ -1,3 +1,4 @@
+# GFD-118: Touch ci.yml to trigger full CI run and establish Codecov baseline
 name: CI
 permissions:
   contents: write
