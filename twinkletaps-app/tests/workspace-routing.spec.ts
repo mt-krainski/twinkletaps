@@ -10,6 +10,9 @@ test("login redirects / to /w/{workspaceId}", async ({ page }) => {
 
   // After login, the page should redirect to /w/<workspaceId>
   await expect(page).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
+
+  await captureScreen(page, "workspace-redirect");
+  await takeSnapshot(page, "workspace-redirect", test.info());
 });
 
 test("visiting /w/{workspaceId} shows correct workspace", async ({ page }) => {
