@@ -1,5 +1,9 @@
 import { test, expect, takeSnapshot } from "@chromatic-com/playwright";
-import { login, captureScreen } from "../src/test-utils/playwright";
+import {
+  login,
+  captureScreen,
+  openSidebarIfMobile,
+} from "../src/test-utils/playwright";
 
 test.describe.configure({ retries: 2 });
 
@@ -8,9 +12,6 @@ test("workspace invite: user A creates link, user B accepts", async ({
   browser,
   isMobile,
 }) => {
-  // The sidebar footer is a Sheet on mobile and has no trigger in the current UI
-  test.skip(isMobile, "Sidebar is inaccessible on mobile — SidebarTrigger not present");
-
   const runId = crypto.randomUUID();
   const adminEmail = `testadmin-${runId}@test.com`;
   const memberEmail = `testmember-${runId}@test.com`;
@@ -22,16 +23,24 @@ test("workspace invite: user A creates link, user B accepts", async ({
   // After login, user is redirected to /w/<workspaceId>
   await expect(page).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
 
-  await captureScreen(page, "admin-workspace");
-  await takeSnapshot(page, "admin-workspace", test.info());
+  await captureScreen(page, "admin-after-login");
+  await takeSnapshot(page, "admin-after-login", test.info());
 
   // ── User A: open "Invite to workspace" from sidebar ───────────────
+  await openSidebarIfMobile(page, isMobile);
   await expect(
     page.getByRole("button", { name: "Invite to workspace" }),
   ).toBeVisible({ timeout: 10000 });
+
+  await captureScreen(page, "sidebar-open");
+  await takeSnapshot(page, "sidebar-open", test.info());
+
   await page.getByRole("button", { name: "Invite to workspace" }).click();
 
   // ShareDialog opens — click "Generate link"
+  await captureScreen(page, "invite-dialog");
+  await takeSnapshot(page, "invite-dialog", test.info());
+
   await page.getByRole("button", { name: "Generate link" }).click();
 
   // Read the invite URL from the <code> element scoped to the dialog
@@ -56,6 +65,9 @@ test("workspace invite: user A creates link, user B accepts", async ({
   await login(memberPage, memberEmail);
   // After login, member is redirected to /w/<workspaceId>
   await expect(memberPage).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
+
+  await captureScreen(memberPage, "member-after-login");
+  await takeSnapshot(memberPage, "member-after-login", test.info());
 
   // ── User B: navigate to invite URL and accept ─────────────────────
   // Use "load" not "networkidle" — Next.js keeps connections open and

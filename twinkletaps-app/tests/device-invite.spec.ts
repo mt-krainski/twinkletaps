@@ -1,5 +1,9 @@
 import { test, expect, takeSnapshot } from "@chromatic-com/playwright";
-import { login, captureScreen } from "../src/test-utils/playwright";
+import {
+  login,
+  captureScreen,
+  openSidebarIfMobile,
+} from "../src/test-utils/playwright";
 
 test.describe.configure({ retries: 2 });
 
@@ -8,9 +12,6 @@ test("device invite: admin shares device, member accepts", async ({
   browser,
   isMobile,
 }) => {
-  // The sidebar footer is a Sheet on mobile and has no trigger in the current UI
-  test.skip(isMobile, "Sidebar is inaccessible on mobile — SidebarTrigger not present");
-
   const runId = crypto.randomUUID();
   const adminEmail = `testadmin-${runId}@test.com`;
   const memberEmail = `testmember-${runId}@test.com`;
@@ -23,10 +24,18 @@ test("device invite: admin shares device, member accepts", async ({
   // After login, user is redirected to /w/<workspaceId>
   await expect(page).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
 
+  await captureScreen(page, "admin-after-login");
+  await takeSnapshot(page, "admin-after-login", test.info());
+
   // ── Admin: register a device via sidebar ─────────────────────────
+  await openSidebarIfMobile(page, isMobile);
   await expect(
     page.getByRole("button", { name: "Register Device" }),
   ).toBeVisible({ timeout: 10000 });
+
+  await captureScreen(page, "sidebar-open");
+  await takeSnapshot(page, "sidebar-open", test.info());
+
   await page.getByRole("button", { name: "Register Device" }).click();
 
   // RegisterDeviceDialog — fill name, submit
@@ -85,6 +94,9 @@ test("device invite: admin shares device, member accepts", async ({
 
   // After login, member is redirected to /w/<workspaceId>
   await expect(memberPage).toHaveURL(/\/w\/[^/]+$/, { timeout: 15000 });
+
+  await captureScreen(memberPage, "member-after-login");
+  await takeSnapshot(memberPage, "member-after-login", test.info());
 
   // ── Member: navigate to invite URL and accept ─────────────────────
   // Use "load" not "networkidle" — Next.js keeps connections open and
