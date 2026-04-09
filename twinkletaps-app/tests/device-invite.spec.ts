@@ -64,6 +64,9 @@ test("device invite: admin shares device, member accepts", async ({
     ).toBeHidden({ timeout: 5000 });
   }
 
+  await captureScreen(page, "main-content-after-register");
+  await takeSnapshot(page, "main-content-after-register", test.info());
+
   // ── Admin: navigate to the device ────────────────────────────────
   // router.refresh() in onSuccess causes the page to reload with the new device
   // Click the device card in the main content area (has role="button")
