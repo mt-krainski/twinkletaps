@@ -108,7 +108,7 @@ export function TapRecorder({
       <Button
         size="icon"
         disabled={isDisabled}
-        className="h-[160px] w-[160px] rounded-full"
+        className="h-[140px] w-[140px] md:h-[160px] md:w-[160px] rounded-full"
         onMouseDown={(e) => {
           e.preventDefault();
           handlePress();
@@ -131,9 +131,9 @@ export function TapRecorder({
         aria-label="Record tap sequence"
       >
         {cooldown ? (
-          <Loader2 className="h-16 w-16 animate-spin" />
+          <Loader2 className="h-12 w-12 md:h-16 md:w-16 animate-spin" />
         ) : (
-          <Lightbulb className="h-[80px] w-[80px]" />
+          <Lightbulb className="h-[70px] w-[70px] md:h-[80px] md:w-[80px]" />
         )}
       </Button>
       <pre
