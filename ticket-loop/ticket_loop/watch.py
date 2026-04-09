@@ -6,6 +6,7 @@ import signal
 import subprocess
 import sys
 import threading
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -316,6 +317,37 @@ class SessionTailer:
             if p.name not in self._subagent_tails:
                 agent_id = p.stem  # e.g. "agent-a5c725bb8b43"
                 self._subagent_tails[p.name] = _FileTail(p, agent_id=agent_id)
+
+
+@dataclass
+class BranchChange:
+    """Result of a detected branch change."""
+
+    branch: str
+    task_key: str | None
+
+
+class BranchTracker:
+    """Detect git branch changes by polling."""
+
+    def __init__(self, *, get_branch: Any | None = None) -> None:
+        """Create a tracker. Accepts an optional get_branch callable for testing."""
+        self._get_branch = get_branch or _get_current_branch
+        self._last_branch: str | None = None
+
+    def check(self) -> BranchChange | None:
+        """Check the current branch. Returns BranchChange if changed, None otherwise."""
+        try:
+            branch = self._get_branch()
+        except (subprocess.CalledProcessError, OSError):
+            return None
+
+        if branch == self._last_branch:
+            return None
+
+        self._last_branch = branch
+        task_key = resolve_task_key_from_branch(branch)
+        return BranchChange(branch=branch, task_key=task_key)
 
 
 # -- Default paths --
