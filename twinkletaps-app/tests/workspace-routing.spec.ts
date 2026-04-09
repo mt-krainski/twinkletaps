@@ -1,4 +1,4 @@
-import { test, expect } from "@chromatic-com/playwright";
+import { test, expect, takeSnapshot } from "@chromatic-com/playwright";
 import { login, captureScreen } from "../src/test-utils/playwright";
 
 test.describe.configure({ retries: 2 });
@@ -25,6 +25,7 @@ test("visiting /w/{workspaceId} shows correct workspace", async ({ page }) => {
   ).toBeVisible({ timeout: 10000 });
 
   await captureScreen(page, "dashboard");
+  await takeSnapshot(page, "dashboard", test.info());
 });
 
 test("localStorage key is set after visiting workspace", async ({ page }) => {
