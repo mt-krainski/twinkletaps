@@ -496,6 +496,30 @@ class TestFormatEvent:
         assert "..." in result
         assert len(result) < 300
 
+    def test_multiline_text_separates_timestamp(self):
+        """Multi-line text puts the timestamp on its own line."""
+        event = {
+            "kind": "text",
+            "text": "Line one.\n- bullet two",
+            "timestamp": "2026-04-03T14:47:15.000Z",
+        }
+        result = format_event(event)
+        lines = result.split("\n")
+        assert _has_time_prefix(lines[0])
+        assert "Line one." not in lines[0]
+        assert "Line one." in lines[1]
+
+    def test_singleline_text_keeps_timestamp_inline(self):
+        """Single-line text stays on the same line as the timestamp."""
+        event = {
+            "kind": "text",
+            "text": "Just one line.",
+            "timestamp": "2026-04-03T14:47:15.000Z",
+        }
+        result = format_event(event)
+        assert "\n" not in result
+        assert "Just one line." in result
+
     def test_verbose_tool_result_shows_preview(self):
         """Verbose mode includes tool result preview."""
         event = {

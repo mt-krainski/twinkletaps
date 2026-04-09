@@ -200,6 +200,9 @@ def format_event(event: dict[str, Any], *, verbose: bool = False) -> str:
         text = event["text"]
         if len(text) > _MAX_TEXT_LEN:
             text = text[: _MAX_TEXT_LEN - 3] + "..."
+        # Put timestamp on its own line so multi-line text isn't jammed
+        if "\n" in text:
+            return f"{time_str}  {prefix}\n{text}"
         return f"{time_str}  {prefix}{text}"
 
     if kind == "tool_use":
