@@ -439,45 +439,68 @@ def run_watch(
 
     # Poll loop
     while not shutdown.is_set():
-        # Check for branch changes (only in tracking mode)
-        if tracker is not None:
-            change = tracker.check()
-            if change is not None:
-                if change.task_key is None:
-                    if current_task is not None:
-                        print(f"\n=== On {change.branch} (not a task branch) ===")
-                    tailer = None
-                    current_task = None
-                else:
-                    current_task = change.task_key
-                    path = _try_resolve_session(change.task_key)
-                    if path is not None:
-                        tailer = _start_tailing(
-                            current_task,
-                            path,
-                            verbose=verbose,
-                            catchup=catchup,
-                        )
-                    else:
-                        print(f"\n=== {change.task_key} — waiting for session... ===")
-                        tailer = None
-
-        # If we have no tailer but have a task, keep trying to resolve
-        elif tailer is None and current_task is not None:
-            path = _try_resolve_session(current_task)
-            if path is not None:
-                tailer = _start_tailing(
-                    current_task,
-                    path,
-                    verbose=verbose,
-                    catchup=catchup,
-                )
-
-        # Poll the active tailer
-        if tailer is not None:
-            for evt in tailer.poll():
-                print(format_event(evt, verbose=verbose))
-
+        tailer, current_task = _poll_once(
+            tracker=tracker,
+            tailer=tailer,
+            current_task=current_task,
+            verbose=verbose,
+            catchup=catchup,
+        )
         shutdown.wait(_POLL_INTERVAL)
 
     print("\nStopped.")
+
+
+def _handle_branch_change(
+    change: BranchChange,
+    current_task: str | None,
+    *,
+    verbose: bool,
+    catchup: int,
+) -> tuple[SessionTailer | None, str | None]:
+    """Handle a detected branch change. Returns (tailer, task_key)."""
+    if change.task_key is None:
+        if current_task is not None:
+            print(f"\n=== On {change.branch} (not a task branch) ===")
+        return None, None
+
+    path = _try_resolve_session(change.task_key)
+    if path is not None:
+        tailer = _start_tailing(change.task_key, path, verbose=verbose, catchup=catchup)
+        return tailer, change.task_key
+
+    print(f"\n=== {change.task_key} — waiting for session... ===")
+    return None, change.task_key
+
+
+def _poll_once(
+    *,
+    tracker: BranchTracker | None,
+    tailer: SessionTailer | None,
+    current_task: str | None,
+    verbose: bool,
+    catchup: int,
+) -> tuple[SessionTailer | None, str | None]:
+    """Run one iteration of the poll loop. Returns (tailer, current_task)."""
+    # Branch tracking
+    if tracker is not None:
+        change = tracker.check()
+        if change is not None:
+            return _handle_branch_change(
+                change, current_task, verbose=verbose, catchup=catchup
+            )
+
+    # Retry session resolution for a task that had no session yet
+    if tailer is None and current_task is not None:
+        path = _try_resolve_session(current_task)
+        if path is not None:
+            tailer = _start_tailing(
+                current_task, path, verbose=verbose, catchup=catchup
+            )
+
+    # Poll active tailer
+    if tailer is not None:
+        for evt in tailer.poll():
+            print(format_event(evt, verbose=verbose))
+
+    return tailer, current_task
