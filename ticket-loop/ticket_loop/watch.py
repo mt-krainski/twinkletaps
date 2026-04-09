@@ -12,10 +12,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-# Branch pattern: task/GFD-###/<optional-slug>
 _BRANCH_RE = re.compile(r"^task/(GFD-\d+)/")
 
-# Tool description extractors — keyed by tool name, returns a short summary
 _TOOL_DESCRIPTION_EXTRACTORS: dict[str, list[str]] = {
     "Bash": ["description", "command"],
     "Read": ["file_path"],
@@ -59,11 +57,9 @@ def _extract_tool_description(tool_name: str, tool_input: dict[str, Any]) -> str
     for key in keys:
         if key in tool_input and tool_input[key]:
             value = str(tool_input[key])
-            # Truncate long values
             if len(value) > 120:
                 return value[:117] + "..."
             return value
-    # Fallback: show first key's value
     for v in tool_input.values():
         s = str(v)
         if len(s) > 80:
@@ -121,11 +117,9 @@ def parse_jsonl_line(line: str) -> list[dict[str, Any]]:
     except (json.JSONDecodeError, ValueError):
         return []
 
-    # Skip queue operations
     if data.get("type") == "queue-operation":
         return []
 
-    # Skip meta messages (skill loading, system reminders)
     if data.get("isMeta"):
         return []
 
@@ -192,7 +186,6 @@ def _format_agent_prefix(agent_id: str | None) -> str:
     """Format a short agent prefix from an agent ID like 'agent-a5c725bb8b43'."""
     if not agent_id:
         return ""
-    # Extract first 4 hex chars after 'agent-'
     short = agent_id.replace("agent-", "")[:4]
     return f"[{short}] "
 
@@ -281,7 +274,6 @@ class SessionTailer:
         for raw in all_lines:
             events.extend(parse_jsonl_line(raw))
 
-        # Also read any existing subagent files
         self._discover_subagents()
         for tail in self._subagent_tails.values():
             for raw in tail.read_all_lines():
@@ -289,7 +281,6 @@ class SessionTailer:
                     evt["agent_id"] = tail.agent_id
                     events.append(evt)
 
-        # Sort by timestamp and return last N
         events.sort(key=lambda e: e.get("timestamp", ""))
         return events[-self._catchup_count :]
 
@@ -316,7 +307,7 @@ class SessionTailer:
             return
         for p in self._subagent_dir.glob("agent-*.jsonl"):
             if p.name not in self._subagent_tails:
-                agent_id = p.stem  # e.g. "agent-a5c725bb8b43"
+                agent_id = p.stem
                 self._subagent_tails[p.name] = _FileTail(p, agent_id=agent_id)
 
 
@@ -397,12 +388,12 @@ def _start_tailing(
 ) -> SessionTailer:
     """Print header, show catch-up, and return a new SessionTailer."""
     print(f"\n=== Watching {task_key} — {jsonl_path.name} ===\n")
-    tailer = SessionTailer(jsonl_path, catchup=catchup)
-    for evt in tailer.catchup_events():
+    file_tailer = SessionTailer(jsonl_path, catchup=catchup)
+    for evt in file_tailer.catchup_events():
         print(format_event(evt, verbose=verbose))
     if catchup > 0:
         print("--- live ---")
-    return tailer
+    return file_tailer
 
 
 def run_watch(
@@ -414,7 +405,6 @@ def run_watch(
     """Main entry point for the watch command."""
     print("Press Ctrl+C to stop.")
 
-    # Set up graceful shutdown
     shutdown = threading.Event()
 
     def _handle_signal(signum: int, _frame: Any) -> None:
@@ -423,25 +413,25 @@ def run_watch(
     signal.signal(signal.SIGINT, _handle_signal)
     signal.signal(signal.SIGTERM, _handle_signal)
 
-    tracking = task_key_override is None
-    tailer: SessionTailer | None = None
+    file_tailer: SessionTailer | None = None
     current_task: str | None = None
-    tracker = BranchTracker() if tracking else None
+    # --task pins to a specific task; without it, we track the branch
+    branch_tracker = None if task_key_override else BranchTracker()
 
-    # Initial resolution
     if task_key_override:
         path = _try_resolve_session(task_key_override)
         if path is None:
             print(f"Error: no session found for {task_key_override}")
             sys.exit(1)
         current_task = task_key_override
-        tailer = _start_tailing(current_task, path, verbose=verbose, catchup=catchup)
+        file_tailer = _start_tailing(
+            current_task, path, verbose=verbose, catchup=catchup
+        )
 
-    # Poll loop
     while not shutdown.is_set():
-        tailer, current_task = _poll_once(
-            tracker=tracker,
-            tailer=tailer,
+        file_tailer, current_task = _poll_once(
+            branch_tracker=branch_tracker,
+            file_tailer=file_tailer,
             current_task=current_task,
             verbose=verbose,
             catchup=catchup,
@@ -458,7 +448,7 @@ def _handle_branch_change(
     verbose: bool,
     catchup: int,
 ) -> tuple[SessionTailer | None, str | None]:
-    """Handle a detected branch change. Returns (tailer, task_key)."""
+    """Handle a detected branch change. Returns (file_tailer, task_key)."""
     if change.task_key is None:
         if current_task is not None:
             print(f"\n=== On {change.branch} (not a task branch) ===")
@@ -466,8 +456,10 @@ def _handle_branch_change(
 
     path = _try_resolve_session(change.task_key)
     if path is not None:
-        tailer = _start_tailing(change.task_key, path, verbose=verbose, catchup=catchup)
-        return tailer, change.task_key
+        file_tailer = _start_tailing(
+            change.task_key, path, verbose=verbose, catchup=catchup
+        )
+        return file_tailer, change.task_key
 
     print(f"\n=== {change.task_key} — waiting for session... ===")
     return None, change.task_key
@@ -475,32 +467,30 @@ def _handle_branch_change(
 
 def _poll_once(
     *,
-    tracker: BranchTracker | None,
-    tailer: SessionTailer | None,
+    branch_tracker: BranchTracker | None,
+    file_tailer: SessionTailer | None,
     current_task: str | None,
     verbose: bool,
     catchup: int,
 ) -> tuple[SessionTailer | None, str | None]:
-    """Run one iteration of the poll loop. Returns (tailer, current_task)."""
-    # Branch tracking
-    if tracker is not None:
-        change = tracker.check()
+    """Run one iteration of the poll loop. Returns (file_tailer, current_task)."""
+    if branch_tracker is not None:
+        change = branch_tracker.check()
         if change is not None:
             return _handle_branch_change(
                 change, current_task, verbose=verbose, catchup=catchup
             )
 
-    # Retry session resolution for a task that had no session yet
-    if tailer is None and current_task is not None:
+    # Session may not exist yet when the ticket-loop hasn't started the task
+    if file_tailer is None and current_task is not None:
         path = _try_resolve_session(current_task)
         if path is not None:
-            tailer = _start_tailing(
+            file_tailer = _start_tailing(
                 current_task, path, verbose=verbose, catchup=catchup
             )
 
-    # Poll active tailer
-    if tailer is not None:
-        for evt in tailer.poll():
+    if file_tailer is not None:
+        for evt in file_tailer.poll():
             print(format_event(evt, verbose=verbose))
 
-    return tailer, current_task
+    return file_tailer, current_task
