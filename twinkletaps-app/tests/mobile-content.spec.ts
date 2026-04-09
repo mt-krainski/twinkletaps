@@ -44,9 +44,25 @@ test("mobile content: dashboard, device view, and tap recorder", async ({
   });
   await page.getByRole("button", { name: "Done" }).click();
 
+  // ── Dashboard after registration ─────────────────────────────────
+  // Wait for registration dialog to fully unmount
+  await expect(
+    page.locator("[data-slot='dialog-content']"),
+  ).toBeHidden({ timeout: 5000 });
+  // Close sidebar Sheet by clicking the overlay area right of the sidebar.
+  // Sidebar takes 75% of viewport width; click in the exposed 25% strip.
+  const vp = page.viewportSize()!;
+  await page.mouse.click(vp.width - 20, vp.height / 2);
+  await expect(
+    page.locator("[data-slot='sheet-overlay']"),
+  ).toBeHidden({ timeout: 5000 });
+  await page.waitForTimeout(1000);
+  await captureScreen(page, "dashboard-after-registration");
+
   // ── Navigate to device via sidebar ─────────────────────────────────
-  // Sidebar Sheet is still open after dialog closes. Click the device
-  // in the sidebar — withMobileClose closes the Sheet and navigates.
+  // Re-open sidebar, then click the device — withMobileClose closes
+  // the Sheet and navigates.
+  await openSidebarIfMobile(page, isMobile);
   const sidebarDevice = page.getByRole("button", { name: deviceName });
   await expect(sidebarDevice).toBeVisible({ timeout: 10000 });
   await sidebarDevice.click();
