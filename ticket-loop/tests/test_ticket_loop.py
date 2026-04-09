@@ -1,6 +1,7 @@
 """Lightweight tests for ticket_loop — pure logic and basic I/O only."""
 
 import json
+import signal
 import subprocess
 from unittest.mock import MagicMock, patch
 
@@ -10,6 +11,7 @@ from ticket_loop.main import (
     COLUMN_HANDLERS,
     Phase,
     _run_continuous,
+    _run_in_process_group,
     _run_loop,
     _run_with_session_retry,
     _swap_session_to_resume,
@@ -920,3 +922,258 @@ def test_handle_in_progress_looks_up_implementation_phase(tmp_path, monkeypatch)
         handle_in_progress(task)
 
     assert mock_claude.call_args.kwargs["session_id"] == "impl-sid"
+
+
+# -- _run_in_process_group --
+
+
+def _mock_proc(*, returncode=0, stdout=None, stderr=None):
+    """Create a mock Popen process for _run_in_process_group tests."""
+    proc = MagicMock()
+    proc.pid = 12345
+    proc.returncode = returncode
+    proc.communicate.return_value = (stdout, stderr)
+    proc.args = ["claude", "-p"]
+    return proc
+
+
+def _signal_tracker():
+    """Build a fake signal.signal that tracks installed handlers."""
+    installed = {}
+
+    def fake_signal(signum, handler):
+        old = installed.get(signum, signal.SIG_DFL)
+        installed[signum] = handler
+        return old
+
+    return fake_signal, installed
+
+
+class TestRunInProcessGroup:
+    """Tests for _run_in_process_group signal-safe subprocess runner."""
+
+    def test_returns_completed_process_on_success(self):
+        """Child exits 0, returns CompletedProcess with correct returncode."""
+        proc = _mock_proc(returncode=0)
+        with patch("ticket_loop.main.subprocess.Popen", return_value=proc):
+            result = _run_in_process_group(["claude", "-p"])
+
+        assert isinstance(result, subprocess.CompletedProcess)
+        assert result.returncode == 0
+
+    def test_check_raises_on_nonzero_exit(self):
+        """Non-zero exit with check=True raises CalledProcessError."""
+        proc = _mock_proc(returncode=1, stderr="some error")
+        with patch("ticket_loop.main.subprocess.Popen", return_value=proc):
+            with pytest.raises(subprocess.CalledProcessError) as exc_info:
+                _run_in_process_group(["claude", "-p"], check=True)
+
+        assert exc_info.value.returncode == 1
+        assert exc_info.value.stderr == "some error"
+
+    def test_nonzero_exit_without_check_returns_normally(self):
+        """Non-zero exit with check=False returns CompletedProcess."""
+        proc = _mock_proc(returncode=1)
+        with patch("ticket_loop.main.subprocess.Popen", return_value=proc):
+            result = _run_in_process_group(["claude", "-p"], check=False)
+
+        assert result.returncode == 1
+
+    def test_passes_kwargs_to_popen(self):
+        """Extra kwargs (cwd, stderr, text) are forwarded to Popen."""
+        proc = _mock_proc()
+        with patch(
+            "ticket_loop.main.subprocess.Popen", return_value=proc
+        ) as mock_popen:
+            _run_in_process_group(
+                ["claude", "-p"], cwd="/workspace", stderr=subprocess.PIPE, text=True
+            )
+
+        mock_popen.assert_called_once_with(
+            ["claude", "-p"],
+            start_new_session=True,
+            cwd="/workspace",
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+    def test_popen_uses_start_new_session(self):
+        """Popen is called with start_new_session=True."""
+        proc = _mock_proc()
+        with patch(
+            "ticket_loop.main.subprocess.Popen", return_value=proc
+        ) as mock_popen:
+            _run_in_process_group(["claude", "-p"])
+
+        assert mock_popen.call_args.kwargs["start_new_session"] is True
+
+    def test_sigint_forwards_sigterm_to_child_group(self):
+        """SIGINT sends SIGTERM to child process group via os.killpg."""
+        proc = _mock_proc(returncode=-signal.SIGTERM)
+        fake_signal, installed = _signal_tracker()
+
+        def fake_communicate():
+            handler = installed.get(signal.SIGINT)
+            if callable(handler):
+                handler(signal.SIGINT, None)
+            return (None, None)
+
+        proc.communicate.side_effect = fake_communicate
+
+        with (
+            patch("ticket_loop.main.subprocess.Popen", return_value=proc),
+            patch("ticket_loop.main.signal.signal", side_effect=fake_signal),
+            patch("ticket_loop.main.os.killpg") as mock_killpg,
+            patch("ticket_loop.main.os.getpgid", return_value=12345),
+        ):
+            with pytest.raises(KeyboardInterrupt):
+                _run_in_process_group(["claude", "-p"])
+
+        mock_killpg.assert_any_call(12345, signal.SIGTERM)
+
+    def test_sigint_raises_keyboard_interrupt(self):
+        """After child exits from forwarded SIGINT, KeyboardInterrupt is raised."""
+        proc = _mock_proc(returncode=-signal.SIGTERM)
+        fake_signal, installed = _signal_tracker()
+
+        def fake_communicate():
+            handler = installed.get(signal.SIGINT)
+            if callable(handler):
+                handler(signal.SIGINT, None)
+            return (None, None)
+
+        proc.communicate.side_effect = fake_communicate
+
+        with (
+            patch("ticket_loop.main.subprocess.Popen", return_value=proc),
+            patch("ticket_loop.main.signal.signal", side_effect=fake_signal),
+            patch("ticket_loop.main.os.killpg"),
+            patch("ticket_loop.main.os.getpgid", return_value=12345),
+        ):
+            with pytest.raises(KeyboardInterrupt):
+                _run_in_process_group(["claude", "-p"])
+
+    def test_sigterm_raises_system_exit(self):
+        """After SIGTERM forwarding, SystemExit is raised."""
+        proc = _mock_proc(returncode=-signal.SIGTERM)
+        fake_signal, installed = _signal_tracker()
+
+        def fake_communicate():
+            handler = installed.get(signal.SIGTERM)
+            if callable(handler):
+                handler(signal.SIGTERM, None)
+            return (None, None)
+
+        proc.communicate.side_effect = fake_communicate
+
+        with (
+            patch("ticket_loop.main.subprocess.Popen", return_value=proc),
+            patch("ticket_loop.main.signal.signal", side_effect=fake_signal),
+            patch("ticket_loop.main.os.killpg"),
+            patch("ticket_loop.main.os.getpgid", return_value=12345),
+        ):
+            with pytest.raises(SystemExit):
+                _run_in_process_group(["claude", "-p"])
+
+    def test_sigkill_escalation_on_timeout(self):
+        """SIGKILL sent when child doesn't exit within grace period."""
+        proc = _mock_proc(returncode=-signal.SIGKILL)
+        proc.wait.side_effect = subprocess.TimeoutExpired(cmd="claude", timeout=5)
+        fake_signal, installed = _signal_tracker()
+
+        def fake_thread_class(*, target, args=(), daemon=False):
+            target(*args)
+            return MagicMock()
+
+        def fake_communicate():
+            handler = installed.get(signal.SIGINT)
+            if callable(handler):
+                handler(signal.SIGINT, None)
+            return (None, None)
+
+        proc.communicate.side_effect = fake_communicate
+
+        with (
+            patch("ticket_loop.main.subprocess.Popen", return_value=proc),
+            patch("ticket_loop.main.signal.signal", side_effect=fake_signal),
+            patch("ticket_loop.main.os.killpg") as mock_killpg,
+            patch("ticket_loop.main.os.getpgid", return_value=12345),
+            patch("ticket_loop.main.threading.Thread", side_effect=fake_thread_class),
+        ):
+            with pytest.raises(KeyboardInterrupt):
+                _run_in_process_group(["claude", "-p"])
+
+        mock_killpg.assert_any_call(12345, signal.SIGTERM)
+        mock_killpg.assert_any_call(12345, signal.SIGKILL)
+
+    def test_signal_handlers_restored_after_normal_exit(self):
+        """Original signal handlers are restored after function returns."""
+        proc = _mock_proc()
+        handler_log = []
+        original_sigint = signal.getsignal(signal.SIGINT)
+        original_sigterm = signal.getsignal(signal.SIGTERM)
+
+        def tracking_signal(signum, handler):
+            handler_log.append((signum, handler))
+            if signum == signal.SIGINT:
+                return original_sigint
+            return original_sigterm
+
+        with (
+            patch("ticket_loop.main.subprocess.Popen", return_value=proc),
+            patch("ticket_loop.main.signal.signal", side_effect=tracking_signal),
+        ):
+            _run_in_process_group(["claude", "-p"])
+
+        # 4 calls: install SIGINT, install SIGTERM, restore SIGINT, restore SIGTERM
+        assert len(handler_log) == 4
+        # Last two restore the originals saved by getsignal
+        assert handler_log[2][1] == original_sigint
+        assert handler_log[3][1] == original_sigterm
+
+    def test_signal_handlers_restored_after_exception(self):
+        """Signal handlers are restored even when check=True raises."""
+        proc = _mock_proc(returncode=1)
+        handler_log = []
+        original_sigint = signal.getsignal(signal.SIGINT)
+        original_sigterm = signal.getsignal(signal.SIGTERM)
+
+        def tracking_signal(signum, handler):
+            handler_log.append((signum, handler))
+            if signum == signal.SIGINT:
+                return original_sigint
+            return original_sigterm
+
+        with (
+            patch("ticket_loop.main.subprocess.Popen", return_value=proc),
+            patch("ticket_loop.main.signal.signal", side_effect=tracking_signal),
+        ):
+            with pytest.raises(subprocess.CalledProcessError):
+                _run_in_process_group(["claude", "-p"], check=True)
+
+        assert len(handler_log) == 4
+        assert handler_log[2][1] == original_sigint
+        assert handler_log[3][1] == original_sigterm
+
+    def test_process_lookup_error_handled_on_sigterm(self):
+        """ProcessLookupError from os.killpg is caught (child already dead)."""
+        proc = _mock_proc(returncode=0)
+        fake_signal, installed = _signal_tracker()
+
+        def fake_communicate():
+            handler = installed.get(signal.SIGINT)
+            if callable(handler):
+                handler(signal.SIGINT, None)
+            return (None, None)
+
+        proc.communicate.side_effect = fake_communicate
+
+        with (
+            patch("ticket_loop.main.subprocess.Popen", return_value=proc),
+            patch("ticket_loop.main.signal.signal", side_effect=fake_signal),
+            patch("ticket_loop.main.os.killpg", side_effect=ProcessLookupError),
+            patch("ticket_loop.main.os.getpgid", return_value=12345),
+        ):
+            # Should not raise ProcessLookupError — caught internally
+            with pytest.raises(KeyboardInterrupt):
+                _run_in_process_group(["claude", "-p"])
