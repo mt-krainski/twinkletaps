@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "@chromatic-com/playwright";
 import { login } from "../src/test-utils/playwright";
 
 test.describe.configure({ retries: 2 });

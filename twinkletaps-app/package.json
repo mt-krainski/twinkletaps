@@ -34,7 +34,9 @@
     "test:e2e": "playwright test",
     "test": "npm run test:unit && npm run test:integration && npm run test:e2e",
     "test:coverage": "npm run test:unit:coverage && npm run test:integration:coverage && npm run test:e2e",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "chromatic:stories": "dotenv -e .env -e .env.chromatic.stories -- npx chromatic",
+    "chromatic:e2e": "dotenv -e .env -e .env.chromatic.e2e -- npx chromatic --playwright"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.3.0",
@@ -61,6 +63,7 @@
     "node": "^24.0.0"
   },
   "devDependencies": {
+    "@chromatic-com/playwright": "^0.13.0",
     "@chromatic-com/storybook": "^5.0.1",
     "@eslint/eslintrc": "^3",
     "@playwright/test": "^1.54.2",
@@ -75,7 +78,9 @@
     "@types/react-dom": "^19",
     "@vitest/browser": "^3.2.4",
     "@vitest/coverage-v8": "^3.2.4",
+    "chromatic": "^16.1.0",
     "dotenv": "^17.3.1",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.12",
     "eslint-plugin-storybook": "^10.2.16",

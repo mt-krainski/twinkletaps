@@ -83,7 +83,7 @@ export function ShareDialog({
         {state === "ready" && link ? (
           <>
             <div className="flex items-center gap-2">
-              <code className="min-w-0 flex-1 truncate rounded border bg-muted px-3 py-2 text-sm">
+              <code className="chromatic-ignore min-w-0 flex-1 truncate rounded border bg-muted px-3 py-2 text-sm">
                 {link}
               </code>
               <Button

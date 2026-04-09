@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "@chromatic-com/playwright";
 import mqtt, { type MqttClient } from "mqtt";
 import { login } from "../src/test-utils/playwright";
 

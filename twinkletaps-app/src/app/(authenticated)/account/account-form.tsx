@@ -93,7 +93,7 @@ export default function AccountForm() {
 
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" value={profile.email} disabled />
+          <Input id="email" type="email" value={profile.email} disabled className="chromatic-ignore" />
         </div>
 
         <div className="space-y-2">
@@ -105,6 +105,7 @@ export default function AccountForm() {
             onChange={(e) => setFullname(e.target.value)}
             placeholder="Enter your full name"
             disabled={loading}
+            className="chromatic-ignore"
           />
         </div>
 
@@ -117,6 +118,7 @@ export default function AccountForm() {
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Enter your username"
             disabled={loading}
+            className="chromatic-ignore"
           />
         </div>
 

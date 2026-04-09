@@ -18,6 +18,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -106,6 +108,11 @@ jobs:
         run: |
           echo "=== HiveMQ container logs ==="
           docker compose logs 2>&1 || true
+
+      - name: Run Chromatic
+        env:
+          CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN_E2E }}
+        run: npx chromatic --playwright --exit-zero-on-changes
 
       - name: Upload Playwright report
         if: always()

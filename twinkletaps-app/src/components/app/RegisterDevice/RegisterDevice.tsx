@@ -74,7 +74,7 @@ function CredentialRow({
       <Label className="shrink-0 text-muted-foreground w-24 text-sm">
         {label}
       </Label>
-      <code className="min-w-0 flex-1 truncate rounded border bg-muted px-2 py-1.5 text-sm">
+      <code className="chromatic-ignore min-w-0 flex-1 truncate rounded border bg-muted px-2 py-1.5 text-sm">
         {value}
       </code>
       <CopyButton value={value} label={label} />
